@@ -13,6 +13,23 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    - name: Prepare Build
+      run: |
+        # 如果 gradle.properties 存在，删除 Java home 配置
+        if [ -f gradle.properties ]; then
+          sed -i '/org.gradle.java.home/d' gradle.properties
+          echo "Removed Java home configuration from gradle.properties"
+        fi
+        
+        # 显示剩余配置（可选的调试步骤）
+        cat gradle.properties || echo "No gradle.properties found"
+
+    - name: Build with Gradle
+      run: |
+        ./gradlew clean build --info --stacktrace
+      env:
+        GRADLE_OPTS: "-Dorg.gradle.logging.level=info"
+    
     - name: Debug System Information
       run: |
         echo "Operating System:"
