@@ -23,6 +23,9 @@ jobs:
         
         # 显示剩余配置（可选的调试步骤）
         cat gradle.properties || echo "No gradle.properties found"
+        
+        # 确保 gradlew 可执行
+        chmod +x gradlew
 
     - name: Build with Gradle
       run: |
