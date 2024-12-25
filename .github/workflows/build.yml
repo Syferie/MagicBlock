@@ -54,9 +54,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Install jq
-      run: sudo apt-get update && sudo apt-get install -y jq
-    
     - name: Download Artifact
       uses: actions/download-artifact@v3
       with:
@@ -66,33 +63,7 @@ jobs:
     - name: List Downloaded Artifacts
       run: ls -l build/libs/
     
-    - name: Check if Version Exists
-      id: check_release
-      env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-      run: |
-        VERSION="${{ needs.build.outputs.version }}"
-        echo "Checking for existing release with tag v$VERSION"
-        
-        # 直接检查 tag 是否存在
-        TAG_CHECK=$(curl -s -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}/git/refs/tags/v$VERSION")
-        
-        # 打印响应用于调试
-        echo "Tag Check Response:"
-        echo "$TAG_CHECK"
-        
-        # 如果 tag 不存在，允许创建 release
-        if echo "$TAG_CHECK" | grep -q "message\":\"Not Found"; then
-          echo "Tag not found, proceeding with release"
-          echo "exists=not_found" >> $GITHUB_OUTPUT
-        else
-          echo "Tag already exists"
-          echo "exists=found" >> $GITHUB_OUTPUT
-        fi
-
     - name: Create Release
-      if: steps.check_release.outputs.exists == 'not_found'
       id: create_release
       uses: actions/create-release@v1
       env:
@@ -104,7 +75,6 @@ jobs:
         prerelease: false
     
     - name: Upload Release Asset
-      if: steps.check_release.outputs.exists == 'not_found'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
@@ -113,9 +83,3 @@ jobs:
         asset_path: ./build/libs/MagicBlock-${{ needs.build.outputs.version }}.jar
         asset_name: MagicBlock-${{ needs.build.outputs.version }}.jar
         asset_content_type: application/java-archive
-    
-    - name: Debug Information
-      if: always()
-      run: |
-        echo "Release Exists: ${{ steps.check_release.outputs.exists }}"
-        echo "Version: ${{ needs.build.outputs.version }}"
