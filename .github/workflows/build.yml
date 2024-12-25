@@ -1,0 +1,65 @@
+name: Build and Release Plugin
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+    
+    - name: Build with Gradle
+      run: ./gradlew clean build
+    
+    - name: Read Version
+      id: read_version
+      run: |
+        VERSION=$(grep 'version =' build.gradle | cut -d "'" -f 2)
+        echo "::set-output name=version::$VERSION"
+    
+    - name: Check if Version Exists
+      id: check_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        EXISTING_RELEASE=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/releases/tags/v${{ steps.read_version.outputs.version }}" \
+          | grep -q "message\":\"Not Found" && echo "not_found" || echo "found")
+        echo "::set-output name=exists::$EXISTING_RELEASE"
+    
+    - name: Create Release
+      if: steps.check_release.outputs.exists == 'not_found'
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.read_version.outputs.version }}
+        release_name: Release ${{ steps.read_version.outputs.version }}
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Asset
+      if: steps.check_release.outputs.exists == 'not_found'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/libs/*.jar
+        asset_name: MagicBlock-${{ steps.read_version.outputs.version }}.jar
+        asset_content_type: application/java-archive
