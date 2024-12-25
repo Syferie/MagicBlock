@@ -1,0 +1,140 @@
+# ===================================
+# MagicBlock Plugin Configuration
+# ===================================
+
+# Debug mode
+debug-mode: false
+
+# Language setting (en, zh_CN)
+# Available languages:
+# - en (English)
+# - zh_CN (简体中文)
+language: "en"
+
+# Message prefix
+prefix: "§7[MagicBlock] "
+
+# GUI settings
+gui:
+  rows: 6
+
+# Display settings
+display:
+  block-name-format: "&b✦ %s &b✦"  # %s will be replaced with block name
+
+# Statistics
+enable-statistics: true
+
+# Auto update check
+check-updates: true
+
+# Custom magic block lore, use § for colors, not &. Cannot be empty.
+# Do not use common lore text that appears in other materials
+magic-lore: "§7MagicBlock"
+
+# Usage times prefix text
+usage-lore-prefix: "§7Uses:"
+
+# Blacklisted worlds where magic blocks cannot be used
+blacklisted-worlds:
+  - world_nether
+  - world_the_end
+
+# Default usage times for magic blocks obtained through mb get command
+default-block-times: 1000000000
+
+# ===================================
+# Materials that will appear in the GUI selection menu
+allowed-materials:
+  # Natural Blocks
+  - STONE
+  - GRASS_BLOCK
+  - DIRT
+  - COBBLESTONE
+  - SAND
+  - GRAVEL
+  - GOLD_ORE
+  - IRON_ORE
+  - COAL_ORE
+  
+  # Wood Types
+  - OAK_WOOD
+  - SPRUCE_WOOD
+  - BIRCH_WOOD
+  - JUNGLE_WOOD
+  - ACACIA_WOOD
+  - DARK_OAK_WOOD
+  - OAK_LOG
+  - SPRUCE_LOG
+  - BIRCH_LOG
+  - JUNGLE_LOG
+  - ACACIA_LOG
+  - DARK_OAK_LOG
+  
+  # Mineral Blocks
+  - GOLD_BLOCK
+  - IRON_BLOCK
+  - DIAMOND_BLOCK
+  - EMERALD_BLOCK
+  - LAPIS_BLOCK
+  - REDSTONE_BLOCK
+  
+  # Stone Types
+  - GRANITE
+  - DIORITE
+  - ANDESITE
+  - STONE_BRICKS
+  - MOSSY_STONE_BRICKS
+  - CRACKED_STONE_BRICKS
+  
+  # Decorative Blocks
+  - GLASS
+  - BOOKSHELF
+  - OBSIDIAN
+  - GLOWSTONE
+  - SEA_LANTERN
+  - CLAY
+  - TERRACOTTA
+  
+  # Nether Blocks
+  - NETHERRACK
+  - SOUL_SAND
+  - NETHER_BRICKS
+  - MAGMA_BLOCK
+  
+  # End Blocks
+  - END_STONE
+  - PURPUR_BLOCK
+  - END_STONE_BRICKS
+  
+  # Concrete Colors
+  - WHITE_CONCRETE
+  - ORANGE_CONCRETE
+  - MAGENTA_CONCRETE
+  - LIGHT_BLUE_CONCRETE
+  - YELLOW_CONCRETE
+  - LIME_CONCRETE
+  - PINK_CONCRETE
+  - GRAY_CONCRETE
+  - LIGHT_GRAY_CONCRETE
+  - CYAN_CONCRETE
+  - PURPLE_CONCRETE
+  - BLUE_CONCRETE
+  - BROWN_CONCRETE
+  - GREEN_CONCRETE
+  - RED_CONCRETE
+  - BLACK_CONCRETE
+
+# Group permissions for additional materials
+group:
+  # VIP group materials
+  vip-material:
+    - DIAMOND_BLOCK
+    - EMERALD_BLOCK
+    - GOLD_BLOCK
+  
+  # MVP group materials
+  mvp-material:
+    - BEACON
+    - DRAGON_EGG
+    - NETHERITE_BLOCK

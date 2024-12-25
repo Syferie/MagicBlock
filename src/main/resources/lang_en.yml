@@ -1,0 +1,183 @@
+general:
+  prefix: "&8[&bMagicBlock&8] "
+  reload: "&a✔ &7Configuration reloaded successfully!"
+  no-permission: "&c✖ &7You don't have permission to do this!"
+  plugin-enabled: "&a✔ &7Plugin enabled successfully!"
+  plugin-disabled: "&c✖ &7Plugin disabled."
+  placeholder-registered: "&a✔ &7PlaceholderAPI hook registered successfully!"
+  food-config-reloaded: "&a✔ &7Food configuration reloaded successfully!"
+  food-config-not-found: "&c✖ &7Food configuration file not found!"
+  materials-updated: "&a✔ &7Allowed materials updated successfully!"
+  config-load-error: "&c✖ &7Error loading configuration!"
+
+gui:
+  title: "&8⚡ &bMagicBlock Selection"
+  search-button: "&e⚡ Search Block"
+  search-lore: "&7» Click to search"
+  previous-page: "&a« Previous Page"
+  next-page: "&aNext Page »"
+  select-block: "&7» Click to select this block"
+  bound-blocks-title: "&8⚡ &bBound Blocks"
+  retrieve-block: "&a▸ &7Left-click to retrieve this block"
+  remove-block: "&c▸ &7Right-click to hide from list"
+  remove-block-note: "&8• &7(Only hides from list, binding remains)"
+  remaining-uses: "Remaining uses: "
+
+messages:
+  block-placed: "&a✔ &7Successfully placed MagicBlock!"
+  block-broken: "&c✖ &7MagicBlock has been broken!"
+  block-removed: "&c✖ &7Your MagicBlock has run out of uses!"
+  block-removed-by-owner: "&c✖ &7A bound block in your inventory has been retrieved by its original owner!"
+  food-removed: "&c✖ &7Your magic food has run out of uses!"
+  blacklisted-world: "&c✖ &7MagicBlock is not allowed in this world!"
+  item-changed: "&c✖ &7Operation cancelled due to item change!"
+  success-replace: "&a✔ &7Successfully replaced with &b{0}&7!"
+  invalid-material: "&c✖ &7Invalid block ID or material not allowed, please try again!"
+  input-block-id: "&e⚡ &7Please enter the block ID to replace. Type 'cancel' to cancel."
+  must-hold-magic-block: "&c✖ &7You must hold a MagicBlock to open the selection menu!"
+  search-prompt: "&e⚡ &7Please enter the block name to search in chat &8(&7Type cancel to cancel search&8)"
+  wait-cooldown: "&c✖ &7Please wait a moment before searching again..."
+  no-results: "&c✖ &7No matching blocks found."
+  already-bound: "&c✖ &7This block is already bound!"
+  bind-success: "&a✔ &7Block bound successfully!"
+  no-bound-blocks: "&c✖ &7You don't have any bound blocks!"
+  not-bound-to-you: "&c✖ &7This block doesn't belong to you!"
+  already-have-block: "&c✖ &7You already have this bound block!"
+  block-retrieved: "&a✔ &7Block retrieved successfully!"
+  cannot-break-others-block: "&c✖ &7You cannot break blocks bound to other players!"
+  block-bind-removed: "&a✔ &7Block hidden from list!"
+  bound-to: "Bound to:"
+  click-again-to-remove: "&e⚡ &7Click again to hide this block from list"
+
+commands:
+  help:
+    title: "&e⚡ &7MagicBlock Help"
+    help: "&7/mb help &8- &7Show help information"
+    get: "&7/mb get [uses] &8- &7Get a MagicBlock"
+    give: "&7/mb give <player> [uses] &8- &7Give a MagicBlock to a player"
+    getfood: "&7/mb getfood <food> [uses] &8- &7Get magic food"
+    settimes: "&7/mb settimes <uses> &8- &7Set uses for held MagicBlock"
+    addtimes: "&7/mb addtimes <uses> &8- &7Add uses to held MagicBlock"
+    list: "&7/mb list &8- &7View bound blocks"
+    reload: "&7/mb reload &8- &7Reload plugin configuration"
+    tip: "&7Sneak + Right Click &8- &7Bind block"
+  get:
+    no-permission: "&c✖ &7You don't have permission to use this command!"
+    success: "&a✔ &7Successfully got a MagicBlock with &b{0} &7uses!"
+    success-infinite: "&a✔ &7Successfully got a MagicBlock with &binfinite &7uses!"
+    invalid-number: "&c✖ &7Invalid number of uses."
+  give:
+    no-permission: "&c✖ &7You don't have permission to use this command!"
+    success:
+      console: "&a✔ &7Successfully gave &b{0} &7a MagicBlock with &b{1} &7uses!"
+      console-infinite: "&a✔ &7Successfully gave &b{0} &7a MagicBlock with &binfinite &7uses!"
+      player: "&a✔ &7Successfully gave &b{0} &7a MagicBlock with &b{1} &7uses!"
+      player-infinite: "&a✔ &7Successfully gave &b{0} &7a MagicBlock with &binfinite &7uses!"
+  settimes:
+    no-permission: "&c✖ &7You don't have permission to use this command!"
+    must-hold: "&c✖ &7You must hold a MagicBlock to set uses!"
+    invalid-number: "&c✖ &7Invalid number of uses."
+    success: "&a✔ &7Successfully set MagicBlock uses to &b{0}&7!"
+    success-infinite: "&a✔ &7Successfully set MagicBlock uses to &binfinite&7!"
+  addtimes:
+    no-permission: "&c✖ &7You don't have permission to use this command!"
+    must-hold: "&c✖ &7You must hold a MagicBlock to add uses!"
+    invalid-number: "&c✖ &7Invalid number of uses."
+    unlimited: "&c✖ &7This MagicBlock already has infinite uses!"
+    success: "&a✔ &7Successfully added &b{0} &7uses!"
+  getfood:
+    no-permission: "&c✖ &7You don't have permission to use this command!"
+    usage: "&c✖ &7Usage: /mb getfood <food> [uses]"
+    invalid-food: "&c✖ &7Invalid food type!"
+    invalid-number: "&c✖ &7Invalid number of uses."
+    success: "&a✔ &7Successfully got magic food with &b{0} &7uses!"
+  list:
+    no-permission: "&c✖ &7You don't have permission to use this command!"
+  reload:
+    no-permission: "&c✖ &7You don't have permission to use this command!"
+    success: "&a✔ &7Configuration reloaded successfully!"
+
+blocks:
+  # Natural Blocks
+  STONE: "Stone"
+  GRASS_BLOCK: "Grass Block"
+  DIRT: "Dirt"
+  COBBLESTONE: "Cobblestone"
+  SAND: "Sand"
+  GRAVEL: "Gravel"
+  GOLD_ORE: "Gold Ore"
+  IRON_ORE: "Iron Ore"
+  COAL_ORE: "Coal Ore"
+  
+  # Wood Types
+  OAK_WOOD: "Oak Wood"
+  SPRUCE_WOOD: "Spruce Wood"
+  BIRCH_WOOD: "Birch Wood"
+  JUNGLE_WOOD: "Jungle Wood"
+  ACACIA_WOOD: "Acacia Wood"
+  DARK_OAK_WOOD: "Dark Oak Wood"
+  OAK_LOG: "Oak Log"
+  SPRUCE_LOG: "Spruce Log"
+  BIRCH_LOG: "Birch Log"
+  JUNGLE_LOG: "Jungle Log"
+  ACACIA_LOG: "Acacia Log"
+  DARK_OAK_LOG: "Dark Oak Log"
+  
+  # Mineral Blocks
+  GOLD_BLOCK: "Gold Block"
+  IRON_BLOCK: "Iron Block"
+  DIAMOND_BLOCK: "Diamond Block"
+  EMERALD_BLOCK: "Emerald Block"
+  LAPIS_BLOCK: "Lapis Block"
+  REDSTONE_BLOCK: "Redstone Block"
+  
+  # Stone Types
+  GRANITE: "Granite"
+  DIORITE: "Diorite"
+  ANDESITE: "Andesite"
+  STONE_BRICKS: "Stone Bricks"
+  MOSSY_STONE_BRICKS: "Mossy Stone Bricks"
+  CRACKED_STONE_BRICKS: "Cracked Stone Bricks"
+  
+  # Decorative Blocks
+  GLASS: "Glass"
+  BOOKSHELF: "Bookshelf"
+  OBSIDIAN: "Obsidian"
+  GLOWSTONE: "Glowstone"
+  SEA_LANTERN: "Sea Lantern"
+  CLAY: "Clay"
+  TERRACOTTA: "Terracotta"
+  
+  # Nether Blocks
+  NETHERRACK: "Netherrack"
+  SOUL_SAND: "Soul Sand"
+  NETHER_BRICKS: "Nether Bricks"
+  MAGMA_BLOCK: "Magma Block"
+  
+  # End Blocks
+  END_STONE: "End Stone"
+  PURPUR_BLOCK: "Purpur Block"
+  END_STONE_BRICKS: "End Stone Bricks"
+  
+  # Concrete Colors
+  WHITE_CONCRETE: "White Concrete"
+  ORANGE_CONCRETE: "Orange Concrete"
+  MAGENTA_CONCRETE: "Magenta Concrete"
+  LIGHT_BLUE_CONCRETE: "Light Blue Concrete"
+  YELLOW_CONCRETE: "Yellow Concrete"
+  LIME_CONCRETE: "Lime Concrete"
+  PINK_CONCRETE: "Pink Concrete"
+  GRAY_CONCRETE: "Gray Concrete"
+  LIGHT_GRAY_CONCRETE: "Light Gray Concrete"
+  CYAN_CONCRETE: "Cyan Concrete"
+  PURPLE_CONCRETE: "Purple Concrete"
+  BLUE_CONCRETE: "Blue Concrete"
+  BROWN_CONCRETE: "Brown Concrete"
+  GREEN_CONCRETE: "Green Concrete"
+  RED_CONCRETE: "Red Concrete"
+  BLACK_CONCRETE: "Black Concrete"
+  
+  # Special Permission Blocks
+  BEACON: "Beacon"
+  DRAGON_EGG: "Dragon Egg"
+  NETHERITE_BLOCK: "Netherite Block"
