@@ -18,7 +18,8 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        
+        cache: 'gradle'
+    
     - name: Make gradlew executable
       run: chmod +x ./gradlew
     
@@ -28,8 +29,8 @@ jobs:
     - name: Read Version
       id: read_version
       run: |
-        VERSION=$(grep 'version =' build.gradle | cut -d "'" -f 2)
-        echo "::set-output name=version::$VERSION"
+        VERSION=$(grep 'version ' build.gradle | cut -d "'" -f 2)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
     
     - name: Check if Version Exists
       id: check_release
@@ -39,7 +40,7 @@ jobs:
         EXISTING_RELEASE=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           "https://api.github.com/repos/${{ github.repository }}/releases/tags/v${{ steps.read_version.outputs.version }}" \
           | grep -q "message\":\"Not Found" && echo "not_found" || echo "found")
-        echo "::set-output name=exists::$EXISTING_RELEASE"
+        echo "exists=$EXISTING_RELEASE" >> $GITHUB_OUTPUT
     
     - name: Create Release
       if: steps.check_release.outputs.exists == 'not_found'
@@ -60,6 +61,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/libs/*.jar
+        asset_path: ./build/libs/MagicBlock-${{ steps.read_version.outputs.version }}.jar
         asset_name: MagicBlock-${{ steps.read_version.outputs.version }}.jar
         asset_content_type: application/java-archive
