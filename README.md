@@ -1,104 +1,160 @@
 # MagicBlock Plugin
 
-MagicBlock是一个功能强大的Minecraft服务器插件，允许玩家使用具有限定使用次数的特殊方块。
+MagicBlock 是一个功能丰富的 Minecraft 插件，允许玩家使用具有有限使用次数的魔法方块和魔法食物。这些特殊物品可以被绑定到特定玩家，并且可以通过直观的 GUI 界面进行管理。
 
-## 主要功能
+## 功能特点
 
-### 1. 魔法方块系统
-- 创建具有使用次数限制的特殊方块
-- 支持无限次数的魔法方块
-- 方块绑定系统，确保只有绑定玩家才能使用
-- 支持多种方块类型，包括所有原版方块
+- 魔法方块系统
+  - 可配置使用次数的方块
+  - 方块绑定系统
+  - 直观的 GUI 界面
+  - 方块搜索功能
+- 魔法食物系统
+  - 可重复使用的食物
+  - 自定义食物效果
+- 多语言支持
+  - 英语 (en)
+  - 简体中文 (zh_CN)
+- PlaceholderAPI 支持
+- 详细的使用统计
+- 权限系统
 
-### 2. 魔法食物系统
-- 创建具有使用次数的特殊食物
-- 可自定义食物效果和使用次数
+## 安装要求
 
-### 3. GUI界面
-- 直观的方块选择界面
-- 已绑定方块管理界面
-- 支持多语言显示（中文、英文）
-- 方块搜索功能
-
-### 4. 权限系统
-```
-magicblock.admin - 管理员权限，可以使用所有命令
-magicblock.use - 基础使用权限
-magicblock.give - 给予魔法方块权限
-magicblock.food - 魔法食物使用权限
-```
+- Minecraft 服务器版本: 1.19+
+- 可选依赖: PlaceholderAPI
 
 ## 命令系统
 
-### 基础命令
+### 主命令
+- `/magicblock` 或 `/mb` - 插件主命令
+
+### 子命令
 - `/mb help` - 显示帮助信息
 - `/mb get [次数]` - 获取一个魔法方块
 - `/mb give <玩家> [次数]` - 给予玩家魔法方块
+- `/mb getfood <食物> [次数]` - 获取魔法食物
+- `/mb settimes <次数>` - 设置手持魔法方块的使用次数
+- `/mb addtimes <次数>` - 增加手持魔法方块的使用次数
 - `/mb list` - 查看已绑定的方块
 - `/mb reload` - 重载插件配置
 
-### 方块操作
-- `/mb settimes <次数>` - 设置手持魔法方块的使用次数
-- `/mb addtimes <次数>` - 增加手持魔法方块的使用次数
+## 权限节点
 
-### 食物系统
-- `/mb getfood <食物> [次数]` - 获取魔法食物
+### 基础权限
+- `magicblock.use` - 允许使用魔法方块基本功能（默认: true）
+- `magicblock.food` - 允许使用魔法食物（默认: true）
+
+### 管理员权限
+- `magicblock.admin` - 允许访问所有功能（默认: op）
+  - 包含以下子权限:
+    - `magicblock.use`
+    - `magicblock.give`
+    - `magicblock.reload`
+    - `magicblock.settimes`
+    - `magicblock.addtimes`
+    - `magicblock.food`
+
+### 独立权限
+- `magicblock.give` - 允许给予其他玩家魔法方块（默认: op）
+- `magicblock.reload` - 允许重载配置（默认: op）
+- `magicblock.settimes` - 允许设置使用次数（默认: op）
+- `magicblock.addtimes` - 允许增加使用次数（默认: op）
+
+## 基本操作说明
+
+### 魔法方块使用
+1. 获取魔法方块：使用 `/mb get` 命令
+2. 绑定方块：潜行 + 右键点击
+3. 放置方块：直接放置即可
+4. 更改方块类型：潜行 + 左键打开GUI界面
+5. 查看绑定方块：使用 `/mb list` 命令
+
+### GUI 界面操作
+- 左键点击：选择方块类型
+- 使用搜索按钮：可以搜索特定方块
+- 翻页按钮：浏览更多方块选项
+
+### 绑定列表操作
+- 左键点击：找回绑定的方块
+- 右键双击：从列表中隐藏方块（不会解除绑定）
 
 ## 配置文件
-- `config.yml` - 主配置文件
-- `foodconf.yml` - 食物配置文件
-- `lang_zh_CN.yml` - 中文语言文件
-- `lang_en.yml` - 英文语言文件
 
-## 特色功能
-1. 多语言支持
-   - 支持中英文切换
-   - 可自定义语言文件
-   
-2. 方块绑定系统
-   - 潜行+右键绑定方块
-   - 防止其他玩家破坏已绑定方块
-   - 方块使用次数显示
-   
-3. PlaceholderAPI支持
-   - 支持变量显示
-   - 可用于记分板等功能
+### config.yml 主要配置项
+```yaml
+# 调试模式
+debug-mode: false
 
-4. 高度自定义
-   - 可配置的方块使用次数
-   - 自定义方块描述
-   - 黑名单世界设置
+# 语言设置
+language: "en"  # 可选 "en" 或 "zh_CN"
 
-## 使用说明
+# 默认使用次数
+default-block-times: 1000000000
 
-### 基础使用
-1. 获取魔法方块
-   ```
-   /mb get [次数]
-   ```
-   
-2. 绑定方块
-   - 手持魔法方块
-   - 潜行+右键点击目标方块
-   
-3. 查看已绑定方块
-   ```
-   /mb list
-   ```
+# 黑名单世界
+blacklisted-worlds:
+  - world_nether
+  - world_the_end
+```
 
-### 进阶功能
-1. 方块搜索
-   - 在GUI界面中点击搜索按钮
-   - 输入方块名称进行搜索
-   
-2. 方块管理
-   - 左键点击找回绑定的方块
-   - 右键点击从列表中隐藏
+### foodconf.yml 食物配置
+```yaml
+# 食物配置示例
+foods:
+  GOLDEN_APPLE:
+    heal: 4
+    saturation: 9.6
+    effects:
+      REGENERATION:
+        duration: 100
+        amplifier: 1
+```
 
-## 安装要求
-- Spigot/Paper 1.19.4+
-- Java 17+
-- PlaceholderAPI（可选）
+## PlaceholderAPI 变量
+
+支持的变量：
+- `%magicblock_block_uses%` - 显示玩家使用魔法方块的总次数
+- `%magicblock_food_uses%` - 显示玩家使用魔法食物的总次数
+- `%magicblock_remaining_uses%` - 显示当前手持魔法方块的剩余使用次数
+- `%magicblock_has_block%` - 显示玩家是否持有魔法方块
+- `%magicblock_has_food%` - 显示玩家是否持有魔法食物
+- `%magicblock_max_uses%` - 显示当前手持魔法方块的最大使用次数
+- `%magicblock_uses_progress%` - 显示使用进度（百分比）
+
+## 注意事项
+
+1. 魔法方块在使用次数耗尽后会自动消失
+2. 绑定的方块只能被绑定者使用和破坏
+3. 方块不能在黑名单世界中使用
+4. 方块不受活塞影响
+5. 爆炸不会破坏魔法方块
+
+## 定制功能
+
+### 物品组权限
+可以通过配置文件为不同权限组设置可用的方块类型：
+```yaml
+group:
+  vip-material:
+    - DIAMOND_BLOCK
+    - EMERALD_BLOCK
+  mvp-material:
+    - BEACON
+    - DRAGON_EGG
+```
+
+### 统计功能
+- 插件会自动记录玩家使用魔法方块和魔法食物的次数
+- 支持通过 PlaceholderAPI 在计分板等地方显示统计信息
+
+## 问题排查
+
+常见问题：
+1. 无法使用命令：检查权限节点设置
+2. 方块无法放置：检查是否在黑名单世界
+3. GUI无法打开：确认是否手持魔法方块
+4. 方块无法绑定：检查是否已被其他玩家绑定
 
 ## 许可协议
 
