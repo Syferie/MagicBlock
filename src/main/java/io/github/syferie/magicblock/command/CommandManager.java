@@ -15,6 +15,8 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.UUID;
+
 public class CommandManager implements CommandExecutor {
     private final MagicBlockPlugin plugin;
 
@@ -116,7 +118,7 @@ public class CommandManager implements CommandExecutor {
         }
 
         if (args.length < 2) {
-            sender.sendMessage(ChatColor.RED + "用法: /mb give <玩家> [次数]");
+            sender.sendMessage(ChatColor.RED + "用法: /mb give <玩��> [次数]");
             return;
         }
 
@@ -162,7 +164,7 @@ public class CommandManager implements CommandExecutor {
             plugin.sendMessage(target, "commands.get.success", times);
         }
         
-        // 根据发��者类型显示不同的消息
+        // 根据发送者类型显示不同的消息
         if (sender instanceof ConsoleCommandSender) {
             if (times == -1) {
                 plugin.sendMessage(sender, "commands.give.success.console-infinite", target.getName());
@@ -283,34 +285,62 @@ public class CommandManager implements CommandExecutor {
     }
 
     private void handleAddTimes(Player player, String[] args) {
+        if (!player.hasPermission("magicblock.addtimes")) {
+            plugin.sendMessage(player, "commands.addtimes.no-permission");
+            return;
+        }
+
         if (args.length < 2) {
             plugin.sendMessage(player, "commands.addtimes.usage");
             return;
         }
 
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (!plugin.hasMagicLore(item.getItemMeta())) {
+        if (!plugin.getBlockManager().isMagicBlock(item)) {
             plugin.sendMessage(player, "commands.addtimes.must-hold");
+            return;
+        }
+
+        // 检查是否是绑定的方块且是否属于该玩家
+        UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(item);
+        if (boundPlayer != null && !boundPlayer.equals(player.getUniqueId())) {
+            plugin.sendMessage(player, "messages.not-bound-to-you");
             return;
         }
 
         int addTimes;
         try {
             addTimes = Integer.parseInt(args[1]);
+            if (addTimes <= 0) {
+                plugin.sendMessage(player, "commands.addtimes.invalid-number");
+                return;
+            }
         } catch (NumberFormatException e) {
             plugin.sendMessage(player, "commands.addtimes.invalid-number");
             return;
         }
 
-        BlockManager blockManager = plugin.getBlockManager();
-        int currentTimes = blockManager.getUseTimes(item);
-        if (currentTimes == -1) {
+        // 获取当前使用次数
+        int currentTimes = plugin.getBlockManager().getUseTimes(item);
+        
+        // 检查是否是无限次数
+        if (currentTimes == Integer.MAX_VALUE - 100) {
             plugin.sendMessage(player, "commands.addtimes.unlimited");
             return;
         }
 
+        // 计算新的使用次数
         int newTimes = currentTimes + addTimes;
-        blockManager.setUseTimes(item, newTimes);
+        
+        // 设置新的使用次数
+        plugin.getBlockManager().setUseTimes(item, newTimes);
+        
+        // 如果是绑定的方块，更新配置中的使用次数
+        if (plugin.getBlockBindManager().isBlockBound(item)) {
+            plugin.getBlockBindManager().updateBlockMaterial(item);
+        }
+
+        // 发送成功消息
         plugin.sendMessage(player, "commands.addtimes.success", addTimes, newTimes);
     }
 
