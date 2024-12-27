@@ -41,12 +41,10 @@ MagicBlock 是一个功能丰富的 Minecraft 插件，允许玩家使用具有�
 
 ## 权限节点
 
-### 基础权限
-- `magicblock.use` - 允许使用魔法方块基本功能（默认: true）
-- `magicblock.food` - 允许使用魔法食物（默认: true）
-
 ### 管理员权限
-- `magicblock.admin` - 允许访问所有功能（默认: op）
+- `magicblock.admin`
+  - 包含所有权限
+  - 默认仅 OP 拥有
   - 包含以下子权限:
     - `magicblock.use`
     - `magicblock.give`
@@ -55,11 +53,47 @@ MagicBlock 是一个功能丰富的 Minecraft 插件，允许玩家使用具有�
     - `magicblock.addtimes`
     - `magicblock.food`
 
-### 独立权限
-- `magicblock.give` - 允许给予其他玩家魔法方块（默认: op）
-- `magicblock.reload` - 允许重载配置（默认: op）
-- `magicblock.settimes` - 允许设置使用次数（默认: op）
-- `magicblock.addtimes` - 允许增加使用次数（默认: op）
+### 基础权限
+- `magicblock.use`
+  - 允许使用魔法方块的基本功能
+  - 默认所有玩家拥有
+  - 命令: `/mb get`
+
+### 管理类权限
+- `magicblock.give`
+  - 允许给予其他玩家魔法方块
+  - 默认仅 OP 拥有
+  - 命令: `/mb give <玩家> [次数]`
+
+- `magicblock.reload`
+  - 允许重载插件配置
+  - 默认仅 OP 拥有
+  - 命令: `/mb reload`
+
+- `magicblock.settimes`
+  - 允许设置魔法方块使用次数
+  - 默认仅 OP 拥有
+  - 命令: `/mb settimes <次数>`
+
+- `magicblock.addtimes`
+  - 允许增加魔法方块使用次数
+  - 默认仅 OP 拥有
+  - 命令: `/mb addtimes <次数>`
+
+### 功能权限
+- `magicblock.food`
+  - 允许使用魔法食物
+  - 默认所有玩家拥有
+  - 命令: `/mb getfood <食物> [次数]`
+
+- `magicblock.list`
+  - 允许查看已绑定的方块列表
+  - 默认所有玩家拥有
+  - 命令: `/mb list`
+
+### 特殊方块权限
+- `magicblock.vip` - 允许使用VIP专属方块
+- `magicblock.mvp` - 允许使用MVP专属方块
 
 ## 基本操作说明
 
@@ -111,74 +145,6 @@ foods:
         amplifier: 1
 ```
 
-## PlaceholderAPI 变量
-
-支持的变量：
-- `%magicblock_block_uses%` - 显示玩家使用魔法方块的总次数
-- `%magicblock_food_uses%` - 显示玩家使用魔法食物的总次数
-- `%magicblock_remaining_uses%` - 显示当前手持魔法方块的剩余使用次数
-- `%magicblock_has_block%` - 显示玩家是否持有魔法方块
-- `%magicblock_has_food%` - 显示玩家是否持有魔法食物
-- `%magicblock_max_uses%` - 显示当前手持魔法方块的最大使用次数
-- `%magicblock_uses_progress%` - 显示使用进度（百分比）
-
-## 注意事项
-
-1. 魔法方块在使用次数耗尽后会自动消失
-2. 绑定的方块只能被绑定者使用和破坏
-3. 方块不能在黑名单世界中使用
-4. 方块不受活塞影响
-5. 爆炸不会破坏魔法方块
-
-## 权限节点
-
-### 管理员权限
-- `magicblock.admin`
-  - 包含所有权限
-  - 默认仅 OP 拥有
-
-### 基础权限
-- `magicblock.use`
-  - 允许使用魔法方块的基本功能
-  - 默认所有玩家拥有
-  - 命令: `/mb get`
-
-### 管理类权限
-- `magicblock.give`
-  - 允许给予其他玩家魔法方块
-  - 默认仅 OP 拥有
-  - 命令: `/mb give <玩家> [次数]`
-
-- `magicblock.reload`
-  - 允许重载插件配置
-  - 默认仅 OP 拥有
-  - 命令: `/mb reload`
-
-- `magicblock.settimes`
-  - 允许设置魔法方块使用次数
-  - 默认仅 OP 拥有
-  - 命令: `/mb settimes <次数>`
-
-- `magicblock.addtimes`
-  - 允许增加魔法方块使用次数
-  - 默认仅 OP 拥有
-  - 命令: `/mb addtimes <次数>`
-
-### 功能权限
-- `magicblock.food`
-  - 允许使用魔法食物
-  - 默认所有玩家拥有
-  - 命令: `/mb getfood <食物> [次数]`
-
-- `magicblock.list`
-  - 允许查看已绑定的方块列表
-  - 默认所有玩家拥有
-  - 命令: `/mb list`
-
-## 特殊方块权限
-- `magicblock.vip` - 允许使用VIP专属方块
-- `magicblock.mvp` - 允许使用MVP专属方块
-
 ## 使用示例
 
 1. 给予玩家基础使用权限：
@@ -204,16 +170,45 @@ permissions:
   - magicblock.admin
 ```
 
-## 注意事项
+## PlaceholderAPI 变量
 
-1. 绑定系统不需要额外权限，任何拥有 `magicblock.use` 的玩家都可以使用
-2. 无限次数方块的创建需要 `magicblock.give` 或 `magicblock.settimes` 权限
-3. VIP和MVP方块需要在配置文件中设置相应的方块列表
+支持的变量：
+- `%magicblock_block_uses%` - 显示玩家使用魔法方块的总次数
+- `%magicblock_food_uses%` - 显示玩家使用魔法食物的总次数
+- `%magicblock_remaining_uses%` - 显示当前手持魔法方块的剩余使用次数
+- `%magicblock_has_block%` - 显示玩家是否持有魔法方块
+- `%magicblock_has_food%` - 显示玩家是否持有魔法食物
+- `%magicblock_max_uses%` - 显示当前手持魔法方块的最大使用次数
+- `%magicblock_uses_progress%` - 显示使用进度（百分比）
+
+## 定制功能
+
+### 物品组权限
+可以通过配置文件为不同权限组设置可用的方块类型：
+```yaml
+group:
+  vip-material:
+    - DIAMOND_BLOCK
+    - EMERALD_BLOCK
+  mvp-material:
+    - BEACON
+    - DRAGON_EGG
 ```
 
-## 统计功能
+### 统计功能
 - 插件会自动记录玩家使用魔法方块和魔法食物的次数
 - 支持通过 PlaceholderAPI 在计分板等地方显示统计信息
+
+## 注意事项
+
+1. 魔法方块在使用次数耗尽后会自动消失
+2. 绑定的方块只能被绑定者使用和破坏
+3. 方块不能在黑名单世界中使用
+4. 方块不受活塞影响
+5. 爆炸不会破坏魔法方块
+6. 绑定系统不需要额外权限，任何拥有 `magicblock.use` 的玩家都可以使用
+7. 无限次数方块的创建需要 `magicblock.give` 或 `magicblock.settimes` 权限
+8. VIP和MVP方块需要在配置文件中设置相应的方块列表
 
 ## 问题排查
 
@@ -245,7 +240,6 @@ permissions:
 
 如有问题或建议，请通过以下方式联系：
 - GitHub Issues，BUG反馈请在能够进行复现的情况下反馈，否则无法修复，功能建议并不是提了就会添加，是否能够实现需要根据实际情况决定。
-
 - QQ交流群：[134484522]
 
 ## 更新日志
@@ -259,6 +253,6 @@ permissions:
 - 整体重构
 - 过多内容不进行一一列举………………………………
 - 注：3.0版本与2.X版本之间改动过多，请注意备份您的配置之后删除原配置文件夹，进行重新生成
----
-© 2024 MagicBlock. All Rights Reserved. 
 
+---
+© 2024 MagicBlock. All Rights Reserved.
