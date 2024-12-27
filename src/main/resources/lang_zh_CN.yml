@@ -80,11 +80,12 @@ commands:
     success: "&a✔ &7成功将MagicBlock的使用次数设置为 &b{0} &7次！"
     success-infinite: "&a✔ &7成功将MagicBlock的使用次数设置为 &b无限 &7次！"
   addtimes:
+    usage: "&c✖ &7用法: /mb addtimes <次数>"
     no-permission: "&c✖ &7你没有权限使用此命令！"
     must-hold: "&c✖ &7你必须手持一个MagicBlock来添加使用次数！"
     invalid-number: "&c✖ &7无效的次数。"
     unlimited: "&c✖ &7这个MagicBlock已经是无限使用次数了！"
-    success: "&a✔ &7成功增加 &b{0} &7次使用次数！"
+    success: "&a✔ &7成功增加 &b{0} &7次使用次数！当前总次数: &b{1}"
   getfood:
     no-permission: "&c✖ &7你没有权限使用此命令！"
     usage: "&c✖ &7用法: /mb getfood <食物> [次数]"

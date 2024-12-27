@@ -84,7 +84,8 @@ commands:
     must-hold: "&c✖ &7You must hold a MagicBlock to add uses!"
     invalid-number: "&c✖ &7Invalid number of uses."
     unlimited: "&c✖ &7This MagicBlock already has infinite uses!"
-    success: "&a✔ &7Successfully added &b{0} &7uses!"
+    success: "&a✔ &7Successfully added &b{0} &7uses! Current total: &b{1}"
+    usage: "&c✖ &7Usage: /mb addtimes <amount>"
   getfood:
     no-permission: "&c✖ &7You don't have permission to use this command!"
     usage: "&c✖ &7Usage: /mb getfood <food> [uses]"
