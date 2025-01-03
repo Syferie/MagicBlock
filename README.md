@@ -1,140 +1,132 @@
 # MagicBlock Plugin
 
-MagicBlock 是一个功能丰富的 Minecraft 插件，允许玩家使用具有有限使用次数的魔法方块和魔法食物。这些特殊物品可以被绑定到特定玩家，并且可以通过直观的 GUI 界面进行管理。
+[点击查看中文版介绍](README_zh.md)
 
-## 功能特点
+MagicBlock is a feature-rich Minecraft plugin that enables players to use magic blocks and magic food items with limited usage counts. These special items can be bound to specific players and managed through an intuitive GUI interface.
 
-- 魔法方块系统
-  - 可配置使用次数的方块
-  - 方块绑定系统
-  - 直观的 GUI 界面
-  - 方块搜索功能
-- 魔法食物系统
-  - 可重复使用的食物
-  - 自定义食物效果
-- 多语言支持
-  - 英语 (en)
-  - 简体中文 (zh_CN)
-- PlaceholderAPI 支持
-- 详细的使用统计
-- 权限系统
+## Features
+* Magic Block System
+   * Configurable usage counts for blocks
+   * Block binding system
+   * Intuitive GUI interface
+   * Block search functionality
+* Magic Food System
+   * Reusable food items
+   * Custom food effects
+* Multi-language Support
+   * English (en)
+   * Simplified Chinese (zh_CN)
+* PlaceholderAPI Support
+* Detailed Usage Statistics
+* Permission System
 
-## 安装要求
+## Requirements
+* Minecraft Server Version: 1.19+
+* Optional Dependency: PlaceholderAPI
 
-- Minecraft 服务器版本: 1.19+
-- 可选依赖: PlaceholderAPI
+## Commands
+Main Command:
+* `/magicblock` or `/mb` - Main plugin command
 
-## 命令系统
+Subcommands:
+* `/mb help` - Show help information
+* `/mb get [times]` - Get a magic block (use -1 for infinite uses)
+* `/mb give <player> [times]` - Give a magic block to a player
+* `/mb getfood <food> [times]` - Get magic food
+* `/mb settimes <times>` - Set uses for held magic block
+* `/mb addtimes <times>` - Add uses to held magic block
+* `/mb list` - View bound blocks
+* `/mb reload` - Reload plugin configuration
 
-### 主命令
-- `/magicblock` 或 `/mb` - 插件主命令
+## Permissions
+### Administrator Permission
+* `magicblock.admin`
+   * Includes all permissions
+   * Default: OP only
+   * Includes sub-permissions:
+      * `magicblock.use`
+      * `magicblock.give`
+      * `magicblock.reload`
+      * `magicblock.settimes`
+      * `magicblock.addtimes`
+      * `magicblock.food`
 
-### 子命令
-- `/mb help` - 显示帮助信息
-- `/mb get [次数]` - 获取一个魔法方块（次数为-1时获取无限次数的魔术方块）
-- `/mb give <玩家> [次数]` - 给予玩家魔法方块
-- `/mb getfood <食物> [次数]` - 获取魔法食物
-- `/mb settimes <次数>` - 设置手持魔法方块的使用次数
-- `/mb addtimes <次数>` - 增加手持魔法方块的使用次数
-- `/mb list` - 查看已绑定的方块
-- `/mb reload` - 重载插件配置
+### Basic Permissions
+* `magicblock.use`
+   * Allows basic magic block functionality
+   * Default: All players
+   * Command: `/mb get`
 
-## 权限节点
+### Management Permissions
+* `magicblock.give`
+   * Allows giving magic blocks to others
+   * Default: OP only
+   * Command: `/mb give <player> [times]`
+* `magicblock.reload`
+   * Allows reloading plugin configuration
+   * Default: OP only
+   * Command: `/mb reload`
+* `magicblock.settimes`
+   * Allows setting magic block uses
+   * Default: OP only
+   * Command: `/mb settimes <times>`
+* `magicblock.addtimes`
+   * Allows adding magic block uses
+   * Default: OP only
+   * Command: `/mb addtimes <times>`
 
-### 管理员权限
-- `magicblock.admin`
-  - 包含所有权限
-  - 默认仅 OP 拥有
-  - 包含以下子权限:
-    - `magicblock.use`
-    - `magicblock.give`
-    - `magicblock.reload`
-    - `magicblock.settimes`
-    - `magicblock.addtimes`
-    - `magicblock.food`
+### Feature Permissions
+* `magicblock.food`
+   * Allows using magic food
+   * Default: All players
+   * Command: `/mb getfood <food> [times]`
+* `magicblock.list`
+   * Allows viewing bound block list
+   * Default: All players
+   * Command: `/mb list`
 
-### 基础权限
-- `magicblock.use`
-  - 允许使用魔法方块的基本功能
-  - 默认所有玩家拥有
-  - 命令: `/mb get`
+### Special Block Permissions
+* `magicblock.vip` - Allows using VIP-exclusive blocks
+* `magicblock.mvp` - Allows using MVP-exclusive blocks
 
-### 管理类权限
-- `magicblock.give`
-  - 允许给予其他玩家魔法方块
-  - 默认仅 OP 拥有
-  - 命令: `/mb give <玩家> [次数]`
+## Basic Usage
+### Magic Block Usage
+1. Get magic block: Use `/mb get` command
+2. Bind block: Sneak + Right-click
+3. Place block: Place normally
+4. Change block type: Sneak + Left-click to open GUI
+5. View bound blocks: Use `/mb list` command
 
-- `magicblock.reload`
-  - 允许重载插件配置
-  - 默认仅 OP 拥有
-  - 命令: `/mb reload`
+### GUI Operations
+* Left-click: Select block type
+* Search button: Search for specific blocks
+* Page buttons: Browse more block options
 
-- `magicblock.settimes`
-  - 允许设置魔法方块使用次数
-  - 默认仅 OP 拥有
-  - 命令: `/mb settimes <次数>`
+### Bound List Operations
+* Left-click: Retrieve bound block
+* Double right-click: Hide block from list (doesn't unbind)
 
-- `magicblock.addtimes`
-  - 允许增加魔法方块使用次数
-  - 默认仅 OP 拥有
-  - 命令: `/mb addtimes <次数>`
-
-### 功能权限
-- `magicblock.food`
-  - 允许使用魔法食物
-  - 默认所有玩家拥有
-  - 命令: `/mb getfood <食物> [次数]`
-
-- `magicblock.list`
-  - 允许查看已绑定的方块列表
-  - 默认所有玩家拥有
-  - 命令: `/mb list`
-
-### 特殊方块权限
-- `magicblock.vip` - 允许使用VIP专属方块
-- `magicblock.mvp` - 允许使用MVP专属方块
-
-## 基本操作说明
-
-### 魔法方块使用
-1. 获取魔法方块：使用 `/mb get` 命令
-2. 绑定方块：潜行 + 右键点击
-3. 放置方块：直接放置即可
-4. 更改方块类型：潜行 + 左键打开GUI界面
-5. 查看绑定方块：使用 `/mb list` 命令
-
-### GUI 界面操作
-- 左键点击：选择方块类型
-- 使用搜索按钮：可以搜索特定方块
-- 翻页按钮：浏览更多方块选项
-
-### 绑定列表操作
-- 左键点击：找回绑定的方块
-- 右键双击：从列表中隐藏方块（不会解除绑定）
-
-## 配置文件
-
-### config.yml 主要配置项
+## Configuration Files
+### config.yml Main Settings
 ```yaml
-# 调试模式
+# Debug mode
 debug-mode: false
 
-# 语言设置
-language: "en"  # 可选 "en" 或 "zh_CN"
+# Language setting
+language: "en"  # Options: "en" or "zh_CN"
 
-# 默认使用次数
+# Default usage count
 default-block-times: 1000000000
 
-# 黑名单世界
+# Blacklisted worlds
 blacklisted-worlds:
   - world_nether
   - world_the_end
 ```
 
-### foodconf.yml 食物配置
+### foodconf.yml Food Configuration
 ```yaml
-# 食物配置示例
+# Food configuration example
 foods:
   GOLDEN_APPLE:
     heal: 4
@@ -145,9 +137,8 @@ foods:
         amplifier: 1
 ```
 
-## 使用示例
-
-1. 给予玩家基础使用权限：
+## Usage Examples
+1. Basic player permissions:
 ```yaml
 permissions:
   - magicblock.use
@@ -155,7 +146,7 @@ permissions:
   - magicblock.list
 ```
 
-2. 给予玩家VIP权限：
+2. VIP player permissions:
 ```yaml
 permissions:
   - magicblock.use
@@ -164,27 +155,25 @@ permissions:
   - magicblock.vip
 ```
 
-3. 给予玩家管理员权限：
+3. Administrator permissions:
 ```yaml
 permissions:
   - magicblock.admin
 ```
 
-## PlaceholderAPI 变量
+## PlaceholderAPI Variables
+Supported variables:
+* `%magicblock_block_uses%` - Total magic block uses
+* `%magicblock_food_uses%` - Total magic food uses
+* `%magicblock_remaining_uses%` - Remaining uses of held magic block
+* `%magicblock_has_block%` - Whether player has magic block
+* `%magicblock_has_food%` - Whether player has magic food
+* `%magicblock_max_uses%` - Maximum uses of held magic block
+* `%magicblock_uses_progress%` - Usage progress (percentage)
 
-支持的变量：
-- `%magicblock_block_uses%` - 显示玩家使用魔法方块的总次数
-- `%magicblock_food_uses%` - 显示玩家使用魔法食物的总次数
-- `%magicblock_remaining_uses%` - 显示当前手持魔法方块的剩余使用次数
-- `%magicblock_has_block%` - 显示玩家是否持有魔法方块
-- `%magicblock_has_food%` - 显示玩家是否持有魔法食物
-- `%magicblock_max_uses%` - 显示当前手持魔法方块的最大使用次数
-- `%magicblock_uses_progress%` - 显示使用进度（百分比）
-
-## 定制功能
-
-### 物品组权限
-可以通过配置文件为不同权限组设置可用的方块类型：
+## Customization
+### Item Group Permissions
+Configure available block types for different permission groups:
 ```yaml
 group:
   vip-material:
@@ -195,64 +184,55 @@ group:
     - DRAGON_EGG
 ```
 
-### 统计功能
-- 插件会自动记录玩家使用魔法方块和魔法食物的次数
-- 支持通过 PlaceholderAPI 在计分板等地方显示统计信息
+### Statistics
+* Plugin automatically records magic block and food usage
+* Supports displaying statistics via PlaceholderAPI
 
-## 注意事项
+## Important Notes
+1. Magic blocks disappear when uses are depleted
+2. Bound blocks can only be used/broken by the binding player
+3. Blocks cannot be used in blacklisted worlds
+4. Blocks are unaffected by pistons
+5. Explosions don't destroy magic blocks
+6. Binding system requires no extra permissions beyond `magicblock.use`
+7. Infinite use blocks require `magicblock.give` or `magicblock.settimes`
+8. VIP/MVP blocks need configured block lists
 
-1. 魔法方块在使用次数耗尽后会自动消失
-2. 绑定的方块只能被绑定者使用和破坏
-3. 方块不能在黑名单世界中使用
-4. 方块不受活塞影响
-5. 爆炸不会破坏魔法方块
-6. 绑定系统不需要额外权限，任何拥有 `magicblock.use` 的玩家都可以使用
-7. 无限次数方块的创建需要 `magicblock.give` 或 `magicblock.settimes` 权限
-8. VIP和MVP方块需要在配置文件中设置相应的方块列表
+## Troubleshooting
+Common issues:
+1. Cannot use commands: Check permission nodes
+2. Cannot place blocks: Check blacklisted worlds
+3. GUI won't open: Verify holding magic block
+4. Cannot bind block: Check if already bound
 
-## 问题排查
+## License
+Modified MIT License:
+1. Free Use
+   * Use on any server
+   * Modify source code
+   * Distribute modified versions
+2. Restrictions
+   * No commercial use
+   * No selling plugin/modifications
+   * Must retain original author information
+3. Disclaimer
+   * Provided "as is" without warranty
+   * Author not liable for any damages
 
-常见问题：
-1. 无法使用命令：检查权限节点设置
-2. 方块无法放置：检查是否在黑名单世界
-3. GUI无法打开：确认是否手持魔法方块
-4. 方块无法绑定：检查是否已被其他玩家绑定
+## Support
+For issues or suggestions:
+* GitHub Issues (Include reproducible steps for bugs)
+* QQ Group: [134484522]
 
-## 许可协议
+## Changelog
+v3.0
+* Enhanced multilingual support
+* Optimized GUI display
+* Improved block binding
+* Code cleanup
+* Performance improvements
+* Complete restructure
+* Many more changes...
+* Note: Backup config before updating from 2.X
 
-本插件采用修改版MIT许可证：
-
-1. 允许自由使用
-   - 可以在任何服务器上使用本插件
-   - 允许修改源代码
-   - 允许分发修改后的版本
-
-2. 限制条款
-   - 禁止将插件或其修改版本用于商业用途
-   - 禁止销售插件或其修改版本
-   - 二次开发时必须保留原作者信息
-
-3. 免责声明
-   - 本插件按"原样"提供，不提供任何形式的保证
-   - 作者不对使用本插件造成的任何损失负责
-
-## 技术支持
-
-如有问题或建议，请通过以下方式联系：
-- GitHub Issues，BUG反馈请在能够进行复现的情况下反馈，否则无法修复，功能建议并不是提了就会添加，是否能够实现需要根据实际情况决定。
-- QQ交流群：[134484522]
-
-## 更新日志
-
-### v3.0
-- 完善多语言支持系统
-- 优化GUI界面显示
-- 改进方块绑定机制
-- 清理冗余代码
-- 提升性能和稳定性
-- 整体重构
-- 过多内容不进行一一列举………………………………
-- 注：3.0版本与2.X版本之间改动过多，请注意备份您的配置之后删除原配置文件夹，进行重新生成
-
----
 © 2024 MagicBlock. All Rights Reserved.
