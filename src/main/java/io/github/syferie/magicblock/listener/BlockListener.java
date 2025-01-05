@@ -7,6 +7,8 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -352,7 +354,7 @@ public class BlockListener implements Listener {
                     // 根据当前语言获取方块名称
                     String blockName = plugin.getLanguageManager().getMessage("blocks." + clickedItem.getType().name());
                     
-                    // ��原有名称两侧添加装饰符号
+                    // 原有名称两侧添加装饰符号
                     String nameFormat = plugin.getConfig().getString("display.block-name-format", "&b✦ %s &b✦");
                     meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', 
                         String.format(nameFormat, blockName)));
@@ -448,17 +450,51 @@ public class BlockListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onEntityExplode(EntityExplodeEvent event) {
         List<Block> blocksToKeep = new ArrayList<>();
 
         for (Block block : event.blockList()) {
             if (isMagicBlockLocation(block.getLocation())) {
                 blocksToKeep.add(block);
-                removeMagicBlockLocation(block.getLocation());
             }
         }
 
+        // 只从爆炸列表中移除魔法方块
+        event.blockList().removeAll(blocksToKeep);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onEntityExplodeComplete(EntityExplodeEvent event) {
+        if (event.isCancelled()) {
+            return;
+        }
+
+        // 延迟一tick执行清理工作，确保所有爆炸都已处理完
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            Collection<Entity> nearbyEntities = event.getLocation().getWorld().getNearbyEntities(
+                    event.getLocation(), 10, 10, 10);
+            
+            for (Entity entity : nearbyEntities) {
+                if (entity instanceof Item) {
+                    Item item = (Item) entity;
+                    if (plugin.getBlockManager().isMagicBlock(item.getItemStack())) {
+                        item.remove(); // 只移除魔法方块掉落物
+                    }
+                }
+            }
+        });
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onBlockExplode(BlockExplodeEvent event) {
+        List<Block> blocksToKeep = new ArrayList<>();
+        for (Block block : event.blockList()) {
+            if (isMagicBlockLocation(block.getLocation())) {
+                blocksToKeep.add(block);
+            }
+        }
+        // 只从爆炸列表中移除魔法方块
         event.blockList().removeAll(blocksToKeep);
     }
 }
