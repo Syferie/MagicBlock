@@ -61,49 +61,72 @@ public class BlockListener implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
+        // 如果是BlockMultiPlaceEvent，让专门的处理器处理
+        if (event instanceof org.bukkit.event.block.BlockMultiPlaceEvent) {
+            return;
+        }
+
         ItemStack item = event.getItemInHand();
         if (plugin.hasMagicLore(item.getItemMeta())) {
-            Block block = event.getBlock();
-            Player player = event.getPlayer();
-
-            // 检查使用次数
-            int useTimes = plugin.getBlockManager().getUseTimes(item);
-            if (useTimes == 0) {
-                event.setCancelled(true);
-                plugin.sendMessage(player, "messages.block-removed");
-                return;
-            }
-
-            // 检查是否已绑定
-            UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(item);
-            if (boundPlayer == null) {
-                // 第一次使用时自动绑定
-                plugin.getBlockBindManager().bindBlock(player, item);
-            } else if (!boundPlayer.equals(player.getUniqueId())) {
-                event.setCancelled(true);
-                plugin.sendMessage(player, "messages.not-bound-to-you");
-                return;
-            }
-
-            // 放置方块
-            block.setType(item.getType());
-            saveMagicBlockLocation(block.getLocation());
-
-            // 如果是双格高方块，保存上半部分的位置
-            if (isTallBlock(item.getType())) {
-                Block topBlock = block.getRelative(BlockFace.UP);
-                saveMagicBlockLocation(topBlock.getLocation());
-            }
-
-            // 减少使用次数
-            if (useTimes > 0) { // -1表示无限使用
-                plugin.getBlockManager().decrementUseTimes(item);
-            }
-
-            // 记录使用统计
-            plugin.incrementPlayerUsage(player.getUniqueId());
-            plugin.logUsage(player, item);
+            handleMagicBlockPlace(event, item);
         }
+    }
+
+    @EventHandler
+    public void onBlockMultiPlace(org.bukkit.event.block.BlockMultiPlaceEvent event) {
+        ItemStack item = event.getItemInHand();
+        if (plugin.hasMagicLore(item.getItemMeta())) {
+            handleMagicBlockPlace(event, item);
+            
+            // 对于床方块，保存所有放置的方块位置
+            if (item.getType().toString().contains("_BED")) {
+                for (org.bukkit.block.BlockState state : event.getReplacedBlockStates()) {
+                    saveMagicBlockLocation(state.getLocation());
+                }
+            }
+        }
+    }
+
+    private void handleMagicBlockPlace(BlockPlaceEvent event, ItemStack item) {
+        Block block = event.getBlock();
+        Player player = event.getPlayer();
+
+        // 检查使用次数
+        int useTimes = plugin.getBlockManager().getUseTimes(item);
+        if (useTimes == 0) {
+            event.setCancelled(true);
+            plugin.sendMessage(player, "messages.block-removed");
+            return;
+        }
+
+        // 检查是否已绑定
+        UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(item);
+        if (boundPlayer == null) {
+            // 第一次使用时自动绑定
+            plugin.getBlockBindManager().bindBlock(player, item);
+        } else if (!boundPlayer.equals(player.getUniqueId())) {
+            event.setCancelled(true);
+            plugin.sendMessage(player, "messages.not-bound-to-you");
+            return;
+        }
+
+        // 保存方块位置
+        saveMagicBlockLocation(block.getLocation());
+
+        // 如果是双格高方块，保存上半部分的位置
+        if (isTallBlock(item.getType())) {
+            Block topBlock = block.getRelative(BlockFace.UP);
+            saveMagicBlockLocation(topBlock.getLocation());
+        }
+
+        // 减少使用次数
+        if (useTimes > 0) { // -1表示无限使用
+            plugin.getBlockManager().decrementUseTimes(item);
+        }
+
+        // 记录使用统计
+        plugin.incrementPlayerUsage(player.getUniqueId());
+        plugin.logUsage(player, item);
     }
 
     private void saveMagicBlockLocation(Location loc) {
@@ -185,6 +208,52 @@ public class BlockListener implements Listener {
         Block block = event.getBlock();
         Location blockLocation = block.getLocation();
         boolean isMagicBlock = isMagicBlockLocation(blockLocation);
+
+        // 检查是否是床方块
+        if (block.getType().toString().contains("_BED")) {
+            org.bukkit.block.data.type.Bed bedData = (org.bukkit.block.data.type.Bed) block.getBlockData();
+            Block otherPart;
+            
+            // 根据当前部分找到另一部分
+            if (bedData.getPart() == org.bukkit.block.data.type.Bed.Part.HEAD) {
+                otherPart = block.getRelative(bedData.getFacing().getOppositeFace());
+            } else {
+                otherPart = block.getRelative(bedData.getFacing());
+            }
+            
+            // 如果任一部分是魔法方块，则两部分都视为魔法方块
+            boolean isOtherPartMagic = isMagicBlockLocation(otherPart.getLocation());
+            if (isOtherPartMagic || isMagicBlock) {
+                isMagicBlock = true;
+                Player player = event.getPlayer();
+                ItemStack blockItem = new ItemStack(block.getType());
+                
+                // 检查绑定状态
+                if (plugin.getBlockBindManager().isBlockBound(blockItem)) {
+                    UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(blockItem);
+                    if (boundPlayer != null && !boundPlayer.equals(player.getUniqueId())) {
+                        event.setCancelled(true);
+                        plugin.sendMessage(player, "messages.not-bound-to-you");
+                        return;
+                    }
+                }
+                
+                // 取消原有的掉落
+                event.setDropItems(false);
+                event.setExpToDrop(0);
+                
+                // 清理绑定数据
+                plugin.getBlockBindManager().cleanupBindings(blockItem);
+                
+                // 移除两个部分的位置记录
+                removeMagicBlockLocation(blockLocation);
+                removeMagicBlockLocation(otherPart.getLocation());
+                
+                // 移除另一部分，不产生掉落物
+                otherPart.setType(Material.AIR);
+            }
+            return;
+        }
 
         // 检查是否是双格高方块的上半部分
         if (!isMagicBlock) {
