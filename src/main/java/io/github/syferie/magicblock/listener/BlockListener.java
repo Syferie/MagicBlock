@@ -48,6 +48,17 @@ public class BlockListener implements Listener {
         this.buildingMaterials.addAll(materials);
     }
 
+    private boolean isTallBlock(Material material) {
+        return material.toString().contains("DOOR") || 
+               material == Material.TALL_GRASS || 
+               material == Material.LARGE_FERN ||
+               material == Material.TALL_SEAGRASS ||
+               material == Material.SUNFLOWER ||
+               material == Material.LILAC ||
+               material == Material.ROSE_BUSH ||
+               material == Material.PEONY;
+    }
+
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         ItemStack item = event.getItemInHand();
@@ -77,6 +88,12 @@ public class BlockListener implements Listener {
             // 放置方块
             block.setType(item.getType());
             saveMagicBlockLocation(block.getLocation());
+
+            // 如果是双格高方块，保存上半部分的位置
+            if (isTallBlock(item.getType())) {
+                Block topBlock = block.getRelative(BlockFace.UP);
+                saveMagicBlockLocation(topBlock.getLocation());
+            }
 
             // 减少使用次数
             if (useTimes > 0) { // -1表示无限使用
@@ -167,8 +184,26 @@ public class BlockListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
         Location blockLocation = block.getLocation();
+        boolean isMagicBlock = isMagicBlockLocation(blockLocation);
 
-        if (isMagicBlockLocation(blockLocation)) {
+        // 检查是否是双格高方块的上半部分
+        if (!isMagicBlock) {
+            Block blockBelow = block.getRelative(BlockFace.DOWN);
+            if (isTallBlock(blockBelow.getType()) && isMagicBlockLocation(blockBelow.getLocation())) {
+                isMagicBlock = true;
+                block = blockBelow; // 使用下半部分的方块进行后续处理
+            }
+        }
+
+        // 检查是否是双格高方块的下半部分
+        if (!isMagicBlock && isTallBlock(block.getType())) {
+            Block blockAbove = block.getRelative(BlockFace.UP);
+            if (isMagicBlockLocation(blockLocation)) {
+                removeMagicBlockLocation(blockAbove.getLocation());
+            }
+        }
+
+        if (isMagicBlock) {
             Player player = event.getPlayer();
             ItemStack blockItem = new ItemStack(block.getType());
             
@@ -188,6 +223,12 @@ public class BlockListener implements Listener {
             // 清理绑定数据
             plugin.getBlockBindManager().cleanupBindings(blockItem);
             removeMagicBlockLocation(blockLocation);
+
+            // 如果是双格高方块，同时移除另一半的位置记录
+            if (isTallBlock(block.getType())) {
+                Block topBlock = block.getRelative(BlockFace.UP);
+                removeMagicBlockLocation(topBlock.getLocation());
+            }
         }
 
         // 检查相邻方块
@@ -249,8 +290,59 @@ public class BlockListener implements Listener {
         }
 
         Player player = event.getPlayer();
-        ItemStack item = event.getItem();
+        Block clickedBlock = event.getClickedBlock();
+        
+        // 只处理右键交互
+        if (clickedBlock != null && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            Location clickedLocation = clickedBlock.getLocation();
+            boolean isMagicBlock = isMagicBlockLocation(clickedLocation);
+            Block targetBlock = clickedBlock;
 
+            // 检查是否是双格高方块的上半部分
+            if (!isMagicBlock) {
+                Block blockBelow = clickedBlock.getRelative(BlockFace.DOWN);
+                if (isTallBlock(blockBelow.getType()) && isMagicBlockLocation(blockBelow.getLocation())) {
+                    isMagicBlock = true;
+                    targetBlock = blockBelow; // 使用下半部分的方块
+                }
+            }
+
+            // 检查是否是双格高方块的下半部分
+            if (!isMagicBlock && isTallBlock(clickedBlock.getType()) && isMagicBlockLocation(clickedLocation)) {
+                isMagicBlock = true;
+                targetBlock = clickedBlock;
+            }
+
+            // 如果是魔法方块且是门，取消原事件并手动处理门的状态
+            if (isMagicBlock && targetBlock.getType().toString().contains("DOOR")) {
+                org.bukkit.block.data.Bisected.Half half = ((org.bukkit.block.data.Bisected)targetBlock.getBlockData()).getHalf();
+                Block otherHalf = half == org.bukkit.block.data.Bisected.Half.BOTTOM ? 
+                    targetBlock.getRelative(BlockFace.UP) : targetBlock.getRelative(BlockFace.DOWN);
+                
+                // 获取门的数据
+                org.bukkit.block.data.type.Door doorData = (org.bukkit.block.data.type.Door)targetBlock.getBlockData();
+                org.bukkit.block.data.type.Door otherDoorData = (org.bukkit.block.data.type.Door)otherHalf.getBlockData();
+                
+                // 切换门的开关状态
+                boolean isOpen = !doorData.isOpen();
+                doorData.setOpen(isOpen);
+                otherDoorData.setOpen(isOpen);
+                
+                // 应用更改
+                targetBlock.setBlockData(doorData);
+                otherHalf.setBlockData(otherDoorData);
+                
+                // 播放门的声音
+                player.getWorld().playSound(targetBlock.getLocation(), 
+                    isOpen ? Sound.BLOCK_WOODEN_DOOR_OPEN : Sound.BLOCK_WOODEN_DOOR_CLOSE, 
+                    1.0f, 1.0f);
+                
+                event.setCancelled(true);
+                return;
+            }
+        }
+
+        ItemStack item = event.getItem();
         if (item == null || !plugin.getBlockManager().isMagicBlock(item)) {
             return;
         }

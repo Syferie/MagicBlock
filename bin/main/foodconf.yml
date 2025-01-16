@@ -1,0 +1,56 @@
+# MagicBlock Food Configuration
+# 这个文件用于配置魔法食物的相关设置
+
+# 食物列表及其效果
+foods:
+  GOLDEN_APPLE:
+    heal: 4
+    saturation: 9.6
+    effects:
+      REGENERATION:
+        duration: 100
+        amplifier: 1
+      ABSORPTION:
+        duration: 2400
+        amplifier: 0
+  
+  ENCHANTED_GOLDEN_APPLE:
+    heal: 4
+    saturation: 9.6
+    effects:
+      REGENERATION:
+        duration: 400
+        amplifier: 1
+      ABSORPTION:
+        duration: 2400
+        amplifier: 3
+      RESISTANCE:
+        duration: 6000
+        amplifier: 0
+      FIRE_RESISTANCE:
+        duration: 6000
+        amplifier: 0
+
+  COOKED_BEEF:
+    heal: 8
+    saturation: 12.8
+    
+  GOLDEN_CARROT:
+    heal: 6
+    saturation: 14.4
+    
+  BREAD:
+    heal: 5
+    saturation: 6
+
+# 默认食物使用次数
+default-food-uses: 64
+
+# 是否允许玩家在饥饿值满时使用魔法食物
+allow-use-when-full: true
+
+# 是否在使用魔法食物时播放音效
+play-sound: true
+
+# 是否在使用魔法食物时显示粒子效果
+show-particles: true
