@@ -20,16 +20,14 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.*;
 
 
 public class MagicBlockPlugin extends JavaPlugin {
@@ -53,21 +51,21 @@ public class MagicBlockPlugin extends JavaPlugin {
 
         // 初始化配置
         initializeConfig();
-        
+
         // 初始化允许的材料列表
         this.allowedMaterials = loadMaterialsFromConfig();
 
         // 检查更新
-        if(getConfig().getBoolean("check-updates")) {
+        if (getConfig().getBoolean("check-updates")) {
             checkForUpdates();
         }
 
         initializeMembers();
         registerEventsAndCommands();
         saveFoodConfig();
-        
+
         // 初始化统计
-        if(getConfig().getBoolean("enable-statistics")) {
+        if (getConfig().getBoolean("enable-statistics")) {
             statistics = new Statistics(this);
         }
 
@@ -79,7 +77,7 @@ public class MagicBlockPlugin extends JavaPlugin {
         checkAndUpdateConfig("config.yml");
 
         // 注册PlaceholderAPI扩展
-        if(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new PlaceholderHook(this).register();
             getLogger().info(languageManager.getMessage("general.placeholder-registered"));
         }
@@ -96,24 +94,24 @@ public class MagicBlockPlugin extends JavaPlugin {
         Metrics metrics = new Metrics(this, pluginId);
 
         // 统计在线玩家数量
-        metrics.addCustomChart(new Metrics.SingleLineChart("online_players", () -> 
-            Bukkit.getOnlinePlayers().size()));
+        metrics.addCustomChart(new Metrics.SingleLineChart("online_players", () ->
+                Bukkit.getOnlinePlayers().size()));
 
         // 统计使用过魔法方块的玩家数量
-        metrics.addCustomChart(new Metrics.SingleLineChart("unique_users", () -> 
-            playerUsage.size()));
+        metrics.addCustomChart(new Metrics.SingleLineChart("unique_users", () ->
+                playerUsage.size()));
 
         // 统计使用的语言分布
-        metrics.addCustomChart(new Metrics.SimplePie("language", () -> 
-            getConfig().getString("language", "en")));
+        metrics.addCustomChart(new Metrics.SimplePie("language", () ->
+                getConfig().getString("language", "en")));
 
         // 统计服务器版本
-        metrics.addCustomChart(new Metrics.SimplePie("server_version", () -> 
-            Bukkit.getVersion()));
+        metrics.addCustomChart(new Metrics.SimplePie("server_version", () ->
+                Bukkit.getVersion()));
 
         // 统计是否启用了PlaceholderAPI
-        metrics.addCustomChart(new Metrics.SimplePie("using_placeholderapi", () -> 
-            String.valueOf(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null)));
+        metrics.addCustomChart(new Metrics.SimplePie("using_placeholderapi", () ->
+                String.valueOf(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null)));
 
         // 统计总使用次数
         metrics.addCustomChart(new Metrics.SingleLineChart("total_uses", () -> {
@@ -145,17 +143,17 @@ public class MagicBlockPlugin extends JavaPlugin {
         }));
 
         // 统计是否启用了调试模式
-        metrics.addCustomChart(new Metrics.SimplePie("debug_mode", () -> 
-            String.valueOf(getConfig().getBoolean("debug-mode"))));
+        metrics.addCustomChart(new Metrics.SimplePie("debug_mode", () ->
+                String.valueOf(getConfig().getBoolean("debug-mode"))));
 
         // 统计是否启用了更新检查
-        metrics.addCustomChart(new Metrics.SimplePie("update_check", () -> 
-            String.valueOf(getConfig().getBoolean("check-updates"))));
+        metrics.addCustomChart(new Metrics.SimplePie("update_check", () ->
+                String.valueOf(getConfig().getBoolean("check-updates"))));
     }
 
     // 调试日志方法
     public void debug(String message) {
-        if(getConfig().getBoolean("debug-mode")) {
+        if (getConfig().getBoolean("debug-mode")) {
             getLogger().info("[Debug] " + message);
         }
     }
@@ -186,7 +184,7 @@ public class MagicBlockPlugin extends JavaPlugin {
 
     // 记录使用统计
     public void logUsage(Player player, ItemStack block) {
-        if(statistics != null) {
+        if (statistics != null) {
             statistics.logBlockUse(player, block);
         }
     }
@@ -206,10 +204,10 @@ public class MagicBlockPlugin extends JavaPlugin {
         int bars = 20;
         float percent = (float) current / max;
         int filledBars = (int) (bars * percent);
-        
+
         StringBuilder bar = new StringBuilder("§a");
-        for(int i = 0; i < bars; i++) {
-            if(i < filledBars) {
+        for (int i = 0; i < bars; i++) {
+            if (i < filledBars) {
                 bar.append("■");
             } else {
                 bar.append("□");
@@ -265,8 +263,13 @@ public class MagicBlockPlugin extends JavaPlugin {
         return this.foodService;
     }
 
-    public String getMagicLore() {
-        return ChatColor.translateAlternateColorCodes('&', getConfig().getString("magic-lore", "&e⚡ &7MagicBlock"));
+    public List<String> getMagicLore() {
+        List<String> lore = getConfig().getStringList("magic-lore");
+        List<String> loreAfter = new ArrayList<>(List.of());
+        for (String s : lore) {
+            loreAfter.add(s.replace("&", "§"));
+        }
+        return loreAfter;
     }
 
     public List<String> getBlacklistedWorlds() {
@@ -299,26 +302,47 @@ public class MagicBlockPlugin extends JavaPlugin {
         if (meta != null) {
             // 根据当前语言获取方块名称
             String blockName = languageManager.getMessage("blocks.STONE");
-            
+
             // 在原有名称两侧添加装饰符号
             String nameFormat = getConfig().getString("display.block-name-format", "&b✦ %s &b✦");
-            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', 
-                String.format(nameFormat, blockName)));
-            
+            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&',
+                    String.format(nameFormat, blockName)));
+
             ArrayList<String> lore = new ArrayList<>();
-            lore.add(getMagicLore());
+            lore.addAll(getMagicLore());
             meta.setLore(lore);
             meta.addEnchant(Enchantment.DURABILITY, 1, true);
-            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             item.setItemMeta(meta);
         }
         return item;
     }
 
+    public static void replacePlayerNameLore(ItemStack item, String playerName) {
+        if (item.getItemMeta() == null || item.getItemMeta().getLore() == null) {
+            return;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        List<String> lore = meta.getLore();
+
+        int loreIndex = 0;
+        String loreAfter = "";
+        for (int i = 0; i < lore.size(); i++) {
+            if (lore.get(i).contains("{player}")) {
+                loreIndex = i;
+                loreAfter = lore.get(i).replace("{player}", playerName);
+            }
+        }
+        lore.set(loreIndex, loreAfter);
+        meta.setLore(lore);
+        item.setItemMeta(meta);
+    }
+
     public boolean hasMagicLore(ItemMeta meta) {
         if (meta == null || !meta.hasLore()) return false;
         List<String> lore = meta.getLore();
-        return lore != null && lore.contains(getMagicLore());
+        return lore != null && new HashSet<>(lore).containsAll(getMagicLore());
     }
 
     public void reloadPluginAllowedMaterials() {
@@ -363,10 +387,10 @@ public class MagicBlockPlugin extends JavaPlugin {
     private void initializeConfig() {
         saveDefaultConfig();
         reloadConfig();
-        
+
         // 检查并更新配置文件
         checkAndUpdateConfig("config.yml");
-        
+
         // 初始化食物配置
         File foodConfigFile = new File(getDataFolder(), "foodconf.yml");
         if (!foodConfigFile.exists()) {
@@ -396,7 +420,7 @@ public class MagicBlockPlugin extends JavaPlugin {
     private List<Material> loadMaterialsFromConfig() {
         List<Material> materials = new ArrayList<>();
         List<String> configMaterials = getConfig().getStringList("allowed-materials");
-        
+
         for (String materialName : configMaterials) {
             try {
                 Material material = Material.valueOf(materialName.toUpperCase());
@@ -409,7 +433,7 @@ public class MagicBlockPlugin extends JavaPlugin {
                 getLogger().warning("Invalid material name in config: " + materialName);
             }
         }
-        
+
         return materials;
     }
 
