@@ -100,14 +100,16 @@ public class BlockListener implements Listener {
         }
 
         // 检查是否已绑定
-        UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(item);
-        if (boundPlayer == null) {
-            // 第一次使用时自动绑定
-            plugin.getBlockBindManager().bindBlock(player, item);
-        } else if (!boundPlayer.equals(player.getUniqueId())) {
-            event.setCancelled(true);
-            plugin.sendMessage(player, "messages.not-bound-to-you");
-            return;
+        if (plugin.getConfig().getBoolean("magic-bind")) {
+            UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(item);
+            if (boundPlayer == null) {
+                // 第一次使用时自动绑定
+                plugin.getBlockBindManager().bindBlock(player, item);
+            } else if (!boundPlayer.equals(player.getUniqueId())) {
+                event.setCancelled(true);
+                plugin.sendMessage(player, "messages.not-bound-to-you");
+                return;
+            }
         }
 
         // 保存方块位置
@@ -576,7 +578,10 @@ public class BlockListener implements Listener {
             return false;
         }
         ItemMeta meta = item.getItemMeta();
-        return meta.hasLore() && meta.getLore().contains(plugin.getMagicLore());
+        if (meta == null || meta.getLore() == null) {
+            return false;
+        }
+        return meta.hasLore() && new HashSet<>(meta.getLore()).containsAll(plugin.getMagicLore());
     }
 
     @EventHandler

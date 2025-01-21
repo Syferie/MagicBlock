@@ -7,6 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -61,13 +62,13 @@ public class BlockBindManager {
     }
 
     private String getBindLorePrefix() {
-        return ChatColor.translateAlternateColorCodes('&', 
-            "&7" + plugin.getMessage("messages.bound-to") + " &b");
+        return ChatColor.translateAlternateColorCodes('&',
+                "&7" + plugin.getMessage("messages.bound-to") + " &b");
     }
 
     public void bindBlock(Player player, ItemStack item) {
         if (!plugin.getBlockManager().isMagicBlock(item)) return;
-        
+
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
@@ -83,7 +84,9 @@ public class BlockBindManager {
 
         // 添加绑定说明
         List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
-        lore.add(getBindLorePrefix() + player.getName());
+        if (plugin.getConfig().getBoolean("magic-bind")) {
+            lore.add(getBindLorePrefix() + player.getName());
+        }
         meta.setLore(lore);
         item.setItemMeta(meta);
 
@@ -99,26 +102,28 @@ public class BlockBindManager {
         bindConfig.set(path + ".max_uses", maxUses);
         // 存储方块ID到物品中
         meta.getPersistentDataContainer().set(
-            new NamespacedKey(plugin, "block_id"),
-            PersistentDataType.STRING,
-            itemId
+                new NamespacedKey(plugin, "block_id"),
+                PersistentDataType.STRING,
+                itemId
         );
         item.setItemMeta(meta);
         saveBindConfig();
 
-        plugin.sendMessage(player, "messages.bind-success");
+        if (plugin.getConfig().getBoolean("magic-bind")) {
+            plugin.sendMessage(player, "messages.bind-success");
+        }
     }
 
     // 更新绑定方块的材质和使用次数
     public void updateBlockMaterial(ItemStack item) {
         if (!isBlockBound(item)) return;
-        
+
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
         String blockId = meta.getPersistentDataContainer().get(
-            new NamespacedKey(plugin, "block_id"),
-            PersistentDataType.STRING
+                new NamespacedKey(plugin, "block_id"),
+                PersistentDataType.STRING
         );
         if (blockId == null) return;
 
@@ -168,8 +173,8 @@ public class BlockBindManager {
         }
 
         // 重新检查是否还有绑定的方块
-        if (!bindConfig.contains("bindings." + uuid) || 
-            bindConfig.getConfigurationSection("bindings." + uuid).getKeys(false).isEmpty()) {
+        if (!bindConfig.contains("bindings." + uuid) ||
+                bindConfig.getConfigurationSection("bindings." + uuid).getKeys(false).isEmpty()) {
             plugin.sendMessage(player, "messages.no-bound-blocks");
             return;
         }
@@ -180,28 +185,28 @@ public class BlockBindManager {
         int slot = 0;
         for (String blockId : blocks) {
             if (slot >= 54) break;
-            
+
             String path = "bindings." + uuid + "." + blockId;
-            
+
             // 跳过被隐藏的方块
             if (bindConfig.getBoolean(path + ".hidden", false)) {
                 continue;
             }
 
             Material material = Material.valueOf(bindConfig.getString(path + ".material"));
-            
+
             // 尝试从玩家背包中找到对应的方块以获取实际使用次数
             int uses = bindConfig.getInt(path + ".uses");
             int maxUses = bindConfig.getInt(path + ".max_uses", uses);
-            
+
             // 查找玩家背包中的对应方块
             for (ItemStack item : player.getInventory().getContents()) {
                 if (item != null && plugin.getBlockManager().isMagicBlock(item) && isBlockBound(item)) {
                     ItemMeta meta = item.getItemMeta();
                     if (meta != null) {
                         String itemBlockId = meta.getPersistentDataContainer().get(
-                            new NamespacedKey(plugin, "block_id"),
-                            PersistentDataType.STRING
+                                new NamespacedKey(plugin, "block_id"),
+                                PersistentDataType.STRING
                         );
                         if (blockId.equals(itemBlockId)) {
                             // 使用实际的使用次数
@@ -228,8 +233,10 @@ public class BlockBindManager {
             if (meta != null) {
                 meta.setDisplayName(ChatColor.AQUA + plugin.getLanguageManager().getMessage("blocks." + material.name()));
                 List<String> lore = new ArrayList<>();
-                lore.add(plugin.getMagicLore());
-                lore.add(getBindLorePrefix() + player.getName());
+                lore.addAll(plugin.getMagicLore());
+                if (plugin.getConfig().getBoolean("magic-bind")) {
+                    lore.add(getBindLorePrefix() + player.getName());
+                }
                 lore.add("");
                 lore.add(ChatColor.GRAY + plugin.getMessage("gui.remaining-uses") + ChatColor.YELLOW + uses + ChatColor.GRAY + "/" + ChatColor.YELLOW + maxUses);
                 lore.add("");
@@ -240,9 +247,9 @@ public class BlockBindManager {
                 meta.setLore(lore);
                 meta.getPersistentDataContainer().set(bindKey, PersistentDataType.STRING, uuid);
                 meta.getPersistentDataContainer().set(
-                    new NamespacedKey(plugin, "block_id"),
-                    PersistentDataType.STRING,
-                    blockId
+                        new NamespacedKey(plugin, "block_id"),
+                        PersistentDataType.STRING,
+                        blockId
                 );
                 displayItem.setItemMeta(meta);
             }
@@ -254,7 +261,7 @@ public class BlockBindManager {
 
     public void retrieveBlock(Player player, ItemStack displayItem) {
         if (!isBlockBound(displayItem)) return;
-        
+
         UUID boundUUID = getBoundPlayer(displayItem);
         if (boundUUID == null || !boundUUID.equals(player.getUniqueId())) {
             plugin.sendMessage(player, "messages.not-bound-to-you");
@@ -264,10 +271,10 @@ public class BlockBindManager {
         // 获取方块ID
         ItemMeta displayMeta = displayItem.getItemMeta();
         if (displayMeta == null) return;
-        
+
         String blockId = displayMeta.getPersistentDataContainer().get(
-            new NamespacedKey(plugin, "block_id"),
-            PersistentDataType.STRING
+                new NamespacedKey(plugin, "block_id"),
+                PersistentDataType.STRING
         );
         if (blockId == null) return;
 
@@ -297,14 +304,14 @@ public class BlockBindManager {
 
         // 2. 清理掉落在地上的方块
         player.getWorld().getEntities().stream()
-            .filter(entity -> entity instanceof org.bukkit.entity.Item)
-            .map(entity -> (org.bukkit.entity.Item) entity)
-            .forEach(item -> {
-                ItemStack itemStack = item.getItemStack();
-                if (isSameBoundBlock(itemStack, player.getUniqueId(), blockType)) {
-                    item.remove();
-                }
-            });
+                .filter(entity -> entity instanceof Item)
+                .map(entity -> (Item) entity)
+                .forEach(item -> {
+                    ItemStack itemStack = item.getItemStack();
+                    if (isSameBoundBlock(itemStack, player.getUniqueId(), blockType)) {
+                        item.remove();
+                    }
+                });
 
         // 3. 清理容器中的方块（箱子等）
         for (Chunk chunk : player.getWorld().getLoadedChunks()) {
@@ -313,7 +320,7 @@ public class BlockBindManager {
                     Container container = (Container) blockState;
                     ItemStack[] containerContents = container.getInventory().getContents();
                     boolean updated = false;
-                    
+
                     for (int i = 0; i < containerContents.length; i++) {
                         ItemStack item = containerContents[i];
                         if (isSameBoundBlock(item, player.getUniqueId(), blockType)) {
@@ -321,7 +328,7 @@ public class BlockBindManager {
                             updated = true;
                         }
                     }
-                    
+
                     if (updated) {
                         container.update();
                     }
@@ -336,7 +343,9 @@ public class BlockBindManager {
         if (meta != null) {
             meta.getPersistentDataContainer().set(bindKey, PersistentDataType.STRING, player.getUniqueId().toString());
             List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
-            lore.add(getBindLorePrefix() + player.getName());
+            if (plugin.getConfig().getBoolean("magic-bind")) {
+                lore.add(getBindLorePrefix() + player.getName());
+            }
             lore.add(ChatColor.GRAY + plugin.getMessage("gui.remaining-uses") + ChatColor.YELLOW + uses + ChatColor.GRAY + "/" + ChatColor.YELLOW + maxUses);
             meta.setLore(lore);
             newBlock.setItemMeta(meta);
@@ -346,6 +355,8 @@ public class BlockBindManager {
         plugin.getBlockManager().setMaxUseTimes(newBlock, maxUses);
         plugin.getBlockManager().setUseTimes(newBlock, uses);
         plugin.getBlockManager().updateLore(newBlock, uses);
+
+        MagicBlockPlugin.replacePlayerNameLore(newBlock,player.getName());
 
         // 给予玩家新的方块
         HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(newBlock);
@@ -361,11 +372,11 @@ public class BlockBindManager {
         if (item == null || !plugin.getBlockManager().isMagicBlock(item) || !isBlockBound(item)) {
             return false;
         }
-        
+
         UUID boundPlayer = getBoundPlayer(item);
-        return boundPlayer != null && 
-               boundPlayer.equals(playerUUID) && 
-               item.getType() == type;
+        return boundPlayer != null &&
+                boundPlayer.equals(playerUUID) &&
+                item.getType() == type;
     }
 
     public void removeBindings(Player player) {
@@ -376,7 +387,7 @@ public class BlockBindManager {
 
     public void cleanupBindings(ItemStack item) {
         if (!isBlockBound(item)) return;
-        
+
         UUID boundUUID = getBoundPlayer(item);
         if (boundUUID == null) return;
 
@@ -405,7 +416,7 @@ public class BlockBindManager {
     private void removeZeroUsageBlocks(String uuid, String blockId) {
         String path = "bindings." + uuid + "." + blockId;
         int uses = bindConfig.getInt(path + ".uses", 0);
-        
+
         if (uses <= 0) {
             bindConfig.set(path, null);
             // 如果该玩家没有绑定的方块了，删除整个节点
@@ -419,20 +430,20 @@ public class BlockBindManager {
     // 处理绑定列表中的点击事件
     public void handleBindListClick(Player player, ItemStack clickedItem) {
         if (!isBlockBound(clickedItem)) return;
-        
+
         ItemMeta meta = clickedItem.getItemMeta();
         if (meta == null) return;
 
         String blockId = meta.getPersistentDataContainer().get(
-            new NamespacedKey(plugin, "block_id"),
-            PersistentDataType.STRING
+                new NamespacedKey(plugin, "block_id"),
+                PersistentDataType.STRING
         );
         if (blockId == null) return;
 
         // 获取玩家的点击记录
         Map<String, Long> playerClicks = lastClickTimes.computeIfAbsent(
-            player.getUniqueId(), 
-            k -> new HashMap<>()
+                player.getUniqueId(),
+                k -> new HashMap<>()
         );
 
         long currentTime = System.currentTimeMillis();
@@ -441,14 +452,14 @@ public class BlockBindManager {
         if (lastClickTime != null && currentTime - lastClickTime < DOUBLE_CLICK_TIME) {
             // 双击确认，隐藏方块
             hideBlockFromList(player, blockId);
-            
+
             // 刷新界面
             player.closeInventory();
             openBindList(player);
-            
+
             // 发送确认消息
             plugin.sendMessage(player, "messages.block-bind-removed");
-            
+
             // 清除点击记录
             playerClicks.remove(blockId);
         } else {

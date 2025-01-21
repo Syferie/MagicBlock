@@ -14,7 +14,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class CommandManager implements CommandExecutor {
@@ -118,7 +121,7 @@ public class CommandManager implements CommandExecutor {
         }
 
         if (args.length < 2) {
-            sender.sendMessage(ChatColor.RED + "用法: /mb give <玩��> [次数]");
+            sender.sendMessage(ChatColor.RED + "用法: /mb give <玩家> [次数]");
             return;
         }
 
@@ -154,8 +157,11 @@ public class CommandManager implements CommandExecutor {
         }
 
         ItemStack specialBlock = plugin.createMagicBlock();
+
         plugin.getBlockManager().setUseTimes(specialBlock, times);
         plugin.getBlockManager().updateLore(specialBlock, times);
+
+        MagicBlockPlugin.replacePlayerNameLore(specialBlock,sender.getName());
 
         target.getInventory().addItem(specialBlock);
         if (times == -1) {
@@ -163,7 +169,7 @@ public class CommandManager implements CommandExecutor {
         } else {
             plugin.sendMessage(target, "commands.get.success", times);
         }
-        
+
         // 根据发送者类型显示不同的消息
         if (sender instanceof ConsoleCommandSender) {
             if (times == -1) {
@@ -202,8 +208,11 @@ public class CommandManager implements CommandExecutor {
         }
 
         ItemStack specialBlock = plugin.createMagicBlock();
+
         plugin.getBlockManager().setUseTimes(specialBlock, times);
         plugin.getBlockManager().updateLore(specialBlock, times);
+
+        MagicBlockPlugin.replacePlayerNameLore(specialBlock,player.getName());
 
         player.getInventory().addItem(specialBlock);
         if (times == -1) {
@@ -322,7 +331,7 @@ public class CommandManager implements CommandExecutor {
 
         // 获取当前使用次数
         int currentTimes = plugin.getBlockManager().getUseTimes(item);
-        
+
         // 检查是否是无限次数
         if (currentTimes == Integer.MAX_VALUE - 100) {
             plugin.sendMessage(player, "commands.addtimes.unlimited");
@@ -331,10 +340,10 @@ public class CommandManager implements CommandExecutor {
 
         // 计算新的使用次数
         int newTimes = currentTimes + addTimes;
-        
+
         // 设置新的使用次数
         plugin.getBlockManager().setUseTimes(item, newTimes);
-        
+
         // 如果是绑定的方块，更新配置中的使用次数
         if (plugin.getBlockBindManager().isBlockBound(item)) {
             plugin.getBlockBindManager().updateBlockMaterial(item);

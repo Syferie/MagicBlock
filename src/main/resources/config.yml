@@ -30,7 +30,13 @@ check-updates: true
 
 # Custom magic block lore, use § for colors, not &. Cannot be empty.
 # Do not use common lore text that appears in other materials
-magic-lore: "§7MagicBlock"
+magic-lore:
+  - '§7MagicBlock'
+  - '§6Soulbound'
+  - '{player}'
+
+# Do you want to use the built-in binding system
+magic-bind: false
 
 # Usage times prefix text
 usage-lore-prefix: "§7Uses:"
