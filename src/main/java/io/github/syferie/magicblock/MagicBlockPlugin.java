@@ -307,6 +307,15 @@ public class MagicBlockPlugin extends JavaPlugin {
             
             ArrayList<String> lore = new ArrayList<>();
             lore.add(getMagicLore());
+
+            // 添加装饰性lore（如果启用）
+            if (getConfig().getBoolean("display.decorative-lore.enabled", true)) {
+                List<String> decorativeLore = getConfig().getStringList("display.decorative-lore.lines");
+                for (String line : decorativeLore) {
+                    lore.add(ChatColor.translateAlternateColorCodes('&', line));
+                }
+            }
+
             meta.setLore(lore);
             meta.addEnchant(Enchantment.DURABILITY, 1, true);
             meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);

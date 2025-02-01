@@ -1,50 +1,78 @@
-# ===================================
-# MagicBlock Plugin Configuration
-# ===================================
+# ==============================================================
+#                  MagicBlock Plugin Configuration
+# ==============================================================
+# Plugin Author: Syferie
+# QQ Group: 134484522
+# Telegram Group: t.me/+ctO2LArww4NkNmI9
+# ==============================================================
 
-# Debug mode
+# General Settings
+# -------------------------------------------------------------
+
+# Debug mode: Enables verbose logging for troubleshooting.
 debug-mode: false
 
-# Language setting (en, zh_CN)
+# Language setting for plugin messages.
 # Available languages:
 # - en (English)
-# - zh_CN (简体中文)
+# - zh_CN (Simplified Chinese)
 language: "en"
 
-# Message prefix
+# Message prefix displayed before plugin messages.
 prefix: "§7[MagicBlock] "
 
-# GUI settings
-gui:
-  rows: 6
-
-# Display settings
-display:
-  block-name-format: "&b✦ %s &b✦"  # %s will be replaced with block name
-
-# Statistics
+# Enable plugin usage statistics.
 enable-statistics: true
 
-# Auto update check
+# Automatically check for plugin updates on server start.
 check-updates: true
 
-# Custom magic block lore, use § for colors, not &. Cannot be empty.
-# Do not use common lore text that appears in other materials
-magic-lore: "§7MagicBlock"
-
-# Usage times prefix text
-usage-lore-prefix: "§7Uses:"
-
-# Blacklisted worlds where magic blocks cannot be used
+# Blacklisted worlds where Magic Blocks cannot be placed or used.
 blacklisted-worlds:
   - world_nether
   - world_the_end
 
-# Default usage times for magic blocks obtained through mb get command
+# Display Settings
+# -------------------------------------------------------------
+
+# Format for displaying the name of a Magic Block in item form.
+# %s will be replaced with the block's material name.
+display:
+  block-name-format: "&b✦ %s &b✦"
+  decorative-lore:
+    # Enable decorative lore lines below the Magic Block's identifier.
+    enabled: true
+    # Decorative lore lines, displayed below the magic-lore.
+    # You can customize these lines freely; they do not affect existing blocks.
+    lines:
+      - "&7This is a magical block."
+      - "&7It is imbued with the power of magic."
+      - "&7Use it to change the world."
+
+# GUI Settings
+# -------------------------------------------------------------
+
+# Number of rows for the Magic Block selection GUI.
+gui:
+  rows: 6
+
+# Magic Block Properties
+# -------------------------------------------------------------
+
+# Custom lore to identify Magic Blocks. Use § for color codes, not &.
+# Important: This lore must be unique and not commonly found on other items.
+magic-lore: "§7MagicBlock"
+
+# Prefix text for displaying the remaining usage times of a Magic Block.
+usage-lore-prefix: "§7Uses:"
+
+# Default usage times for Magic Blocks obtained through the /mb get command.
 default-block-times: 1000000000
 
-# ===================================
-# Materials that will appear in the GUI selection menu
+# Allowed Materials
+# -------------------------------------------------------------
+
+# Materials that will appear in the GUI selection menu for all players.
 allowed-materials:
   # Natural Blocks
   - STONE
@@ -125,16 +153,22 @@ allowed-materials:
   - RED_CONCRETE
   - BLACK_CONCRETE
 
-# Group permissions for additional materials
+# Group Permissions for Additional Materials
+# -------------------------------------------------------------
+
+# Group-specific materials that will appear in the GUI for players with the corresponding permission.
+# Define permission nodes as follows: magicblock.group.<group-name> (e.g., magicblock.group.vip-material)
 group:
   # VIP group materials
   vip-material:
+    # Example: Adds Diamond, Emerald, and Gold Blocks for players with the 'magicblock.group.vip-material' permission.
     - DIAMOND_BLOCK
     - EMERALD_BLOCK
     - GOLD_BLOCK
   
   # MVP group materials
   mvp-material:
+    # Example: Adds Beacon, Dragon Egg, and Netherite Block for players with the 'magicblock.group.mvp-material' permission.
     - BEACON
     - DRAGON_EGG
     - NETHERITE_BLOCK

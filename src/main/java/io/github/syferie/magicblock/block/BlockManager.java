@@ -4,12 +4,14 @@ import io.github.syferie.magicblock.MagicBlockPlugin;
 import io.github.syferie.magicblock.api.IMagicBlock;
 import io.github.syferie.magicblock.util.Constants;
 import io.github.syferie.magicblock.util.MessageUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -123,7 +125,7 @@ public class BlockManager implements IMagicBlock {
         int maxTimes = getMaxUseTimes(item);
         if (maxTimes <= 0) return;
 
-        // 检查是否��"无限"次数（大数值）
+        // 检查是否是"无限"次数（大数值）
         boolean isInfinite = maxTimes == Integer.MAX_VALUE - 100;
         
         // 构建使用次数显示和进度条
@@ -157,36 +159,86 @@ public class BlockManager implements IMagicBlock {
             }
             progressBar.append(ChatColor.GRAY).append("]");
         }
-        
-        // 更新或添加进度显示
-        boolean foundUsage = false;
-        boolean foundProgress = false;
-        
-        // 先移除所有旧的使用次数和进度条显示
-        lore.removeIf(line -> line.contains("/") || line.contains("■") || line.contains("□") || line.contains("∞"));
-        
-        // 找到魔法标识的位置
+
+        // 保存现有的lore信息
+        String bindLorePrefix = plugin.getBlockBindManager().getBindLorePrefix();
+        String bindInfo = null;
+        List<String> decorativeLore = new ArrayList<>();
         int magicLoreIndex = -1;
+        int bindLoreIndex = -1;
+        int usageIndex = -1;
+
+        // 找到各个关键lore的位置
         for (int i = 0; i < lore.size(); i++) {
-            if (lore.get(i).equals(plugin.getMagicLore())) {
+            String line = lore.get(i);
+            if (line.equals(plugin.getMagicLore())) {
                 magicLoreIndex = i;
+            } else if (line.startsWith(bindLorePrefix)) {
+                bindLoreIndex = i;
+                bindInfo = line;
+            } else if (line.contains(plugin.getUsageLorePrefix())) {
+                usageIndex = i;
                 break;
             }
         }
-        
-        // 在魔法标识后添加使用次数和进度条
-        if (magicLoreIndex != -1) {
-            lore.add(magicLoreIndex + 1, usageText.toString());
-            if (!isInfinite) {
-                lore.add(magicLoreIndex + 2, progressBar.toString());
-            }
-        } else {
-            lore.add(usageText.toString());
-            if (!isInfinite) {
-                lore.add(progressBar.toString());
+
+        // 如果物品已绑定但没有绑定lore，添加绑定信息
+        if (bindInfo == null && isBlockBound(item)) {
+            UUID boundPlayer = getBoundPlayer(item);
+            if (boundPlayer != null) {
+                Player player = Bukkit.getPlayer(boundPlayer);
+                if (player != null) {
+                    bindInfo = bindLorePrefix + player.getName();
+                }
             }
         }
-        
+
+        // 收集装饰性lore
+        if (magicLoreIndex != -1) {
+            int startIndex = magicLoreIndex + 1;
+            int endIndex = usageIndex != -1 ? usageIndex : lore.size();
+            
+            // 如果有绑定信息，不要将其包含在装饰性lore中
+            if (bindLoreIndex != -1 && bindLoreIndex > startIndex && bindLoreIndex < endIndex) {
+                if (startIndex < bindLoreIndex) {
+                    decorativeLore.addAll(lore.subList(startIndex, bindLoreIndex));
+                }
+                if (bindLoreIndex + 1 < endIndex) {
+                    decorativeLore.addAll(lore.subList(bindLoreIndex + 1, endIndex));
+                }
+            } else if (startIndex < endIndex) {
+                decorativeLore.addAll(lore.subList(startIndex, endIndex));
+            }
+        }
+
+        // 重建lore列表
+        lore.clear();
+        lore.add(plugin.getMagicLore());
+
+        // 添加装饰性lore（如果启用）
+        if (plugin.getConfig().getBoolean("display.decorative-lore.enabled", true)) {
+            // 如果已有装饰性lore就使用已有的，否则使用配置中的
+            if (!decorativeLore.isEmpty()) {
+                lore.addAll(decorativeLore);
+            } else {
+                List<String> configLore = plugin.getConfig().getStringList("display.decorative-lore.lines");
+                for (String line : configLore) {
+                    lore.add(ChatColor.translateAlternateColorCodes('&', line));
+                }
+            }
+        }
+
+        // 添加绑定信息（如果存在）
+        if (bindInfo != null) {
+            lore.add(bindInfo);
+        }
+
+        // 添加使用次数和进度条
+        lore.add(usageText.toString());
+        if (!isInfinite) {
+            lore.add(progressBar.toString());
+        }
+
         meta.setLore(lore);
         item.setItemMeta(meta);
     }

@@ -60,7 +60,7 @@ public class BlockBindManager {
         }
     }
 
-    private String getBindLorePrefix() {
+    public String getBindLorePrefix() {
         return ChatColor.translateAlternateColorCodes('&', 
             "&7" + plugin.getMessage("messages.bound-to") + " &b");
     }
@@ -83,7 +83,29 @@ public class BlockBindManager {
 
         // 添加绑定说明
         List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
-        lore.add(getBindLorePrefix() + player.getName());
+        // 找到magic-lore的位置
+        int magicLoreIndex = -1;
+        for (int i = 0; i < lore.size(); i++) {
+            if (lore.get(i).equals(plugin.getMagicLore())) {
+                magicLoreIndex = i;
+                break;
+            }
+        }
+        
+        // 在magic-lore后面添加绑定信息
+        if (magicLoreIndex != -1) {
+            // 找到装饰性lore的结束位置
+            int insertIndex = magicLoreIndex + 1;
+            if (plugin.getConfig().getBoolean("display.decorative-lore.enabled", true)) {
+                while (insertIndex < lore.size() && !lore.get(insertIndex).contains(plugin.getUsageLorePrefix())) {
+                    insertIndex++;
+                }
+            }
+            lore.add(insertIndex, getBindLorePrefix() + player.getName());
+        } else {
+            lore.add(getBindLorePrefix() + player.getName());
+        }
+        
         meta.setLore(lore);
         item.setItemMeta(meta);
 
@@ -97,6 +119,7 @@ public class BlockBindManager {
         bindConfig.set(path + ".material", item.getType().name());
         bindConfig.set(path + ".uses", currentUses);
         bindConfig.set(path + ".max_uses", maxUses);
+        
         // 存储方块ID到物品中
         meta.getPersistentDataContainer().set(
             new NamespacedKey(plugin, "block_id"),
@@ -334,10 +357,39 @@ public class BlockBindManager {
         newBlock.setType(blockType);
         ItemMeta meta = newBlock.getItemMeta();
         if (meta != null) {
+            // 设置绑定数据
             meta.getPersistentDataContainer().set(bindKey, PersistentDataType.STRING, player.getUniqueId().toString());
+            meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "block_id"),
+                PersistentDataType.STRING,
+                blockId
+            );
+
+            // 设置lore
             List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
-            lore.add(getBindLorePrefix() + player.getName());
-            lore.add(ChatColor.GRAY + plugin.getMessage("gui.remaining-uses") + ChatColor.YELLOW + uses + ChatColor.GRAY + "/" + ChatColor.YELLOW + maxUses);
+            // 找到magic-lore的位置
+            int magicLoreIndex = -1;
+            for (int i = 0; i < lore.size(); i++) {
+                if (lore.get(i).equals(plugin.getMagicLore())) {
+                    magicLoreIndex = i;
+                    break;
+                }
+            }
+            
+            // 在magic-lore后面添加绑定信息
+            if (magicLoreIndex != -1) {
+                // 找到装饰性lore的结束位置
+                int insertIndex = magicLoreIndex + 1;
+                if (plugin.getConfig().getBoolean("display.decorative-lore.enabled", true)) {
+                    while (insertIndex < lore.size() && !lore.get(insertIndex).contains(plugin.getUsageLorePrefix())) {
+                        insertIndex++;
+                    }
+                }
+                lore.add(insertIndex, getBindLorePrefix() + player.getName());
+            } else {
+                lore.add(getBindLorePrefix() + player.getName());
+            }
+            
             meta.setLore(lore);
             newBlock.setItemMeta(meta);
         }
@@ -345,6 +397,7 @@ public class BlockBindManager {
         // 设置使用次数和最大使用次数
         plugin.getBlockManager().setMaxUseTimes(newBlock, maxUses);
         plugin.getBlockManager().setUseTimes(newBlock, uses);
+        // 更新lore以显示使用次数和进度条
         plugin.getBlockManager().updateLore(newBlock, uses);
 
         // 给予玩家新的方块
