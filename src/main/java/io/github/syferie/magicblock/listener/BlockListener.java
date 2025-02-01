@@ -90,7 +90,7 @@ public class BlockListener implements Listener {
     private void handleMagicBlockPlace(BlockPlaceEvent event, ItemStack item) {
         Block block = event.getBlock();
         Player player = event.getPlayer();
-
+        
         // 检查使用次数
         int useTimes = plugin.getBlockManager().getUseTimes(item);
         if (useTimes == 0) {
@@ -105,9 +105,12 @@ public class BlockListener implements Listener {
             // 第一次使用时自动绑定
             plugin.getBlockBindManager().bindBlock(player, item);
         } else if (!boundPlayer.equals(player.getUniqueId())) {
-            event.setCancelled(true);
-            plugin.sendMessage(player, "messages.not-bound-to-you");
-            return;
+            // 检查是否允许使用已绑定的方块
+            if (!plugin.getConfig().getBoolean("allow-use-bound-blocks", false)) {
+                event.setCancelled(true);
+                plugin.sendMessage(player, "messages.not-bound-to-you");
+                return;
+            }
         }
 
         // 保存方块位置
@@ -123,7 +126,7 @@ public class BlockListener implements Listener {
         if (useTimes > 0) { // -1表示无限使用
             plugin.getBlockManager().decrementUseTimes(item);
         }
-
+        
         // 记录使用统计
         plugin.incrementPlayerUsage(player.getUniqueId());
         plugin.logUsage(player, item);
