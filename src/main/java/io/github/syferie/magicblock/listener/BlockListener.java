@@ -18,6 +18,8 @@ import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.CraftItemEvent;
+import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
@@ -817,5 +819,27 @@ public class BlockListener implements Listener {
         }
         // 只从爆炸列表中移除魔法方块
         event.blockList().removeAll(blocksToKeep);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onFurnaceSmelt(FurnaceSmeltEvent event) {
+        ItemStack source = event.getSource();
+        if (plugin.getBlockManager().isMagicBlock(source)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onCraftItem(CraftItemEvent event) {
+        // 检查合成材料中是否包含魔法方块
+        for (ItemStack item : event.getInventory().getMatrix()) {
+            if (item != null && plugin.getBlockManager().isMagicBlock(item)) {
+                event.setCancelled(true);
+                if (event.getWhoClicked() instanceof Player) {
+                    plugin.sendMessage((Player) event.getWhoClicked(), "messages.cannot-craft-with-magic-block");
+                }
+                return;
+            }
+        }
     }
 }

@@ -48,6 +48,7 @@ messages:
   block-bind-removed: "&a✔ &7方块已从列表中隐藏！"
   bound-to: "绑定玩家:"
   click-again-to-remove: "&e⚡ &7再次点击以从列表中隐藏此方块"
+  cannot-craft-with-magic-block: "&c✖ &7魔法方块不能用于合成！"
 
 commands:
   help:

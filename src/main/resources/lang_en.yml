@@ -48,6 +48,7 @@ messages:
   block-bind-removed: "&a✔ &7Block hidden from list!"
   bound-to: "Bound to:"
   click-again-to-remove: "&e⚡ &7Click again to hide this block from list"
+  cannot-craft-with-magic-block: "&c✖ &7Magic blocks cannot be used in crafting!"
 
 commands:
   help:
