@@ -225,7 +225,31 @@ For issues or suggestions:
 * QQ Group: [134484522]
 
 ## Changelog
-v3.0
+
+**MagicBlock 3.1.0 Changelog**
+
+**New Features:**
+
+*   MagicBlock items now support multi-line lores (thanks to suggestion #3).
+*   Added config option to allow/disallow players using MagicBlocks bound by other players.
+*   Added support for Folia server (resolves #6).
+
+**Fixes:**
+
+*   Fixed connection issues between fences, walls, glass panes, etc.
+*   Fixed a bug where MagicBlocks would be accidentally disintegrated in furnaces and workbenches.
+*   Fixed a bug where MagicBlocks would be accidentally replaced when players clicked on an item in their backpack.
+*   Fixed pressure plate redstone behavior and prevented attached blocks from dropping unexpectedly (resolves #9).
+
+**Improvements:**
+
+*   Improved the configuration description in config.
+
+**In summary,** this update mainly adds support for Folia server, implements multi-line lore support for MagicBlock items, and fixes several important bugs.
+
+
+MagicBlock v3.0.0 Changelog
+
 * Enhanced multilingual support
 * Optimized GUI display
 * Improved block binding
