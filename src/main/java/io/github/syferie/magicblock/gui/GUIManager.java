@@ -5,6 +5,7 @@ import io.github.syferie.magicblock.MagicBlockPlugin;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -87,40 +88,47 @@ public class GUIManager implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
         
-        if (event.getView().getTitle().equals(plugin.getMessage("gui.title"))) {
-            event.setCancelled(true);
-            
-            // 使用computeIfAbsent来确保线程安全的获取上次打开时间
-            long openTime = lastGuiOpenTime.computeIfAbsent(player.getUniqueId(), k -> 0L);
-            long currentTime = System.currentTimeMillis();
-            
-            if (currentTime - openTime < GUI_PROTECTION_TIME) {
-                return;
-            }
-
-            ItemStack clickedItem = event.getCurrentItem();
-            if (clickedItem != null && clickedItem.getType() == Material.COMPASS) {
-                // 使用原子操作检查冷却时间
-                Long lastClick = lastSearchClickTime.get(player.getUniqueId());
-                if (lastClick != null && currentTime - lastClick < SEARCH_CLICK_COOLDOWN) {
-                    plugin.sendMessage(player, "messages.wait-cooldown");
-                    return;
-                }
-                lastSearchClickTime.put(player.getUniqueId(), currentTime);
-                
-                player.closeInventory();
-                plugin.sendMessage(player, "messages.search-prompt");
-                setPlayerSearching(player, true);
-                return;
-            }
-            
-            blockSelectionGUI.handleInventoryClick(event, player);
+        if (!event.getView().getTitle().equals(plugin.getMessage("gui.title"))) {
+            return;
         }
+
+        // 立即取消事件，防止传播
+        event.setCancelled(true);
+            
+        // 使用computeIfAbsent来确保线程安全的获取上次打开时间
+        long openTime = lastGuiOpenTime.computeIfAbsent(player.getUniqueId(), k -> 0L);
+        long currentTime = System.currentTimeMillis();
+            
+        if (currentTime - openTime < GUI_PROTECTION_TIME) {
+            return;
+        }
+
+        ItemStack clickedItem = event.getCurrentItem();
+        if (clickedItem == null || clickedItem.getType() == Material.AIR) {
+            return;
+        }
+
+        // 检查是否是搜索按钮
+        if (clickedItem.getType() == Material.COMPASS) {
+            // 使用原子操作检查冷却时间
+            Long lastClick = lastSearchClickTime.get(player.getUniqueId());
+            if (lastClick != null && currentTime - lastClick < SEARCH_CLICK_COOLDOWN) {
+                plugin.sendMessage(player, "messages.wait-cooldown");
+                return;
+            }
+            lastSearchClickTime.put(player.getUniqueId(), currentTime);
+        }
+            
+        // 使用FoliaLib确保在主线程执行GUI操作
+        foliaLib.getScheduler().runAtEntity(
+            player,
+            task -> blockSelectionGUI.handleInventoryClick(event, player)
+        );
     }
 
     @EventHandler

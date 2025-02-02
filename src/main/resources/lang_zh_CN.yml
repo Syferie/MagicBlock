@@ -22,6 +22,8 @@ gui:
   remove-block: "&c▸ &7右键点击从列表中隐藏"
   remove-block-note: "&8• &7(仅从列表中隐藏，不会解除绑定)"
   remaining-uses: "剩余使用次数: "
+  page-info: "&e第 {0}/{1} 页"
+  close: "&c关闭"
 
 messages:
   block-placed: "&a✔ &7成功放置MagicBlock！"

@@ -55,21 +55,43 @@ public class BlockSelectionGUI {
         int startIndex = (page - 1) * ITEMS_PER_PAGE;
         int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, materials.size());
 
+        // 添加物品
         for (int i = startIndex; i < endIndex; i++) {
             Material material = materials.get(i);
             gui.setItem(i - startIndex, createMagicBlock(material));
         }
 
-        // 添加导航按钮
+        // 添加导航按钮和页码信息
         if (page > 1) {
-            gui.setItem(45, createNavigationItem(plugin.getMessage("gui.previous-page"), Material.ARROW));
+            ItemStack prevButton = createNavigationItem(plugin.getMessage("gui.previous-page"), Material.ARROW);
+            gui.setItem(45, prevButton);
         }
+
+        // 页码显示
+        ItemStack pageInfo = new ItemStack(Material.PAPER);
+        ItemMeta pageInfoMeta = pageInfo.getItemMeta();
+        if (pageInfoMeta != null) {
+            pageInfoMeta.setDisplayName(ChatColor.YELLOW + plugin.getMessage("gui.page-info", page, totalPages));
+            pageInfo.setItemMeta(pageInfoMeta);
+        }
+        gui.setItem(49, pageInfo);
+
         if (page < totalPages) {
-            gui.setItem(53, createNavigationItem(plugin.getMessage("gui.next-page"), Material.ARROW));
+            ItemStack nextButton = createNavigationItem(plugin.getMessage("gui.next-page"), Material.ARROW);
+            gui.setItem(53, nextButton);
         }
 
         // 添加搜索按钮
-        gui.setItem(49, createSearchButton());
+        gui.setItem(47, createSearchButton());
+
+        // 添加关闭按钮
+        ItemStack closeButton = new ItemStack(Material.BARRIER);
+        ItemMeta closeMeta = closeButton.getItemMeta();
+        if (closeMeta != null) {
+            closeMeta.setDisplayName(ChatColor.RED + plugin.getMessage("gui.close"));
+            closeButton.setItemMeta(closeMeta);
+        }
+        gui.setItem(51, closeButton);
 
         player.openInventory(gui);
     }
@@ -104,8 +126,6 @@ public class BlockSelectionGUI {
     }
 
     public void handleInventoryClick(InventoryClickEvent event, Player player) {
-        event.setCancelled(true);
-        
         // 检查冷却时间
         long currentTime = System.currentTimeMillis();
         long openTime = lastGuiOpenTime.getOrDefault(player.getUniqueId(), 0L);
@@ -115,7 +135,6 @@ public class BlockSelectionGUI {
 
         // 检查点击的位置是否在GUI的有效范围内
         int slot = event.getRawSlot();
-        // 如果点击的是玩家背包区域或无效区域，直接返回
         if (slot < 0 || slot >= event.getView().getTopInventory().getSize()) {
             return;
         }
@@ -130,60 +149,68 @@ public class BlockSelectionGUI {
         List<Material> materials = searchResults.getOrDefault(playerId, plugin.getAllowedMaterials());
         int totalPages = (int) Math.ceil(materials.size() / (double) ITEMS_PER_PAGE);
 
-        if (clickedItem.getType() == Material.ARROW) {
-            String itemName = clickedItem.getItemMeta().getDisplayName();
-            if (itemName.equals(plugin.getMessage("gui.previous-page")) && page > 1) {
-                currentPage.put(playerId, page - 1);
-                updateInventory(player);
-            } else if (itemName.equals(plugin.getMessage("gui.next-page")) && page < totalPages) {
-                currentPage.put(playerId, page + 1);
-                updateInventory(player);
+        // 使用synchronized块来确保线程安全
+        synchronized (this) {
+            // 处理导航按钮点击
+            if (clickedItem.getType() == Material.ARROW) {
+                if (slot == 45 && page > 1) {
+                    currentPage.put(playerId, page - 1);
+                    updateInventory(player);
+                } else if (slot == 53 && page < totalPages) {
+                    currentPage.put(playerId, page + 1);
+                    updateInventory(player);
+                }
+                return;
             }
-            return;
-        }
 
-        // 处理搜索按钮点击
-        if (clickedItem.getType() == Material.COMPASS) {
-            player.closeInventory();
-            plugin.sendMessage(player, "messages.search-prompt");
-            GUIManager.setPlayerSearching(player, true);
-            return;
-        }
+            // 处理关闭按钮点击
+            if (slot == 51 && clickedItem.getType() == Material.BARRIER) {
+                player.closeInventory();
+                return;
+            }
 
-        // 检查点击的物品是否在允许的材料列表中
-        if (!plugin.getAllowedMaterials().contains(clickedItem.getType())) {
-            return;
-        }
+            // 处理搜索按钮点击
+            if (slot == 47 && clickedItem.getType() == Material.COMPASS) {
+                player.closeInventory();
+                plugin.sendMessage(player, "messages.search-prompt");
+                GUIManager.setPlayerSearching(player, true);
+                return;
+            }
 
-        // 替换方块
-        ItemStack originalItem = originalItems.get(playerId);
-        if (originalItem != null && plugin.hasMagicLore(originalItem.getItemMeta())) {
-            ItemStack newItem = originalItem.clone();
-            newItem.setType(clickedItem.getType());
-            
-            // 保持原有的附魔和其他元数据
-            ItemMeta originalMeta = originalItem.getItemMeta();
-            ItemMeta newMeta = newItem.getItemMeta();
-            if (originalMeta != null && newMeta != null) {
-                // 在原有名称两侧添加装饰符号
-                String blockName = getChineseBlockName(clickedItem.getType());
-                String nameFormat = plugin.getConfig().getString("display.block-name-format", "&b✦ %s &b✦");
-                newMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', 
-                    String.format(nameFormat, blockName)));
+            // 检查点击的物品是否在允许的材料列表中
+            if (!plugin.getAllowedMaterials().contains(clickedItem.getType())) {
+                return;
+            }
+
+            // 替换方块
+            ItemStack originalItem = originalItems.get(playerId);
+            if (originalItem != null && plugin.hasMagicLore(originalItem.getItemMeta())) {
+                ItemStack newItem = originalItem.clone();
+                newItem.setType(clickedItem.getType());
                 
-                newMeta.setLore(originalMeta.getLore());
-                originalMeta.getEnchants().forEach((enchant, level) -> 
-                    newMeta.addEnchant(enchant, level, true));
-                originalMeta.getItemFlags().forEach(newMeta::addItemFlags);
-                newItem.setItemMeta(newMeta);
+                // 保持原有的附魔和其他元数据
+                ItemMeta originalMeta = originalItem.getItemMeta();
+                ItemMeta newMeta = newItem.getItemMeta();
+                if (originalMeta != null && newMeta != null) {
+                    String blockName = getChineseBlockName(clickedItem.getType());
+                    String nameFormat = plugin.getConfig().getString("display.block-name-format", "&b✦ %s &b✦");
+                    newMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', 
+                        String.format(nameFormat, blockName)));
+                    
+                    newMeta.setLore(originalMeta.getLore());
+                    originalMeta.getEnchants().forEach((enchant, level) -> 
+                        newMeta.addEnchant(enchant, level, true));
+                    originalMeta.getItemFlags().forEach(newMeta::addItemFlags);
+                    newItem.setItemMeta(newMeta);
+                }
+                
+                player.getInventory().setItemInMainHand(newItem);
+                plugin.sendMessage(player, "messages.success-replace", getChineseBlockName(clickedItem.getType()));
+                
+                // 清理记录
+                clearPlayerData(playerId);
+                player.closeInventory();
             }
-            
-            player.getInventory().setItemInMainHand(newItem);
-            plugin.sendMessage(player, "messages.success-replace", getChineseBlockName(clickedItem.getType()));
-            
-            // 清理记录
-            clearPlayerData(playerId);
-            player.closeInventory();
         }
     }
 

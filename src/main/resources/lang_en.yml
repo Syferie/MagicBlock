@@ -22,6 +22,8 @@ gui:
   remove-block: "&c▸ &7Right-click to hide from list"
   remove-block-note: "&8• &7(Only hides from list, binding remains)"
   remaining-uses: "Remaining uses: "
+  page-info: "&ePage {0}/{1}"
+  close: "&cClose"
 
 messages:
   block-placed: "&a✔ &7Successfully placed MagicBlock!"
