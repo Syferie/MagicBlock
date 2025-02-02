@@ -33,6 +33,10 @@ jobs:
       id: read_version
       run: |
         VERSION=$(sed -n "s/^version = '\(.*\)'/\1/p" build.gradle)
+        if [ -z "$VERSION" ]; then
+          echo "Version not found in build.gradle. Exiting."
+          exit 1
+        fi
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Detected Version: $VERSION"
 
@@ -59,7 +63,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: plugin-jar
-        path:
+        path: .
 
     - name: List Downloaded Artifacts
       run: ls -l
