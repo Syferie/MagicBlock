@@ -1,5 +1,7 @@
 package io.github.syferie.magicblock.listener;
 
+import com.tcoded.folialib.FoliaLib;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import io.github.syferie.magicblock.MagicBlockPlugin;
 import io.github.syferie.magicblock.gui.GUIManager;
 
@@ -33,14 +35,17 @@ public class BlockListener implements Listener {
     private final GUIManager guiManager;
     private final List<Material> buildingMaterials;
     private final NamespacedKey magicBlockKey;
-    private static final long GUI_OPEN_COOLDOWN = 500;
+    private static final long GUI_OPEN_COOLDOWN = 300;
     private final Map<UUID, Long> lastGuiOpenTime = new HashMap<>();
+    private final FoliaLib foliaLib;
 
     public BlockListener(MagicBlockPlugin plugin, List<Material> allowedMaterials) {
         this.plugin = plugin;
         this.guiManager = new GUIManager(plugin, allowedMaterials);
         this.buildingMaterials = new ArrayList<>(allowedMaterials);
         this.magicBlockKey = new NamespacedKey(plugin, "magicblock_location");
+        this.foliaLib = plugin.getFoliaLib();
+        plugin.getServer().getPluginManager().registerEvents(guiManager, plugin);
     }
 
     public void setAllowedMaterials(List<Material> materials) {
@@ -441,10 +446,16 @@ public class BlockListener implements Listener {
                 lastGuiOpenTime.put(player.getUniqueId(), currentTime);
                 event.setCancelled(true);
 
-                // 延迟打开GUI
-                plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                    guiManager.getBlockSelectionGUI().openInventory(player);
-                }, 3L); // 3tick ≈ 150ms的延迟
+                // 使用FoliaLib的runLater方法来延迟打开GUI
+                foliaLib.getScheduler().runLater(() -> {
+                    // 确保玩家仍然在线
+                    if (player.isOnline()) {
+                        foliaLib.getScheduler().runAtEntity(
+                            player,
+                            (WrappedTask task) -> guiManager.getBlockSelectionGUI().openInventory(player)
+                        );
+                    }
+                }, 2L);
             }
         }
     }
@@ -497,41 +508,16 @@ public class BlockListener implements Listener {
                 // 检查搜索冷却时间
                 Long lastClick = lastGuiOpenTime.get(player.getUniqueId());
                 if (lastClick != null && currentTime - lastClick < GUI_OPEN_COOLDOWN) {
-                    plugin.sendMessage(player, "messages.wait-cooldown");
                     return;
                 }
-                lastGuiOpenTime.put(player.getUniqueId(), currentTime);
                 
-                player.closeInventory();
-                plugin.sendMessage(player, "messages.search-prompt");
-                GUIManager.setPlayerSearching(player, true);
+                // 将搜索相关的处理委托给GUIManager
+                guiManager.getBlockSelectionGUI().handleInventoryClick(event, player);
                 return;
             }
 
-            // 处理方块选择
-            ItemStack heldItem = player.getInventory().getItemInMainHand();
-            if (plugin.getBlockManager().isMagicBlock(heldItem)) {
-                // 更新方块材质
-                heldItem.setType(clickedItem.getType());
-                ItemMeta meta = heldItem.getItemMeta();
-                if (meta != null) {
-                    // 根据当前语言获取方块名称
-                    String blockName = plugin.getLanguageManager().getMessage("blocks." + clickedItem.getType().name());
-                    
-                    // 原有名称两侧添加装饰符号
-                    String nameFormat = plugin.getConfig().getString("display.block-name-format", "&b✦ %s &b✦");
-                    meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', 
-                        String.format(nameFormat, blockName)));
-                    
-                    heldItem.setItemMeta(meta);
-                }
-                
-                // 如果是绑定的方块，更新配置中的材质
-                plugin.getBlockBindManager().updateBlockMaterial(heldItem);
-                plugin.sendMessage(player, "messages.success-replace", 
-                    plugin.getLanguageManager().getMessage("blocks." + clickedItem.getType().name()));
-                player.closeInventory();
-            }
+            // 其他点击处理委托给GUIManager
+            guiManager.getBlockSelectionGUI().handleInventoryClick(event, player);
         } else if (title.equals(boundBlocksTitle)) {
             event.setCancelled(true);
             ItemStack clickedItem = event.getCurrentItem();

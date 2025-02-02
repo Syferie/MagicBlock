@@ -1,10 +1,11 @@
 name: MagicBlock
-version: '3.0.4'
+version: '3.1.0'
 main: io.github.syferie.magicblock.MagicBlockPlugin
 api-version: '1.19'
 authors: [Syferie]
 description: A plugin that allows players to use magic blocks with limited uses.
 softdepend: [PlaceholderAPI]
+folia-supported: true
 
 commands:
   magicblock:

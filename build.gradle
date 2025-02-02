@@ -1,21 +1,27 @@
 plugins {
     id 'java'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 group 'io.github.syferie.magicblock'
-version '3.0.4'
+version '3.1.0'
 
 repositories {
     mavenCentral()
     maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
     maven { url 'https://repo.extendedclip.com/releases/' }
     maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { 
+        name = "jitpack"
+        url = "https://jitpack.io" 
+    }
 }
 
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.19.4-R0.1-SNAPSHOT'
     compileOnly 'me.clip:placeholderapi:2.11.6'
     compileOnly 'org.jetbrains:annotations:24.0.0'
+    implementation "com.github.technicallycoded:FoliaLib:main-SNAPSHOT"
 }
 
 java {
@@ -30,6 +36,15 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
-jar {
+shadowJar {
+    relocate "com.tcoded.folialib", "io.github.syferie.magicblock.lib.folialib"
     archiveFileName = "MagicBlock-${version}.jar"
+}
+
+jar {
+    enabled = false
+}
+
+artifacts {
+    archives shadowJar
 }

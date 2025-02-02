@@ -1,9 +1,11 @@
 package io.github.syferie.magicblock.gui;
 
+import com.tcoded.folialib.FoliaLib;
 import io.github.syferie.magicblock.MagicBlockPlugin;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
@@ -14,19 +16,21 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
-public class GUIManager {
+public class GUIManager implements Listener {
     private final MagicBlockPlugin plugin;
     private final BlockSelectionGUI blockSelectionGUI;
     private static final Map<UUID, Boolean> searchingPlayers = new ConcurrentHashMap<>();
-    private static final long GUI_CLICK_COOLDOWN = 500; // 500ms冷却时间
+    private static final long GUI_CLICK_COOLDOWN = 300; 
     private static final Map<UUID, Long> lastSearchClickTime = new ConcurrentHashMap<>();
-    private static final long SEARCH_CLICK_COOLDOWN = 1000; // 1000ms冷却时间
+    private static final long SEARCH_CLICK_COOLDOWN = 600;
     private static final Map<UUID, Long> lastGuiOpenTime = new ConcurrentHashMap<>();
-    private static final long GUI_PROTECTION_TIME = 300; // 打开GUI后300ms内不响应点击
+    private static final long GUI_PROTECTION_TIME = 200;
+    private final FoliaLib foliaLib;
 
     public GUIManager(MagicBlockPlugin plugin, List<Material> allowedMaterials) {
         this.plugin = plugin;
         this.blockSelectionGUI = new BlockSelectionGUI(plugin);
+        this.foliaLib = plugin.getFoliaLib();
     }
 
     public static void setPlayerSearching(Player player, boolean searching) {
@@ -64,18 +68,22 @@ public class GUIManager {
 
             if (input.equalsIgnoreCase("cancel")) {
                 setPlayerSearching(player, false);
-                // 使用调度器在主线程中执行GUI操作
-                plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    blockSelectionGUI.openInventory(player);
-                });
+                // 使用FoliaLib在玩家实体上执行GUI操作
+                foliaLib.getScheduler().runAtEntity(
+                    player,
+                    task -> blockSelectionGUI.openInventory(player)
+                );
                 return;
             }
 
-            // 使用调度器在主线程中执行GUI操作
-            plugin.getServer().getScheduler().runTask(plugin, () -> {
-                blockSelectionGUI.handleSearch(player, input);
-                setPlayerSearching(player, false);
-            });
+            // 使用FoliaLib在玩家实体上执行搜索操作
+            foliaLib.getScheduler().runAtEntity(
+                player,
+                task -> {
+                    blockSelectionGUI.handleSearch(player, input);
+                    setPlayerSearching(player, false);
+                }
+            );
         }
     }
 

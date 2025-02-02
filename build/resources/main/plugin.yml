@@ -5,6 +5,7 @@ api-version: '1.19'
 authors: [Syferie]
 description: A plugin that allows players to use magic blocks with limited uses.
 softdepend: [PlaceholderAPI]
+folia-supported: true
 
 commands:
   magicblock:
