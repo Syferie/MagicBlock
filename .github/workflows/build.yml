@@ -28,12 +28,7 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: 'gradle'
-
-    - name: Build with Gradle
-      run: ./gradlew clean build --info --stacktrace
-      env:
-        GRADLE_OPTS: "-Dorg.gradle.logging.level=info"
-
+    
     - name: Read Version
       id: read_version
       run: |
@@ -41,11 +36,17 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Detected Version: $VERSION"
 
+    - name: Build with Gradle
+      run: ./gradlew clean build --info --stacktrace
+      env:
+        GRADLE_OPTS: "-Dorg.gradle.logging.level=info"
+        VERSION: ${{ steps.read_version.outputs.version }} # Pass version to Gradle
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: plugin-jar
-        path: build/libs/MagicBlock-${{ steps.read_version.outputs.version }}.jar 
+        path: build/libs/MagicBlock-${{ steps.read_version.outputs.version }}.jar
         retention-days: 1
 
   release:
@@ -80,6 +81,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/libs/MagicBlock-${{ needs.build.outputs.version }}.jar 
+        asset_path: ./build/libs/MagicBlock-${{ needs.build.outputs.version }}.jar
         asset_name: MagicBlock-${{ needs.build.outputs.version }}.jar
         asset_content_type: application/java-archive
