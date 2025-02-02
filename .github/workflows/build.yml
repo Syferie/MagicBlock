@@ -53,19 +53,13 @@ jobs:
       run: ./gradlew clean build --info --stacktrace
       env:
         GRADLE_OPTS: "-Dorg.gradle.logging.level=info"
-
-    - name: Read Version
-      id: read_version
-      run: |
-        VERSION=$(sed -n "s/^version = '\(.*\)'/\1/p" build.gradle)
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Detected Version: $VERSION"
+        VERSION: ${{ steps.read_version.outputs.version }}
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: plugin-jar
-        path: build/libs/*.jar
+        path: ${{ github.workspace }}/build/libs/MagicBlock-${{ steps.read_version.outputs.version }}.jar 
         retention-days: 1
 
   release:
@@ -78,10 +72,10 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: plugin-jar
-        path: build/libs/
+        path: .
 
     - name: List Downloaded Artifacts
-      run: ls -l build/libs/
+      run: ls -l
 
     - name: Create Release
       id: create_release
@@ -100,6 +94,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/libs/MagicBlock-${{ needs.build.outputs.version }}.jar
+        asset_path: MagicBlock-${{ needs.build.outputs.version }}.jar
         asset_name: MagicBlock-${{ needs.build.outputs.version }}.jar
         asset_content_type: application/java-archive
