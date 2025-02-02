@@ -41,7 +41,7 @@ jobs:
     - name: Read Version
       id: read_version
       run: |
-        VERSION=$(grep "^version" build.gradle | sed -E "s/version *= *['\"]?(.*)['\"]?$/\1/")
+        VERSION=$(grep "^version" build.gradle | sed -E "s/version *= *['\"]?(.*)['\"]?$/\1/" | tr -d "'\"")
         if [ -z "$VERSION" ]; then
           echo "Version not found in build.gradle. Exiting."
           exit 1
