@@ -29,6 +29,26 @@ jobs:
         distribution: 'temurin'
         cache: 'gradle'
 
+    - name: List Files
+      run: |
+        ls -l
+
+    - name: Convert Line Endings
+      run: |
+        sudo apt-get install -y dos2unix
+        dos2unix build.gradle
+
+    - name: Read Version
+      id: read_version
+      run: |
+        VERSION=$(grep "^version" build.gradle | sed -E "s/^version\s*['\"]([^'\"]+)['\"].*$/\1/" | xargs)
+        if [ -z "$VERSION" ]; then
+          echo "Version not found in build.gradle. Exiting."
+          exit 1
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Detected Version: $VERSION"
+
     - name: Build with Gradle
       run: ./gradlew clean build --info --stacktrace
       env:
