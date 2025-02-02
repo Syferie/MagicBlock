@@ -363,7 +363,8 @@ public class BlockListener implements Listener {
         Block eventBlock = event.getBlock();
         Location blockLocation = eventBlock.getLocation();
         boolean isMagicBlock = isMagicBlockLocation(blockLocation);
-        Block targetBlock = eventBlock;  // 用于跟踪实际要处理的方块
+        Block targetBlock = eventBlock;
+        Block blockAbove = eventBlock.getRelative(BlockFace.UP);
 
         // 检查是否是连接型方块
         if (isConnectableBlock(eventBlock.getType())) {
@@ -388,6 +389,12 @@ public class BlockListener implements Listener {
                     }
                 }, 1L);
             }
+        }
+
+        // 检查上方是否有附着类方块（无论下面是不是魔术方块）
+        if (isAttachable(blockAbove.getType()) && isMagicBlockLocation(blockAbove.getLocation())) {
+            blockAbove.setType(Material.AIR);
+            removeMagicBlockLocation(blockAbove.getLocation());
         }
 
         // 检查是否是床方块
@@ -447,7 +454,6 @@ public class BlockListener implements Listener {
 
         // 检查是否是双格高方块的下半部分
         if (!isMagicBlock && isTallBlock(eventBlock.getType())) {
-            Block blockAbove = eventBlock.getRelative(BlockFace.UP);
             if (isMagicBlockLocation(blockLocation)) {
                 removeMagicBlockLocation(blockAbove.getLocation());
             }
@@ -480,57 +486,34 @@ public class BlockListener implements Listener {
                 removeMagicBlockLocation(topBlock.getLocation());
             }
         }
-
-        // 检查相邻方块
-        for (BlockFace face : BlockFace.values()) {
-            Block relativeBlock = eventBlock.getRelative(face);
-            if (isMagicBlockLocation(relativeBlock.getLocation())) {
-                // 如果相邻方块是附着类方块且是魔法方块，则移除它
-                Material type = relativeBlock.getType();
-                if (isAttachable(type)) {
-                    ItemStack relativeItem = new ItemStack(type);
-                    
-                    // 检查绑定状态
-                    if (plugin.getBlockBindManager().isBlockBound(relativeItem)) {
-                        UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(relativeItem);
-                        if (boundPlayer != null && !boundPlayer.equals(event.getPlayer().getUniqueId())) {
-                            continue; // 跳过不属于该玩家的方块
-                        }
-                    }
-                    
-                    // 清理绑定数据
-                    plugin.getBlockBindManager().cleanupBindings(relativeItem);
-                    relativeBlock.setType(Material.AIR);
-                    removeMagicBlockLocation(relativeBlock.getLocation());
-                }
-            }
-        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockPhysics(BlockPhysicsEvent event) {
         Block block = event.getBlock();
         if (isMagicBlockLocation(block.getLocation())) {
-            // 如果是魔法方块，取消物理事件
+            Material type = block.getType();
+            // 允许压力板、按钮等红石元件的状态改变，但阻止它们被破坏
+            if (isRedstoneComponent(type)) {
+                // 如果是由于方块更新引起的状态改变，允许它
+                if (event.getChangedType() == type) {
+                    return;
+                }
+            }
+            // 取消其他物理事件
             event.setCancelled(true);
         }
     }
 
-    private boolean isAttachable(Material material) {
-        switch (material) {
-            case TORCH:
-            case WALL_TORCH:
-            case LANTERN:
-            case SOUL_LANTERN:
-            case LEVER:
-            case REDSTONE_TORCH:
-            case REDSTONE_WALL_TORCH:
-            case TRIPWIRE_HOOK:
-            case VINE:
-                return true;
-            default:
-                return false;
-        }
+    private boolean isRedstoneComponent(Material material) {
+        return material.name().endsWith("_PRESSURE_PLATE") ||
+               material.name().endsWith("_BUTTON") ||
+               material == Material.LEVER ||
+               material == Material.REDSTONE_WIRE ||
+               material == Material.REPEATER ||
+               material == Material.COMPARATOR ||
+               material == Material.REDSTONE_TORCH ||
+               material == Material.REDSTONE_WALL_TORCH;
     }
 
     @EventHandler
@@ -625,7 +608,7 @@ public class BlockListener implements Listener {
                     if (player.isOnline()) {
                         foliaLib.getScheduler().runAtEntity(
                             player,
-                            (WrappedTask task) -> guiManager.getBlockSelectionGUI().openInventory(player)
+                            task -> guiManager.getBlockSelectionGUI().openInventory(player)
                         );
                     }
                 }, 2L);
@@ -746,8 +729,22 @@ public class BlockListener implements Listener {
         Block block = event.getBlock();
         Location blockLocation = block.getLocation();
 
+        // 检查是否是魔法方块
         if (isMagicBlockLocation(blockLocation)) {
-            event.setCancelled(true);
+            // 如果是水流破坏，直接移除方块和记录，不产生掉落物
+            removeMagicBlockLocation(blockLocation);
+            event.setCancelled(false);
+            return;
+        }
+
+        // 检查是否是附着在魔法方块上的方块
+        if (isAttachable(block.getType())) {
+            Block blockBelow = block.getRelative(BlockFace.DOWN);
+            if (isMagicBlockLocation(blockBelow.getLocation())) {
+                // 如果是水流破坏，直接移除方块和记录，不产生掉落物
+                removeMagicBlockLocation(blockLocation);
+                event.setCancelled(false);
+            }
         }
     }
 
@@ -840,6 +837,78 @@ public class BlockListener implements Listener {
                 }
                 return;
             }
+        }
+    }
+
+    private boolean isAttachable(Material material) {
+        switch (material) {
+            case TORCH:
+            case WALL_TORCH:
+            case LANTERN:
+            case SOUL_LANTERN:
+            case LEVER:
+            case REDSTONE_TORCH:
+            case REDSTONE_WALL_TORCH:
+            case TRIPWIRE_HOOK:
+            case VINE:
+            case WHITE_CARPET:
+            case ORANGE_CARPET:
+            case MAGENTA_CARPET:
+            case LIGHT_BLUE_CARPET:
+            case YELLOW_CARPET:
+            case LIME_CARPET:
+            case PINK_CARPET:
+            case GRAY_CARPET:
+            case LIGHT_GRAY_CARPET:
+            case CYAN_CARPET:
+            case PURPLE_CARPET:
+            case BLUE_CARPET:
+            case BROWN_CARPET:
+            case GREEN_CARPET:
+            case RED_CARPET:
+            case BLACK_CARPET:
+            case SNOW:
+            case RAIL:
+            case POWERED_RAIL:
+            case DETECTOR_RAIL:
+            case ACTIVATOR_RAIL:
+            case REDSTONE_WIRE:
+            case REPEATER:
+            case COMPARATOR:
+            case OAK_SAPLING:
+            case SPRUCE_SAPLING:
+            case BIRCH_SAPLING:
+            case JUNGLE_SAPLING:
+            case ACACIA_SAPLING:
+            case DARK_OAK_SAPLING:
+            case DANDELION:
+            case POPPY:
+            case BLUE_ORCHID:
+            case ALLIUM:
+            case AZURE_BLUET:
+            case RED_TULIP:
+            case ORANGE_TULIP:
+            case WHITE_TULIP:
+            case PINK_TULIP:
+            case OXEYE_DAISY:
+            case CORNFLOWER:
+            case LILY_OF_THE_VALLEY:
+            case WITHER_ROSE:
+            case SUGAR_CANE:
+            case WHEAT:
+            case CARROTS:
+            case POTATOES:
+            case BEETROOTS:
+            case MELON_STEM:
+            case PUMPKIN_STEM:
+            case NETHER_WART:
+            case SWEET_BERRY_BUSH:
+                return true;
+            default:
+                return material.name().endsWith("_PRESSURE_PLATE") || 
+                       material.name().endsWith("_BUTTON") ||
+                       material.name().endsWith("_SIGN") ||
+                       material.name().endsWith("_BANNER");
         }
     }
 }
