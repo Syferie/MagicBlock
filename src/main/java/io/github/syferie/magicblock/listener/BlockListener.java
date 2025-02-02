@@ -64,6 +64,143 @@ public class BlockListener implements Listener {
                material == Material.PEONY;
     }
 
+    private boolean isConnectableBlock(Material material) {
+        return material.toString().contains("WALL") ||
+               material.toString().contains("FENCE") ||
+               material.toString().contains("PANE") ||
+               material.toString().contains("CHAIN") ||
+               material == Material.IRON_BARS;
+    }
+
+    private void updateConnectedBlocks(Block block) {
+        // 获取所有相邻方块
+        BlockFace[] faces = {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
+        List<Block> adjacentBlocks = new ArrayList<>();
+        Material blockType = block.getType();
+
+        // 收集所有需要更新的方块
+        for (BlockFace face : faces) {
+            Block adjacent = block.getRelative(face);
+            if (adjacent.getType() == blockType) {
+                adjacentBlocks.add(adjacent);
+            }
+        }
+
+        // 更新当前方块和所有相邻方块的状态
+        if (!adjacentBlocks.isEmpty()) {
+            // 创建一个新的BlockData来应用连接状态
+            org.bukkit.block.data.BlockData blockData = block.getBlockData();
+            if (blockData instanceof org.bukkit.block.data.type.Wall) {
+                updateWallConnections(block, adjacentBlocks);
+            } else if (blockData instanceof org.bukkit.block.data.type.Fence) {
+                updateFenceConnections(block, adjacentBlocks);
+            } else if (blockData instanceof org.bukkit.block.data.type.GlassPane) {
+                updatePaneConnections(block, adjacentBlocks);
+            } else {
+                // 对于其他类型的连接型方块
+                block.getState().update(true, true);
+                for (Block adjacent : adjacentBlocks) {
+                    adjacent.getState().update(true, true);
+                }
+            }
+        }
+    }
+
+    private void updateWallConnections(Block wall, List<Block> adjacentBlocks) {
+        org.bukkit.block.data.type.Wall wallData = (org.bukkit.block.data.type.Wall) wall.getBlockData();
+        
+        // 更新当前墙的连接状态
+        for (BlockFace face : BlockFace.values()) {
+            if (face == BlockFace.NORTH || face == BlockFace.SOUTH || 
+                face == BlockFace.EAST || face == BlockFace.WEST) {
+                Block adjacent = wall.getRelative(face);
+                if (adjacent.getType() == wall.getType()) {
+                    wallData.setHeight(face, org.bukkit.block.data.type.Wall.Height.LOW);
+                } else {
+                    wallData.setHeight(face, org.bukkit.block.data.type.Wall.Height.NONE);
+                }
+            }
+        }
+        wall.setBlockData(wallData, true);
+
+        // 更新相邻墙的连接状态
+        for (Block adjacent : adjacentBlocks) {
+            org.bukkit.block.data.type.Wall adjacentWallData = (org.bukkit.block.data.type.Wall) adjacent.getBlockData();
+            for (BlockFace face : BlockFace.values()) {
+                if (face == BlockFace.NORTH || face == BlockFace.SOUTH || 
+                    face == BlockFace.EAST || face == BlockFace.WEST) {
+                    Block relative = adjacent.getRelative(face);
+                    if (relative.getType() == adjacent.getType()) {
+                        adjacentWallData.setHeight(face, org.bukkit.block.data.type.Wall.Height.LOW);
+                    } else {
+                        adjacentWallData.setHeight(face, org.bukkit.block.data.type.Wall.Height.NONE);
+                    }
+                }
+            }
+            adjacent.setBlockData(adjacentWallData, true);
+        }
+    }
+
+    private void updateFenceConnections(Block fence, List<Block> adjacentBlocks) {
+        org.bukkit.block.data.type.Fence fenceData = (org.bukkit.block.data.type.Fence) fence.getBlockData();
+        
+        // 更新当前栅栏的连接状态
+        for (BlockFace face : BlockFace.values()) {
+            if (face == BlockFace.NORTH || face == BlockFace.SOUTH || 
+                face == BlockFace.EAST || face == BlockFace.WEST) {
+                Block adjacent = fence.getRelative(face);
+                fenceData.setFace(face, adjacent.getType() == fence.getType() || 
+                                     adjacent.getType().toString().contains("FENCE_GATE"));
+            }
+        }
+        fence.setBlockData(fenceData, true);
+
+        // 更新相邻栅栏的连接状态
+        for (Block adjacent : adjacentBlocks) {
+            if (adjacent.getBlockData() instanceof org.bukkit.block.data.type.Fence) {
+                org.bukkit.block.data.type.Fence adjacentFenceData = (org.bukkit.block.data.type.Fence) adjacent.getBlockData();
+                for (BlockFace face : BlockFace.values()) {
+                    if (face == BlockFace.NORTH || face == BlockFace.SOUTH || 
+                        face == BlockFace.EAST || face == BlockFace.WEST) {
+                        Block relative = adjacent.getRelative(face);
+                        adjacentFenceData.setFace(face, relative.getType() == adjacent.getType() || 
+                                                     relative.getType().toString().contains("FENCE_GATE"));
+                    }
+                }
+                adjacent.setBlockData(adjacentFenceData, true);
+            }
+        }
+    }
+
+    private void updatePaneConnections(Block pane, List<Block> adjacentBlocks) {
+        org.bukkit.block.data.type.GlassPane paneData = (org.bukkit.block.data.type.GlassPane) pane.getBlockData();
+        
+        // 更新当前玻璃板的连接状态
+        for (BlockFace face : BlockFace.values()) {
+            if (face == BlockFace.NORTH || face == BlockFace.SOUTH || 
+                face == BlockFace.EAST || face == BlockFace.WEST) {
+                Block adjacent = pane.getRelative(face);
+                paneData.setFace(face, adjacent.getType() == pane.getType());
+            }
+        }
+        pane.setBlockData(paneData, true);
+
+        // 更新相邻玻璃板的连接状态
+        for (Block adjacent : adjacentBlocks) {
+            if (adjacent.getBlockData() instanceof org.bukkit.block.data.type.GlassPane) {
+                org.bukkit.block.data.type.GlassPane adjacentPaneData = (org.bukkit.block.data.type.GlassPane) adjacent.getBlockData();
+                for (BlockFace face : BlockFace.values()) {
+                    if (face == BlockFace.NORTH || face == BlockFace.SOUTH || 
+                        face == BlockFace.EAST || face == BlockFace.WEST) {
+                        Block relative = adjacent.getRelative(face);
+                        adjacentPaneData.setFace(face, relative.getType() == adjacent.getType());
+                    }
+                }
+                adjacent.setBlockData(adjacentPaneData, true);
+            }
+        }
+    }
+
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         // 如果是BlockMultiPlaceEvent，让专门的处理器处理
@@ -125,6 +262,14 @@ public class BlockListener implements Listener {
         if (isTallBlock(item.getType())) {
             Block topBlock = block.getRelative(BlockFace.UP);
             saveMagicBlockLocation(topBlock.getLocation());
+        }
+
+        // 如果是连接型方块，更新连接状态
+        if (isConnectableBlock(item.getType())) {
+            // 使用FoliaLib延迟1tick更新连接状态，确保方块已完全放置
+            foliaLib.getScheduler().runLater(() -> {
+                updateConnectedBlocks(block);
+            }, 1L);
         }
 
         // 减少使用次数
@@ -213,20 +358,46 @@ public class BlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockBreak(BlockBreakEvent event) {
-        Block block = event.getBlock();
-        Location blockLocation = block.getLocation();
+        Block eventBlock = event.getBlock();
+        Location blockLocation = eventBlock.getLocation();
         boolean isMagicBlock = isMagicBlockLocation(blockLocation);
+        Block targetBlock = eventBlock;  // 用于跟踪实际要处理的方块
+
+        // 检查是否是连接型方块
+        if (isConnectableBlock(eventBlock.getType())) {
+            // 保存相邻方块的引用，以便稍后更新
+            final List<Block> adjacentBlocks = new ArrayList<>();
+            BlockFace[] faces = {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
+            for (BlockFace face : faces) {
+                Block adjacent = eventBlock.getRelative(face);
+                if (adjacent.getType() == eventBlock.getType()) {
+                    adjacentBlocks.add(adjacent);
+                }
+            }
+
+            // 在方块被破坏后更新相邻方块
+            if (!adjacentBlocks.isEmpty()) {
+                final Material blockType = eventBlock.getType();
+                foliaLib.getScheduler().runLater(() -> {
+                    for (Block adjacent : adjacentBlocks) {
+                        if (adjacent.getType() == blockType) {
+                            adjacent.getState().update(true, true);
+                        }
+                    }
+                }, 1L);
+            }
+        }
 
         // 检查是否是床方块
-        if (block.getType().toString().contains("_BED")) {
-            org.bukkit.block.data.type.Bed bedData = (org.bukkit.block.data.type.Bed) block.getBlockData();
+        if (eventBlock.getType().toString().contains("_BED")) {
+            org.bukkit.block.data.type.Bed bedData = (org.bukkit.block.data.type.Bed) eventBlock.getBlockData();
             Block otherPart;
             
             // 根据当前部分找到另一部分
             if (bedData.getPart() == org.bukkit.block.data.type.Bed.Part.HEAD) {
-                otherPart = block.getRelative(bedData.getFacing().getOppositeFace());
+                otherPart = eventBlock.getRelative(bedData.getFacing().getOppositeFace());
             } else {
-                otherPart = block.getRelative(bedData.getFacing());
+                otherPart = eventBlock.getRelative(bedData.getFacing());
             }
             
             // 如果任一部分是魔法方块，则两部分都视为魔法方块
@@ -234,7 +405,7 @@ public class BlockListener implements Listener {
             if (isOtherPartMagic || isMagicBlock) {
                 isMagicBlock = true;
                 Player player = event.getPlayer();
-                ItemStack blockItem = new ItemStack(block.getType());
+                ItemStack blockItem = new ItemStack(eventBlock.getType());
                 
                 // 检查绑定状态
                 if (plugin.getBlockBindManager().isBlockBound(blockItem)) {
@@ -265,16 +436,16 @@ public class BlockListener implements Listener {
 
         // 检查是否是双格高方块的上半部分
         if (!isMagicBlock) {
-            Block blockBelow = block.getRelative(BlockFace.DOWN);
+            Block blockBelow = eventBlock.getRelative(BlockFace.DOWN);
             if (isTallBlock(blockBelow.getType()) && isMagicBlockLocation(blockBelow.getLocation())) {
                 isMagicBlock = true;
-                block = blockBelow; // 使用下半部分的方块进行后续处理
+                targetBlock = blockBelow; // 使用下半部分的方块
             }
         }
 
         // 检查是否是双格高方块的下半部分
-        if (!isMagicBlock && isTallBlock(block.getType())) {
-            Block blockAbove = block.getRelative(BlockFace.UP);
+        if (!isMagicBlock && isTallBlock(eventBlock.getType())) {
+            Block blockAbove = eventBlock.getRelative(BlockFace.UP);
             if (isMagicBlockLocation(blockLocation)) {
                 removeMagicBlockLocation(blockAbove.getLocation());
             }
@@ -282,7 +453,7 @@ public class BlockListener implements Listener {
 
         if (isMagicBlock) {
             Player player = event.getPlayer();
-            ItemStack blockItem = new ItemStack(block.getType());
+            ItemStack blockItem = new ItemStack(targetBlock.getType());
             
             // 检查绑定状态
             if (plugin.getBlockBindManager().isBlockBound(blockItem)) {
@@ -302,15 +473,15 @@ public class BlockListener implements Listener {
             removeMagicBlockLocation(blockLocation);
 
             // 如果是双格高方块，同时移除另一半的位置记录
-            if (isTallBlock(block.getType())) {
-                Block topBlock = block.getRelative(BlockFace.UP);
+            if (isTallBlock(targetBlock.getType())) {
+                Block topBlock = targetBlock.getRelative(BlockFace.UP);
                 removeMagicBlockLocation(topBlock.getLocation());
             }
         }
 
         // 检查相邻方块
         for (BlockFace face : BlockFace.values()) {
-            Block relativeBlock = block.getRelative(face);
+            Block relativeBlock = eventBlock.getRelative(face);
             if (isMagicBlockLocation(relativeBlock.getLocation())) {
                 // 如果相邻方块是附着类方块且是魔法方块，则移除它
                 Material type = relativeBlock.getType();
