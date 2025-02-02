@@ -113,6 +113,13 @@ public class BlockSelectionGUI {
             return;
         }
 
+        // 检查点击的位置是否在GUI的有效范围内
+        int slot = event.getRawSlot();
+        // 如果点击的是玩家背包区域或无效区域，直接返回
+        if (slot < 0 || slot >= event.getView().getTopInventory().getSize()) {
+            return;
+        }
+
         ItemStack clickedItem = event.getCurrentItem();
         if (clickedItem == null || clickedItem.getType() == Material.AIR) {
             return;
@@ -140,6 +147,11 @@ public class BlockSelectionGUI {
             player.closeInventory();
             plugin.sendMessage(player, "messages.search-prompt");
             GUIManager.setPlayerSearching(player, true);
+            return;
+        }
+
+        // 检查点击的物品是否在允许的材料列表中
+        if (!plugin.getAllowedMaterials().contains(clickedItem.getType())) {
             return;
         }
 
