@@ -46,7 +46,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: plugin-jar
-        path: ${{ github.workspace }}/MagicBlock-${{ steps.read_version.outputs.version }}.jar # 直接使用 shadowJar 生成的文件路径
+        path: ${{ github.workspace }}/build/libs/MagicBlock-${{ steps.read_version.outputs.version }}.jar 
         retention-days: 1
 
   release:
@@ -81,6 +81,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: MagicBlock-${{ needs.build.outputs.version }}.jar 
+        asset_path: MagicBlock-${{ needs.build.outputs.version }}.jar
         asset_name: MagicBlock-${{ needs.build.outputs.version }}.jar
         asset_content_type: application/java-archive
