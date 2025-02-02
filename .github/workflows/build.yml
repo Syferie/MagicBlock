@@ -32,7 +32,8 @@ jobs:
     - name: Read Version
       id: read_version
       run: |
-        VERSION=$(sed -n "s/^version = '\(.*\)'/\1/p" build.gradle)
+        # 使用 sed 提取版本号，确保能够匹配到正确的格式
+        VERSION=$(sed -n "s/^version *= *['\"]\([^'\"]*\)['\"]/\1/p" build.gradle)
         if [ -z "$VERSION" ]; then
           echo "Version not found in build.gradle. Exiting."
           exit 1
