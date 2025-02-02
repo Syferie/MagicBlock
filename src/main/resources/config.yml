@@ -76,6 +76,25 @@ allow-use-bound-blocks: false
 
 # Allowed Materials
 # -------------------------------------------------------------
+# CAUTION: Please be cautious when adding the following types of blocks to the ALLOWED blocks list!
+#
+# Due to Minecraft's game mechanics, some blocks may unexpectedly drop items under certain circumstances (e.g., water flow, destruction of the block they are attached to), even if they are on the allowed list.
+#
+# Therefore, it is strongly recommended that you EXERCISE CAUTION when adding the following types of blocks:
+#   - Attached Blocks: Blocks that require attachment to another block to exist.
+#   - Environmentally Sensitive Blocks: Blocks that are easily dropped due to environmental factors such as water flow, etc.
+#
+# Typical examples include, but are not limited to:
+#   - Redstone Dust (redstone_wire)
+#   - Redstone Torch (redstone_torch)
+#   - Torch (torch)
+#   - Various Flowers (e.g., poppy, dandelion, blue_orchid, etc.)
+#   - Various Saplings (e.g., oak_sapling, spruce_sapling, birch_sapling, etc.)
+#   - Various Buttons (e.g., oak_button, stone_button, etc.)
+#   - Lever (lever)
+#   - Pressure Plates (e.g., oak_pressure_plate, stone_pressure_plate, etc.)
+#   - Other similar susceptible blocks
+
 
 # Materials that will appear in the GUI selection menu for all players.
 allowed-materials:

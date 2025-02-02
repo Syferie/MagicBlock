@@ -14,7 +14,7 @@ jobs:
       version: ${{ steps.read_version.outputs.version }}
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Prepare Build
       run: |
         if [ -f gradle.properties ]; then
@@ -28,19 +28,19 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: 'gradle'
-    
+
     - name: Build with Gradle
       run: ./gradlew clean build --info --stacktrace
       env:
         GRADLE_OPTS: "-Dorg.gradle.logging.level=info"
-    
+
     - name: Read Version
       id: read_version
       run: |
-        VERSION=$(grep 'version ' build.gradle | cut -d "'" -f 2)
+        VERSION=$(sed -n "s/^version = '\(.*\)'/\1/p" build.gradle)
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Detected Version: $VERSION"
-    
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
@@ -53,16 +53,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Download Artifact
       uses: actions/download-artifact@v4
       with:
         name: plugin-jar
         path: build/libs/
-    
+
     - name: List Downloaded Artifacts
       run: ls -l build/libs/
-    
+
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -73,7 +73,7 @@ jobs:
         release_name: Release ${{ needs.build.outputs.version }}
         draft: false
         prerelease: false
-    
+
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
