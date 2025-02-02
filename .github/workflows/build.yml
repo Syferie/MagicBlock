@@ -29,11 +29,19 @@ jobs:
         distribution: 'temurin'
         cache: 'gradle'
 
+    - name: List Files
+      run: |
+        ls -l
+
+    - name: Convert Line Endings
+      run: |
+        sudo apt-get install -y dos2unix
+        dos2unix build.gradle
+
     - name: Read Version
       id: read_version
       run: |
-        # 使用 sed 提取版本号，确保能够匹配到正确的格式
-        VERSION=$(sed -n "s/^version *= *['\"]\([^'\"]*\)['\"]/\1/p" build.gradle)
+        VERSION=$(grep "version" build.gradle | cut -d "'" -f 2)
         if [ -z "$VERSION" ]; then
           echo "Version not found in build.gradle. Exiting."
           exit 1
