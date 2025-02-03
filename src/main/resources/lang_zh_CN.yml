@@ -64,6 +64,7 @@ commands:
     list: "&7/mb list &8- &7查看已绑定的方块"
     reload: "&7/mb reload &8- &7重载插件配置"
     tip: "&7潜行 + 右键 &8- &7绑定方块"
+    gui-tip: "&7潜行 + 左键 &8- &7打开方块选择界面"
   get:
     no-permission: "&c✖ &7你没有权限使用此命令！"
     success: "&a✔ &7成功获得一个拥有 &b{0} &7次使用次数的MagicBlock！"

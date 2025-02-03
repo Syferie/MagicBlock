@@ -64,6 +64,7 @@ commands:
     list: "&7/mb list &8- &7View bound blocks"
     reload: "&7/mb reload &8- &7Reload plugin configuration"
     tip: "&7Sneak + Right Click &8- &7Bind block"
+    gui-tip: "&7Sneak + Left Click &8- &7Open block selection menu"
   get:
     no-permission: "&c✖ &7You don't have permission to use this command!"
     success: "&a✔ &7Successfully got a MagicBlock with &b{0} &7uses!"

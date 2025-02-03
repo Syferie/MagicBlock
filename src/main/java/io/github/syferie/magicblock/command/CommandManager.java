@@ -99,16 +99,34 @@ public class CommandManager implements CommandExecutor {
     private void sendHelpMessage(Player player) {
         plugin.sendMessage(player, "commands.help.title");
         plugin.sendMessage(player, "commands.help.help");
-        plugin.sendMessage(player, "commands.help.get");
-        plugin.sendMessage(player, "commands.help.give");
-        plugin.sendMessage(player, "commands.help.getfood");
-        plugin.sendMessage(player, "commands.help.settimes");
-        plugin.sendMessage(player, "commands.help.addtimes");
+        
+        // 只显示玩家有权限的命令
+        if (player.hasPermission("magicblock.get")) {
+            plugin.sendMessage(player, "commands.help.get");
+        }
+        if (player.hasPermission("magicblock.give")) {
+            plugin.sendMessage(player, "commands.help.give");
+        }
+        if (player.hasPermission("magicblock.getfood")) {
+            plugin.sendMessage(player, "commands.help.getfood");
+        }
+        if (player.hasPermission("magicblock.settimes")) {
+            plugin.sendMessage(player, "commands.help.settimes");
+        }
+        if (player.hasPermission("magicblock.addtimes")) {
+            plugin.sendMessage(player, "commands.help.addtimes");
+        }
+        
+        // list 命令默认所有玩家都可以使用
         plugin.sendMessage(player, "commands.help.list");
+        
         if (player.hasPermission("magicblock.reload")) {
             plugin.sendMessage(player, "commands.help.reload");
         }
+        
+        // 基础功能提示
         plugin.sendMessage(player, "commands.help.tip");
+        plugin.sendMessage(player, "commands.help.gui-tip");
     }
 
     private void handleGive(CommandSender sender, String[] args) {
@@ -214,7 +232,7 @@ public class CommandManager implements CommandExecutor {
     }
 
     private void handleGetFood(Player player, String[] args) {
-        if (!player.hasPermission("magicblock.food")) {
+        if (!player.hasPermission("magicblock.getfood")) {
             plugin.sendMessage(player, "commands.getfood.no-permission");
             return;
         }
@@ -358,11 +376,6 @@ public class CommandManager implements CommandExecutor {
     }
 
     private void handleList(Player player) {
-        if (!player.hasPermission("magicblock.list")) {
-            plugin.sendMessage(player, "commands.list.no-permission");
-            return;
-        }
-
         plugin.getBlockBindManager().openBindList(player);
     }
 }

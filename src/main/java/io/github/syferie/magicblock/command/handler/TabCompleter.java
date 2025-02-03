@@ -19,25 +19,56 @@ public class TabCompleter implements org.bukkit.command.TabCompleter {
         
         if (command.getName().equalsIgnoreCase("magicblock")) {
             if (args.length == 1) {
+                // 基础命令
+                List<String> availableCommands = new ArrayList<>();
+                availableCommands.add("help");
+                
+                // 根据权限添加命令
+                if (sender.hasPermission("magicblock.get")) {
+                    availableCommands.add("get");
+                }
+                if (sender.hasPermission("magicblock.give")) {
+                    availableCommands.add("give");
+                }
+                if (sender.hasPermission("magicblock.getfood")) {
+                    availableCommands.add("getfood");
+                }
+                if (sender.hasPermission("magicblock.settimes")) {
+                    availableCommands.add("settimes");
+                }
+                if (sender.hasPermission("magicblock.addtimes")) {
+                    availableCommands.add("addtimes");
+                }
+                if (sender.hasPermission("magicblock.list")) {
+                    availableCommands.add("list");
+                }
+                if (sender.hasPermission("magicblock.reload")) {
+                    availableCommands.add("reload");
+                }
+
                 // 过滤并返回匹配的命令
                 String input = args[0].toLowerCase();
-                completions.addAll(commands.stream()
+                completions.addAll(availableCommands.stream()
                     .filter(cmd -> cmd.startsWith(input))
                     .collect(Collectors.toList()));
             } else if (args.length == 2) {
                 // 针对特定命令的第二个参数提供补全
                 switch (args[0].toLowerCase()) {
                     case "give":
-                        // 返回在线玩家列表
-                        String input = args[1].toLowerCase();
-                        completions.addAll(Bukkit.getOnlinePlayers().stream()
-                            .map(Player::getName)
-                            .filter(name -> name.toLowerCase().startsWith(input))
-                            .collect(Collectors.toList()));
+                        if (sender.hasPermission("magicblock.give")) {
+                            // 返回在线玩家列表
+                            String input = args[1].toLowerCase();
+                            completions.addAll(Bukkit.getOnlinePlayers().stream()
+                                .map(Player::getName)
+                                .filter(name -> name.toLowerCase().startsWith(input))
+                                .collect(Collectors.toList()));
+                        }
                         break;
                     case "getfood":
-                        // 这里可以添加食物类型的补全
-                        completions.addAll(Arrays.asList("BREAD", "COOKED_BEEF", "GOLDEN_APPLE", "APPLE"));
+                        if (sender.hasPermission("magicblock.getfood")) {
+                            // 这里可以添加食物类型的补全
+                            completions.addAll(Arrays.asList("BREAD", "COOKED_BEEF", "GOLDEN_APPLE", "APPLE"));
+                        }
                         break;
                 }
             }

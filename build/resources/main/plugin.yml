@@ -24,7 +24,7 @@ permissions:
       magicblock.reload: true
       magicblock.settimes: true
       magicblock.addtimes: true
-      magicblock.food: true
+      magicblock.getfood: true
       magicblock.list: true
   magicblock.use:
     description: Allows basic usage of MagicBlock
@@ -44,8 +44,8 @@ permissions:
   magicblock.addtimes:
     description: Allows adding use times to MagicBlocks
     default: op
-  magicblock.food:
-    description: Allows using magic food items
+  magicblock.getfood:
+    description: Allows getting magic food items
     default: op
   magicblock.list:
     description: Allows viewing bound blocks list
