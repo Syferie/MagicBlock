@@ -19,14 +19,19 @@ permissions:
     default: op
     children:
       magicblock.use: true
+      magicblock.get: true
       magicblock.give: true
       magicblock.reload: true
       magicblock.settimes: true
       magicblock.addtimes: true
       magicblock.food: true
+      magicblock.list: true
   magicblock.use:
     description: Allows basic usage of MagicBlock
     default: true
+  magicblock.get:
+    description: Allows getting MagicBlocks
+    default: op
   magicblock.give:
     description: Allows giving MagicBlocks to other players
     default: op
@@ -41,4 +46,7 @@ permissions:
     default: op
   magicblock.food:
     description: Allows using magic food items
+    default: op
+  magicblock.list:
+    description: Allows viewing bound blocks list
     default: true

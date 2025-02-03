@@ -118,7 +118,7 @@ public class CommandManager implements CommandExecutor {
         }
 
         if (args.length < 2) {
-            sender.sendMessage(ChatColor.RED + "用法: /mb give <玩��> [次数]");
+            sender.sendMessage(ChatColor.RED + "用法: /mb give <玩家> [次数]");
             return;
         }
 
@@ -214,6 +214,11 @@ public class CommandManager implements CommandExecutor {
     }
 
     private void handleGetFood(Player player, String[] args) {
+        if (!player.hasPermission("magicblock.food")) {
+            plugin.sendMessage(player, "commands.getfood.no-permission");
+            return;
+        }
+
         if (args.length < 2) {
             plugin.sendMessage(player, "commands.getfood.usage");
             return;
@@ -261,6 +266,11 @@ public class CommandManager implements CommandExecutor {
     }
 
     private void handleSetTimes(Player player, String[] args) {
+        if (!player.hasPermission("magicblock.settimes")) {
+            plugin.sendMessage(player, "commands.settimes.no-permission");
+            return;
+        }
+
         if (args.length < 2) {
             plugin.sendMessage(player, "commands.settimes.usage");
             return;
@@ -320,8 +330,9 @@ public class CommandManager implements CommandExecutor {
             return;
         }
 
-        // 获取当前使用次数
+        // 获取当前使用次数和最大使用次数
         int currentTimes = plugin.getBlockManager().getUseTimes(item);
+        int maxTimes = plugin.getBlockManager().getMaxUseTimes(item);
         
         // 检查是否是无限次数
         if (currentTimes == Integer.MAX_VALUE - 100) {
@@ -329,11 +340,13 @@ public class CommandManager implements CommandExecutor {
             return;
         }
 
-        // 计算新的使用次数
+        // 计算新的使用次数和最大次数
         int newTimes = currentTimes + addTimes;
+        int newMaxTimes = maxTimes + addTimes;
         
-        // 设置新的使用次数
+        // 设置新的使用次数和最大次数
         plugin.getBlockManager().setUseTimes(item, newTimes);
+        plugin.getBlockManager().setMaxUseTimes(item, newMaxTimes);
         
         // 如果是绑定的方块，更新配置中的使用次数
         if (plugin.getBlockBindManager().isBlockBound(item)) {
