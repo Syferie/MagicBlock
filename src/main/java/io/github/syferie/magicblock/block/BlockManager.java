@@ -94,6 +94,7 @@ public class BlockManager implements IMagicBlock {
                         String path = "bindings." + uuid + "." + blockId;
                         String material = plugin.getBlockBindManager().getBindConfig().getString(path + ".material");
                         if (material != null && material.equals(item.getType().name())) {
+                            // 更新使用次数
                             plugin.getBlockBindManager().getBindConfig().set(path + ".uses", currentTimes);
                             plugin.getBlockBindManager().saveBindConfig();
                             break;

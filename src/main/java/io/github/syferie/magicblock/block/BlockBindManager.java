@@ -518,4 +518,31 @@ public class BlockBindManager {
         bindConfig.set(path, true);
         saveBindConfig();
     }
+
+    public void handleDepleted(ItemStack item) {
+        if (!isBlockBound(item)) return;
+        
+        UUID boundPlayer = getBoundPlayer(item);
+        if (boundPlayer == null) return;
+
+        String uuid = boundPlayer.toString();
+        if (!bindConfig.contains("bindings." + uuid)) return;
+
+        Set<String> blocks = Objects.requireNonNull(bindConfig.getConfigurationSection("bindings." + uuid)).getKeys(false);
+        for (String blockId : blocks) {
+            String path = "bindings." + uuid + "." + blockId;
+            String material = bindConfig.getString(path + ".material");
+            int uses = bindConfig.getInt(path + ".uses", 0);
+
+            if (material != null && material.equals(item.getType().name()) && uses <= 0) {
+                // 如果配置为移除耗尽的方块
+                if (plugin.getConfig().getBoolean("remove-depleted-blocks", false)) {
+                    // 从绑定列表中移除
+                    bindConfig.set(path, null);
+                    saveBindConfig();
+                }
+                break;
+            }
+        }
+    }
 } 

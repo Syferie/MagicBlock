@@ -94,6 +94,11 @@ default-block-times: 1000000000
 # This only affects block usage, not the binding system or UI
 allow-use-bound-blocks: false
 
+# Whether to remove the magic block when its uses are depleted
+# If set to true, the block will be removed from the player's inventory and bound list when uses reach 0
+# If set to false, the block will remain but cannot be used (default behavior)
+remove-depleted-blocks: false
+
 # Allowed Materials
 # -------------------------------------------------------------
 # CAUTION: Please be cautious when adding the following types of blocks to the ALLOWED blocks list!

@@ -234,12 +234,21 @@ public class BlockListener implements Listener {
     private void handleMagicBlockPlace(BlockPlaceEvent event, ItemStack item) {
         Block block = event.getBlock();
         Player player = event.getPlayer();
-        
+
         // 检查使用次数
         int useTimes = plugin.getBlockManager().getUseTimes(item);
-        if (useTimes == 0) {
+        if (useTimes <= 0) {
             event.setCancelled(true);
             plugin.sendMessage(player, "messages.block-removed");
+            
+            // 处理耗尽的方块
+            plugin.getBlockBindManager().handleDepleted(item);
+            
+            // 如果配置为移除耗尽的方块
+            if (plugin.getConfig().getBoolean("remove-depleted-blocks", false)) {
+                // 从玩家手中移除物品
+                player.getInventory().setItemInMainHand(null);
+            }
             return;
         }
 
@@ -278,7 +287,7 @@ public class BlockListener implements Listener {
         if (useTimes > 0) { // -1表示无限使用
             plugin.getBlockManager().decrementUseTimes(item);
         }
-        
+
         // 记录使用统计
         plugin.incrementPlayerUsage(player.getUniqueId());
         plugin.logUsage(player, item);
