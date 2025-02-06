@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 
 public class MagicBlockPlugin extends JavaPlugin {
@@ -81,7 +83,7 @@ public class MagicBlockPlugin extends JavaPlugin {
         this.foodService = new FoodService(this);
 
         saveDefaultConfig();
-        checkAndUpdateConfig("config.yml");
+        checkAndUpdateConfig("config.yml", true);
 
         // 注册PlaceholderAPI扩展
         if(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
@@ -229,33 +231,76 @@ public class MagicBlockPlugin extends JavaPlugin {
         return bar.toString();
     }
 
-    private void checkAndUpdateConfig(String fileName) {
+    private void checkAndUpdateAllConfigs() {
+        // 检查主配置文件
+        checkAndUpdateConfig("config.yml", true);
+        
+        // 检查语言文件
+        for (String langCode : languageManager.getSupportedLanguages().keySet()) {
+            checkAndUpdateConfig("lang_" + langCode + ".yml", false);
+        }
+        
+        // 检查食物配置文件
+        checkAndUpdateConfig("foodconf.yml", false);
+    }
+
+    private void checkAndUpdateConfig(String fileName, boolean isMainConfig) {
         File configFile = new File(getDataFolder(), fileName);
         if (!configFile.exists()) {
             saveResource(fileName, false);
-        }
-
-        FileConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-        InputStream defConfigStream = getResource(fileName);
-        if (defConfigStream == null) {
+            getLogger().info(languageManager.getMessage("general.config-created", fileName));
             return;
         }
 
-        FileConfiguration defConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(defConfigStream));
-        boolean configUpdated = false;
+        FileConfiguration currentConfig = YamlConfiguration.loadConfiguration(configFile);
+        InputStream defaultConfigStream = getResource(fileName);
+        if (defaultConfigStream == null) {
+            getLogger().warning("无法找到默认配置文件: " + fileName);
+            return;
+        }
 
-        for (String key : defConfig.getKeys(true)) {
-            if (!config.isSet(key)) {
-                config.set(key, defConfig.get(key));
+        FileConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(defaultConfigStream));
+        boolean configUpdated = false;
+        Map<String, Object> missingEntries = new LinkedHashMap<>();
+
+        // 递归检查所有键
+        for (String key : defaultConfig.getKeys(true)) {
+            if (!currentConfig.contains(key, true)) {
+                missingEntries.put(key, defaultConfig.get(key));
                 configUpdated = true;
             }
         }
 
         if (configUpdated) {
+            // 添加缺失的配置项
+            for (Map.Entry<String, Object> entry : missingEntries.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                
+                // 获取父节点的注释（如果有）
+                String parentPath = key.contains(".") ? key.substring(0, key.lastIndexOf('.')) : "";
+                if (!parentPath.isEmpty() && defaultConfig.contains(parentPath)) {
+                    List<String> comments = defaultConfig.getComments(parentPath);
+                    if (comments != null && !comments.isEmpty()) {
+                        currentConfig.setComments(parentPath, comments);
+                    }
+                }
+                
+                // 获取键的注释
+                List<String> comments = defaultConfig.getComments(key);
+                if (comments != null && !comments.isEmpty()) {
+                    currentConfig.setComments(key, comments);
+                }
+                
+                currentConfig.set(key, value);
+                getLogger().info(languageManager.getMessage("general.config-key-added", fileName, key));
+            }
+
             try {
-                config.save(configFile);
+                currentConfig.save(configFile);
+                getLogger().info(languageManager.getMessage("general.config-updated", fileName));
             } catch (IOException e) {
-                getLogger().warning("无法存配置文件: " + fileName);
+                getLogger().warning("无法保存更新后的配置文件 " + fileName + ": " + e.getMessage());
             }
         }
     }
@@ -384,8 +429,8 @@ public class MagicBlockPlugin extends JavaPlugin {
         saveDefaultConfig();
         reloadConfig();
         
-        // 检查并更新配置文件
-        checkAndUpdateConfig("config.yml");
+        // 检查并更新所有配置文件
+        checkAndUpdateAllConfigs();
         
         // 初始化食物配置
         File foodConfigFile = new File(getDataFolder(), "foodconf.yml");

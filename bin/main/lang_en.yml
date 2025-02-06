@@ -9,6 +9,9 @@ general:
   food-config-not-found: "&c✖ &7Food configuration file not found!"
   materials-updated: "&a✔ &7Allowed materials updated successfully!"
   config-load-error: "&c✖ &7Error loading configuration!"
+  config-created: "&a✔ &7Created new configuration file: {0}"
+  config-updated: "&a✔ &7Configuration file {0} has been updated"
+  config-key-added: "&7Added missing configuration key in {0}: {1}"
 
 gui:
   title: "&8⚡ &bMagicBlock Selection"
