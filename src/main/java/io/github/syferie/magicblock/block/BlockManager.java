@@ -193,6 +193,15 @@ public class BlockManager implements IMagicBlock {
             }
         }
 
+        // 获取物品所有者（如果已绑定）用于PAPI变量解析
+        Player owner = null;
+        if (isBlockBound(item)) {
+            UUID boundPlayer = getBoundPlayer(item);
+            if (boundPlayer != null) {
+                owner = Bukkit.getPlayer(boundPlayer);
+            }
+        }
+
         // 收集装饰性lore
         if (magicLoreIndex != -1) {
             int startIndex = magicLoreIndex + 1;
@@ -217,14 +226,14 @@ public class BlockManager implements IMagicBlock {
 
         // 添加装饰性lore（如果启用）
         if (plugin.getConfig().getBoolean("display.decorative-lore.enabled", true)) {
-            // 如果已有装饰性lore就使用已有的，否则使用配置中的
-            if (!decorativeLore.isEmpty()) {
-                lore.addAll(decorativeLore);
-            } else {
-                List<String> configLore = plugin.getConfig().getStringList("display.decorative-lore.lines");
-                for (String line : configLore) {
-                    lore.add(ChatColor.translateAlternateColorCodes('&', line));
+            List<String> configLore = plugin.getConfig().getStringList("display.decorative-lore.lines");
+            for (String line : configLore) {
+                String processedLine = ChatColor.translateAlternateColorCodes('&', line);
+                // 如果服务器安装了PlaceholderAPI，处理变量
+                if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+                    processedLine = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(owner, processedLine);
                 }
+                lore.add(processedLine);
             }
         }
 

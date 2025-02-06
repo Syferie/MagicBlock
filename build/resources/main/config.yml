@@ -43,7 +43,22 @@ display:
     # Enable decorative lore lines below the Magic Block's identifier.
     enabled: true
     # Decorative lore lines, displayed below the magic-lore.
-    # You can customize these lines freely; they do not affect existing blocks.
+    # Supports color codes (&) and PlaceholderAPI variables if installed.
+    #
+    # Available MagicBlock Variables:
+    # %magicblock_block_uses%     - Total block uses by player
+    # %magicblock_remaining_uses% - Current block's remaining uses
+    # %magicblock_max_uses%       - Current block's maximum uses
+    # %magicblock_uses_progress%  - Usage progress (percentage)
+    #
+    # Common Variables:
+    # %player_name%     - Bound player's name
+    # %server_online%   - Online players count
+    #
+    # Example with variables (remove # to use):
+    # - "&7Bound to: %player_name%"
+    # - "&7Total Uses: %magicblock_block_uses%"
+    # - "&7Progress: %magicblock_uses_progress%%"
     lines:
       - "&7This is a magical block."
       - "&7It is imbued with the power of magic."

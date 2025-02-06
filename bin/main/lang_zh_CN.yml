@@ -22,6 +22,8 @@ gui:
   remove-block: "&c▸ &7右键点击从列表中隐藏"
   remove-block-note: "&8• &7(仅从列表中隐藏，不会解除绑定)"
   remaining-uses: "剩余使用次数: "
+  page-info: "&e第 {0}/{1} 页"
+  close: "&c关闭"
 
 messages:
   block-placed: "&a✔ &7成功放置MagicBlock！"
@@ -48,6 +50,7 @@ messages:
   block-bind-removed: "&a✔ &7方块已从列表中隐藏！"
   bound-to: "绑定玩家:"
   click-again-to-remove: "&e⚡ &7再次点击以从列表中隐藏此方块"
+  cannot-craft-with-magic-block: "&c✖ &7魔法方块不能用于合成！"
 
 commands:
   help:
@@ -61,6 +64,7 @@ commands:
     list: "&7/mb list &8- &7查看已绑定的方块"
     reload: "&7/mb reload &8- &7重载插件配置"
     tip: "&7潜行 + 右键 &8- &7绑定方块"
+    gui-tip: "&7潜行 + 左键 &8- &7打开方块选择界面"
   get:
     no-permission: "&c✖ &7你没有权限使用此命令！"
     success: "&a✔ &7成功获得一个拥有 &b{0} &7次使用次数的MagicBlock！"
