@@ -12,6 +12,11 @@ general:
   config-created: "&a✔ &7创建新的配置文件: {0}"
   config-updated: "&a✔ &7配置文件 {0} 已更新"
   config-key-added: "&7在 {0} 中添加了缺失的配置项: {1}"
+  update-found: "&e发现新版本: &b{0}"
+  current-version: "&e当前版本: &b{0}"
+  download-link: "&e下载地址: &bhttps://www.spigotmc.org/resources/{0}"
+  up-to-date: "&a插件已是最新版本!"
+  update-check-failed: "&c检查更新失败: {0}"
 
 gui:
   title: "&8⚡ &bMagicBlock选择"

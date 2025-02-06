@@ -12,6 +12,11 @@ general:
   config-created: "&a✔ &7Created new configuration file: {0}"
   config-updated: "&a✔ &7Configuration file {0} has been updated"
   config-key-added: "&7Added missing configuration key in {0}: {1}"
+  update-found: "&eNew version available: &b{0}"
+  current-version: "&eCurrent version: &b{0}"
+  download-link: "&eDownload: &bhttps://www.spigotmc.org/resources/{0}"
+  up-to-date: "&aPlugin is up to date!"
+  update-check-failed: "&cUpdate check failed: {0}"
 
 gui:
   title: "&8⚡ &bMagicBlock Selection"

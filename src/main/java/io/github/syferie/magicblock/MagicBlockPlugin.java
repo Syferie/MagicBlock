@@ -12,6 +12,7 @@ import io.github.syferie.magicblock.metrics.Metrics;
 import io.github.syferie.magicblock.util.Statistics;
 import io.github.syferie.magicblock.util.LanguageManager;
 import io.github.syferie.magicblock.block.BlockBindManager;
+import io.github.syferie.magicblock.util.UpdateChecker;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -193,8 +194,10 @@ public class MagicBlockPlugin extends JavaPlugin {
 
     // 检查更新
     private void checkForUpdates() {
-        // TODO: 实现更新检查逻辑
-        debug("正在检查更新...");
+        if(getConfig().getBoolean("check-updates")) {
+            debug("正在检查更新...");
+            new UpdateChecker(this, 112611).checkForUpdates();
+        }
     }
 
     // 记录使用统计
