@@ -39,10 +39,15 @@ blacklisted-worlds:
 # %s will be replaced with the block's material name.
 display:
   block-name-format: "&b✦ %s &b✦"
+  # Control which information lines are shown in the lore
+  show-info:
+    bound-player: true     # Show "Bound to: PlayerName"
+    usage-count: true      # Show "Uses: X/Y"
+    progress-bar: true     # Show usage progress bar
   decorative-lore:
     # Enable decorative lore lines below the Magic Block's identifier.
     enabled: true
-    # Decorative lore lines, displayed below the magic-lore.
+    # Decorative lore lines will be displayed between magic-lore and usage information
     # Supports color codes (&) and PlaceholderAPI variables if installed.
     #
     # Available MagicBlock Variables:

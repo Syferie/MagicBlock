@@ -119,7 +119,7 @@ public class BlockManager implements IMagicBlock {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
-        List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
+        List<String> lore = new ArrayList<>();
         
         // 获取物品的最大使用次数
         int maxTimes = getMaxUseTimes(item);
@@ -128,101 +128,18 @@ public class BlockManager implements IMagicBlock {
         // 检查是否是"无限"次数（大数值）
         boolean isInfinite = maxTimes == Integer.MAX_VALUE - 100;
         
-        // 构建使用次数显示和进度条
-        StringBuilder usageText = new StringBuilder();
-        StringBuilder progressBar = new StringBuilder();
-        
-        // 使用次数显示
-        usageText.append(ChatColor.GRAY).append(plugin.getUsageLorePrefix()).append(" ");
-        if (isInfinite) {
-            usageText.append(ChatColor.AQUA).append("∞")
-                    .append(ChatColor.GRAY).append("/")
-                    .append(ChatColor.GRAY).append("∞");
-        } else {
-            usageText.append(ChatColor.AQUA).append(remainingTimes)
-                    .append(ChatColor.GRAY).append("/")
-                    .append(ChatColor.GRAY).append(maxTimes);
-            
-            // 只有非无限次数才显示进度条
-            double usedPercentage = (double) remainingTimes / maxTimes;
-            int barLength = 10;
-            int filledBars = (int) Math.round(usedPercentage * barLength);
-            
-            // 进度条显示
-            progressBar.append(ChatColor.GRAY).append("[");
-            for (int i = 0; i < barLength; i++) {
-                if (i < filledBars) {
-                    progressBar.append(ChatColor.GREEN).append("■");
-                } else {
-                    progressBar.append(ChatColor.GRAY).append("■");
-                }
-            }
-            progressBar.append(ChatColor.GRAY).append("]");
-        }
-
-        // 保存现有的lore信息
-        String bindLorePrefix = plugin.getBlockBindManager().getBindLorePrefix();
-        String bindInfo = null;
-        List<String> decorativeLore = new ArrayList<>();
-        int magicLoreIndex = -1;
-        int bindLoreIndex = -1;
-        int usageIndex = -1;
-
-        // 找到各个关键lore的位置
-        for (int i = 0; i < lore.size(); i++) {
-            String line = lore.get(i);
-            if (line.equals(plugin.getMagicLore())) {
-                magicLoreIndex = i;
-            } else if (line.startsWith(bindLorePrefix)) {
-                bindLoreIndex = i;
-                bindInfo = line;
-            } else if (line.contains(plugin.getUsageLorePrefix())) {
-                usageIndex = i;
-                break;
-            }
-        }
-
-        // 如果物品已绑定但没有绑定lore，添加绑定信息
-        if (bindInfo == null && isBlockBound(item)) {
-            UUID boundPlayer = getBoundPlayer(item);
-            if (boundPlayer != null) {
-                Player player = Bukkit.getPlayer(boundPlayer);
-                if (player != null) {
-                    bindInfo = bindLorePrefix + player.getName();
-                }
-            }
-        }
+        // 添加魔法方块标识
+        lore.add(plugin.getMagicLore());
 
         // 获取物品所有者（如果已绑定）用于PAPI变量解析
         Player owner = null;
+        UUID boundPlayer = null;
         if (isBlockBound(item)) {
-            UUID boundPlayer = getBoundPlayer(item);
+            boundPlayer = getBoundPlayer(item);
             if (boundPlayer != null) {
                 owner = Bukkit.getPlayer(boundPlayer);
             }
         }
-
-        // 收集装饰性lore
-        if (magicLoreIndex != -1) {
-            int startIndex = magicLoreIndex + 1;
-            int endIndex = usageIndex != -1 ? usageIndex : lore.size();
-            
-            // 如果有绑定信息，不要将其包含在装饰性lore中
-            if (bindLoreIndex != -1 && bindLoreIndex > startIndex && bindLoreIndex < endIndex) {
-                if (startIndex < bindLoreIndex) {
-                    decorativeLore.addAll(lore.subList(startIndex, bindLoreIndex));
-                }
-                if (bindLoreIndex + 1 < endIndex) {
-                    decorativeLore.addAll(lore.subList(bindLoreIndex + 1, endIndex));
-                }
-            } else if (startIndex < endIndex) {
-                decorativeLore.addAll(lore.subList(startIndex, endIndex));
-            }
-        }
-
-        // 重建lore列表
-        lore.clear();
-        lore.add(plugin.getMagicLore());
 
         // 添加装饰性lore（如果启用）
         if (plugin.getConfig().getBoolean("display.decorative-lore.enabled", true)) {
@@ -237,14 +154,48 @@ public class BlockManager implements IMagicBlock {
             }
         }
 
-        // 添加绑定信息（如果存在）
-        if (bindInfo != null) {
-            lore.add(bindInfo);
+        // 添加绑定信息（如果启用且已绑定）
+        if (plugin.getConfig().getBoolean("display.show-info.bound-player", true) && boundPlayer != null) {
+            String bindLorePrefix = plugin.getBlockBindManager().getBindLorePrefix();
+            if (owner != null) {
+                lore.add(bindLorePrefix + owner.getName());
+            } else {
+                lore.add(bindLorePrefix + boundPlayer.toString());
+            }
         }
 
-        // 添加使用次数和进度条
-        lore.add(usageText.toString());
-        if (!isInfinite) {
+        // 添加使用次数（如果启用）
+        if (plugin.getConfig().getBoolean("display.show-info.usage-count", true)) {
+            StringBuilder usageText = new StringBuilder();
+            usageText.append(ChatColor.GRAY).append(plugin.getUsageLorePrefix()).append(" ");
+            if (isInfinite) {
+                usageText.append(ChatColor.AQUA).append("∞")
+                        .append(ChatColor.GRAY).append("/")
+                        .append(ChatColor.GRAY).append("∞");
+            } else {
+                usageText.append(ChatColor.AQUA).append(remainingTimes)
+                        .append(ChatColor.GRAY).append("/")
+                        .append(ChatColor.GRAY).append(maxTimes);
+            }
+            lore.add(usageText.toString());
+        }
+
+        // 添加进度条（如果启用且不是无限次数）
+        if (!isInfinite && plugin.getConfig().getBoolean("display.show-info.progress-bar", true)) {
+            double usedPercentage = (double) remainingTimes / maxTimes;
+            int barLength = 10;
+            int filledBars = (int) Math.round(usedPercentage * barLength);
+            
+            StringBuilder progressBar = new StringBuilder();
+            progressBar.append(ChatColor.GRAY).append("[");
+            for (int i = 0; i < barLength; i++) {
+                if (i < filledBars) {
+                    progressBar.append(ChatColor.GREEN).append("■");
+                } else {
+                    progressBar.append(ChatColor.GRAY).append("■");
+                }
+            }
+            progressBar.append(ChatColor.GRAY).append("]");
             lore.add(progressBar.toString());
         }
 
