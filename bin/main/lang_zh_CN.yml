@@ -59,6 +59,10 @@ messages:
   bound-to: "绑定玩家:"
   click-again-to-remove: "&e⚡ &7再次点击以从列表中隐藏此方块"
   cannot-craft-with-magic-block: "&c✖ &7魔法方块不能用于合成！"
+  food-full: "&c✖ &7你的饥饿值已满，无法使用魔法食物！"
+  food-effect-applied: "&a✔ &7成功使用魔法食物！"
+  food-invalid: "&c✖ &7无效的魔法食物！"
+  food-not-edible: "&c✖ &7这个物品不能食用！"
 
 commands:
   help:
@@ -104,6 +108,7 @@ commands:
     invalid-food: "&c✖ &7无效的食物类型！"
     invalid-number: "&c✖ &7无效的次数。"
     success: "&a✔ &7成功获得一个拥有 &b{0} &7次使用次数的魔法食物！"
+    success-infinite: "&a✔ &7成功获得一个拥有 &b无限 &7次使用次数的魔法食物！"
   list:
     no-permission: "&c✖ &7你没有权限使用此命令！"
   reload:
@@ -194,3 +199,17 @@ blocks:
   BEACON: "信标"
   DRAGON_EGG: "龙蛋"
   NETHERITE_BLOCK: "下界合金块"
+
+foods:
+  # 原版食物
+  GOLDEN_APPLE: "金苹果"
+  ENCHANTED_GOLDEN_APPLE: "附魔金苹果"
+  COOKED_BEEF: "熟牛肉"
+  GOLDEN_CARROT: "金胡萝卜"
+  BREAD: "面包"
+  COOKED_CHICKEN: "熟鸡肉"
+  COOKED_PORKCHOP: "熟猪排"
+  COOKED_MUTTON: "熟羊肉"
+  COOKED_RABBIT: "熟兔肉"
+  COOKED_COD: "熟鳕鱼"
+  COOKED_SALMON: "熟鲑鱼"

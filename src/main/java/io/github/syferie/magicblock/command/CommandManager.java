@@ -250,27 +250,46 @@ public class CommandManager implements CommandExecutor {
             return;
         }
 
-        ItemStack magicFood = plugin.getMagicFood().createMagicFood(material);
-        if (magicFood == null) {
+        if (!plugin.getFoodConfig().contains("foods." + material.name())) {
             plugin.sendMessage(player, "commands.getfood.invalid-food");
             return;
         }
 
-        int times = 100000000;
+        ItemStack food = plugin.getMagicFood().createMagicFood(material);
+        if (food == null) {
+            plugin.sendMessage(player, "commands.getfood.invalid-food");
+            return;
+        }
+
+        // 处理使用次数
+        int times;
         if (args.length >= 3) {
             try {
                 times = Integer.parseInt(args[2]);
+                if (times < -1) {
+                    plugin.sendMessage(player, "commands.getfood.invalid-number");
+                    return;
+                }
             } catch (NumberFormatException e) {
                 plugin.sendMessage(player, "commands.getfood.invalid-number");
-                times = plugin.getDefaultBlockTimes();
+                return;
             }
+        } else {
+            // 如果没有指定次数，使用配置文件中的默认值
+            times = plugin.getFoodConfig().getInt("default-food-times", 64);
         }
 
-        plugin.getMagicFood().setUseTimes(magicFood, times);
-        plugin.getMagicFood().updateLore(magicFood, times);
+        // 设置使用次数和最大次数
+        plugin.getMagicFood().setMaxUseTimes(food, times);
+        plugin.getMagicFood().setUseTimes(food, times);
+        plugin.getMagicFood().updateLore(food, times);  // 确保更新Lore显示
 
-        player.getInventory().addItem(magicFood);
-        plugin.sendMessage(player, "commands.getfood.success", times);
+        player.getInventory().addItem(food);
+        if (times == -1) {
+            plugin.sendMessage(player, "commands.getfood.success-infinite");
+        } else {
+            plugin.sendMessage(player, "commands.getfood.success", times);
+        }
     }
 
     private void handleReload(CommandSender sender) {

@@ -1,22 +1,87 @@
 # MagicBlock Food Configuration
-# 这个文件用于配置魔法食物的相关设置
+# This file is used to configure magic food settings
+#
+# IMPORTANT NOTICE:
+# Changes to decorative lore settings in this file will only take effect after a server restart.
+# Using /mb reload will not update the lore of existing or newly created food items.
+# This is a known limitation of the current implementation.
 
-# 食物列表及其效果
+# Special identifier for magic food items
+special-lore: "§7MagicFood"
+
+# Display Settings
+# -------------------------------------------------------------
+display:
+  # Format for displaying the name of magic food in item form
+  # %s will be replaced with the food's name
+  food-name-format: "&b✦ %s &b✦"
+
+  # Control which information lines are shown in the lore
+  show-info:
+    usage-count: true      # Show "Uses: X/Y"
+    progress-bar: true     # Show usage progress bar
+
+  # Decorative lore lines will be displayed between magic-lore and usage information
+  # Supports color codes (&) and PlaceholderAPI variables if installed
+  #
+  # Available MagicFood Variables:
+  # %magicfood_food_level%      - Food's hunger restoration
+  # %magicfood_saturation%      - Food's saturation value
+  # %magicfood_heal%           - Food's healing amount
+  # %magicfood_food_uses%      - Total food uses by player
+  # %magicfood_remaining_uses% - Current food's remaining uses
+  # %magicfood_max_uses%       - Current food's maximum uses
+  # %magicfood_uses_progress%  - Usage progress (percentage)
+  decorative-lore:
+    enabled: true
+    lines:
+      - "&7This is a magical food item"
+      - "&7Imbued with mystical properties"
+      - "&7Food Level: &b%magicfood_food_level%"
+      - "&7Saturation: &b%magicfood_saturation%"
+      - "&7Healing: &b%magicfood_heal%"
+
+# Default number of uses for magic food
+default-food-times: 64
+
+# Whether to allow players to use magic food when their hunger bar is full
+allow-use-when-full: true
+
+# Sound effects when using magic food
+sound:
+  enabled: true
+  eat: ENTITY_PLAYER_BURP
+  volume: 1.0
+  pitch: 1.0
+
+# Particle effects when using magic food
+particles:
+  enabled: true
+  type: HEART
+  count: 5
+  spread:
+    x: 0.5
+    y: 0.5
+    z: 0.5
+
+# Food items and their effects
 foods:
   GOLDEN_APPLE:
-    heal: 4
+    food-level: 4
     saturation: 9.6
+    heal: 4.0
     effects:
       REGENERATION:
-        duration: 100
-        amplifier: 1
+        duration: 100  # in ticks (20 ticks = 1 second)
+        amplifier: 1   # effect level - 1
       ABSORPTION:
         duration: 2400
         amplifier: 0
   
   ENCHANTED_GOLDEN_APPLE:
-    heal: 4
+    food-level: 4
     saturation: 9.6
+    heal: 4.0
     effects:
       REGENERATION:
         duration: 400
@@ -32,25 +97,46 @@ foods:
         amplifier: 0
 
   COOKED_BEEF:
-    heal: 8
+    food-level: 8
     saturation: 12.8
+    heal: 2.0
     
   GOLDEN_CARROT:
-    heal: 6
+    food-level: 6
     saturation: 14.4
+    heal: 3.0
     
   BREAD:
-    heal: 5
-    saturation: 6
+    food-level: 5
+    saturation: 6.0
+    heal: 2.5
 
-# 默认食物使用次数
-default-food-uses: 64
+  COOKED_CHICKEN:
+    food-level: 6
+    saturation: 7.2
+    heal: 2.0
 
-# 是否允许玩家在饥饿值满时使用魔法食物
-allow-use-when-full: true
+  COOKED_PORKCHOP:
+    food-level: 8
+    saturation: 12.8
+    heal: 2.0
 
-# 是否在使用魔法食物时播放音效
-play-sound: true
+  COOKED_MUTTON:
+    food-level: 6
+    saturation: 9.6
+    heal: 2.0
 
-# 是否在使用魔法食物时显示粒子效果
-show-particles: true
+  COOKED_RABBIT:
+    food-level: 5
+    saturation: 6.0
+    heal: 2.0
+
+  COOKED_COD:
+    food-level: 5
+    saturation: 6.0
+    heal: 1.0
+
+  COOKED_SALMON:
+    food-level: 6
+    saturation: 9.6
+    heal: 1.0

@@ -70,6 +70,7 @@ public class MagicBlockPlugin extends JavaPlugin {
             checkForUpdates();
         }
 
+        // 初始化成员和注册事件
         initializeMembers();
         registerEventsAndCommands();
         saveFoodConfig();
@@ -79,8 +80,7 @@ public class MagicBlockPlugin extends JavaPlugin {
             statistics = new Statistics(this);
         }
 
-        magicFood = new FoodManager(this);
-        getServer().getPluginManager().registerEvents(magicFood, this);
+        // 初始化食物服务
         this.foodService = new FoodService(this);
 
         saveDefaultConfig();
@@ -393,9 +393,16 @@ public class MagicBlockPlugin extends JavaPlugin {
         reloadConfig();
         languageManager.reloadLanguage();
         reloadFoodConfig();
+        
+        // 重新加载食物管理器
+        if (magicFood != null) {
+            // 不需要重新注册事件监听器，只需要重新创建实例
+            magicFood = new FoodManager(this);
+        }
+
         List<Material> newAllowedMaterials = loadMaterialsFromConfig();
         listener.setAllowedMaterials(newAllowedMaterials);
-        getLogger().info(languageManager.getMessage("general.materials-updated", newAllowedMaterials));
+        getLogger().info(languageManager.getMessage("general.materials-updated"));
     }
 
     public void reloadFoodConfig() {
@@ -452,13 +459,16 @@ public class MagicBlockPlugin extends JavaPlugin {
         this.blockManager = new BlockManager(this);
         this.blockBindManager = new BlockBindManager(this);
         this.listener = new BlockListener(this, allowedMaterials);
+        this.magicFood = new FoodManager(this);
         this.blacklistedWorlds = getConfig().getStringList("blacklisted-worlds");
     }
 
     private void registerEventsAndCommands() {
         getServer().getPluginManager().registerEvents(listener, this);
-        getCommand("magicblock").setExecutor(new CommandManager(this));
-        getCommand("magicblock").setTabCompleter(new TabCompleter());
+        getServer().getPluginManager().registerEvents(magicFood, this);
+        CommandManager commandManager = new CommandManager(this);
+        getCommand("magicblock").setExecutor(commandManager);
+        getCommand("magicblock").setTabCompleter(new TabCompleter(this));
     }
 
     private List<Material> loadMaterialsFromConfig() {
@@ -499,5 +509,9 @@ public class MagicBlockPlugin extends JavaPlugin {
 
     public FoliaLib getFoliaLib() {
         return foliaLib;
+    }
+
+    public Statistics getStatistics() {
+        return statistics;
     }
 }

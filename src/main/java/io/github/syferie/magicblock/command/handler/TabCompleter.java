@@ -1,5 +1,6 @@
 package io.github.syferie.magicblock.command.handler;
 
+import io.github.syferie.magicblock.MagicBlockPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -11,7 +12,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class TabCompleter implements org.bukkit.command.TabCompleter {
+    private final MagicBlockPlugin plugin;
     private final List<String> commands = Arrays.asList("get", "reload", "settimes", "addtimes", "getfood", "help", "give", "list");
+
+    public TabCompleter(MagicBlockPlugin plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
@@ -66,8 +72,13 @@ public class TabCompleter implements org.bukkit.command.TabCompleter {
                         break;
                     case "getfood":
                         if (sender.hasPermission("magicblock.getfood")) {
-                            // 这里可以添加食物类型的补全
-                            completions.addAll(Arrays.asList("BREAD", "COOKED_BEEF", "GOLDEN_APPLE", "APPLE"));
+                            // 从配置文件中获取可用食物列表
+                            String input = args[1].toLowerCase();
+                            if (plugin.getFoodConfig().contains("foods")) {
+                                completions.addAll(plugin.getFoodConfig().getConfigurationSection("foods").getKeys(false).stream()
+                                    .filter(food -> food.toLowerCase().startsWith(input))
+                                    .collect(Collectors.toList()));
+                            }
                         }
                         break;
                 }
