@@ -1,7 +1,7 @@
 package io.github.syferie.magicblock.util;
 
 import io.github.syferie.magicblock.MagicBlockPlugin;
-import org.bukkit.Bukkit;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,7 +18,7 @@ public class UpdateChecker {
     }
 
     public void checkForUpdates() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.getFoliaLib().getImpl().runAsync(task -> {
             try (InputStream inputStream = new URL("https://api.spigotmc.org/legacy/update.php?resource=" + resourceId).openStream();
                  Scanner scanner = new Scanner(inputStream)) {
                 if (scanner.hasNext()) {

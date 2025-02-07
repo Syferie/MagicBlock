@@ -799,20 +799,23 @@ public class BlockListener implements Listener {
             return;
         }
 
-        // 延迟一tick执行清理工作，确保所有爆炸都已处理完
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
-            Collection<Entity> nearbyEntities = event.getLocation().getWorld().getNearbyEntities(
-                    event.getLocation(), 10, 10, 10);
-            
-            for (Entity entity : nearbyEntities) {
-                if (entity instanceof Item) {
-                    Item item = (Item) entity;
-                    if (plugin.getBlockManager().isMagicBlock(item.getItemStack())) {
-                        item.remove(); // 只移除魔法方块掉落物
+        // 使用FoliaLib在爆炸位置执行清理工作
+        foliaLib.getScheduler().runAtLocation(
+            event.getLocation(),
+            task -> {
+                Collection<Entity> nearbyEntities = event.getLocation().getWorld().getNearbyEntities(
+                        event.getLocation(), 10, 10, 10);
+                
+                for (Entity entity : nearbyEntities) {
+                    if (entity instanceof Item) {
+                        Item item = (Item) entity;
+                        if (plugin.getBlockManager().isMagicBlock(item.getItemStack())) {
+                            item.remove(); // 只移除魔法方块掉落物
+                        }
                     }
                 }
             }
-        });
+        );
     }
 
     @EventHandler(priority = EventPriority.HIGH)
