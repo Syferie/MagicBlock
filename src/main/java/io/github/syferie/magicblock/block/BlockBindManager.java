@@ -81,6 +81,12 @@ public class BlockBindManager {
     }
 
     public void bindBlock(Player player, ItemStack item) {
+        // 检查绑定系统是否启用
+        if (!plugin.getConfig().getBoolean("enable-binding-system", true)) {
+            plugin.sendMessage(player, "messages.binding-disabled");
+            return;
+        }
+
         if (!plugin.getBlockManager().isMagicBlock(item)) return;
 
         ItemMeta meta = item.getItemMeta();

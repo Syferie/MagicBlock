@@ -55,6 +55,7 @@ messages:
   no-results: "&c✖ &7未找到匹配的方块。"
   already-bound: "&c✖ &7此方块已经被绑定！"
   bind-success: "&a✔ &7成功绑定方块！"
+  binding-disabled: "&c✖ &7服务器已禁用方块绑定功能！"
   no-bound-blocks: "&c✖ &7你没有任何绑定的方块！"
   not-bound-to-you: "&c✖ &7这个方块不属于你！"
   already-have-block: "&c✖ &7你已经拥有这个绑定的方块了！"

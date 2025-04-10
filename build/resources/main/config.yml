@@ -89,6 +89,11 @@ usage-lore-prefix: "§7Uses:"
 # Default usage times for Magic Blocks obtained through the /mb get command.
 default-block-times: 1000000000
 
+# Whether to enable the block binding system
+# If set to true, players can bind blocks to themselves and retrieve them later
+# If set to false, the binding system will be disabled and blocks won't be bound to players
+enable-binding-system: true
+
 # Whether to allow other players to use blocks that are bound to another player
 # If set to true, players can use blocks even if they are bound to someone else
 # This only affects block usage, not the binding system or UI

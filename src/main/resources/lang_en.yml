@@ -55,6 +55,7 @@ messages:
   no-results: "&c✖ &7No matching blocks found."
   already-bound: "&c✖ &7This block is already bound!"
   bind-success: "&a✔ &7Block bound successfully!"
+  binding-disabled: "&c✖ &7Block binding is disabled on this server!"
   no-bound-blocks: "&c✖ &7You don't have any bound blocks!"
   not-bound-to-you: "&c✖ &7This block doesn't belong to you!"
   already-have-block: "&c✖ &7You already have this bound block!"

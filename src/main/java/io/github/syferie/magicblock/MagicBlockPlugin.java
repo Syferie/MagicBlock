@@ -55,11 +55,20 @@ public class MagicBlockPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // 初始化FoliaLib
-        this.foliaLib = new FoliaLib(this);
-
         // 初始化语言管理器
         this.languageManager = new LanguageManager(this);
+
+        try {
+            // 初始化FoliaLib
+            this.foliaLib = new FoliaLib(this);
+        } catch (Exception e) {
+            getLogger().severe("Failed to initialize FoliaLib: " + e.getMessage());
+            getLogger().severe("The plugin may not work correctly on this server version.");
+            getLogger().severe("Please report this issue to the plugin developer.");
+            // 使用语言管理器的消息
+            getLogger().info(languageManager.getMessage("general.plugin-enabled"));
+            return; // 不要继续初始化插件
+        }
 
         // 初始化配置
         initializeConfig();
@@ -196,7 +205,12 @@ public class MagicBlockPlugin extends JavaPlugin {
             databaseManager.close();
         }
 
-        getLogger().info(languageManager.getMessage("general.plugin-disabled"));
+        // 如果 languageManager 为 null，使用默认消息
+        if (languageManager != null) {
+            getLogger().info(languageManager.getMessage("general.plugin-disabled"));
+        } else {
+            getLogger().info("Plugin disabled.");
+        }
     }
 
     // 检查更新

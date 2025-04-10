@@ -38,9 +38,6 @@ tasks.withType(JavaCompile) {
 }
 
 shadowJar {
-    // 只包含必要的依赖类
-    minimize()
-
     // 重定位依赖包以避免冲突
     relocate "com.tcoded.folialib", "io.github.syferie.magicblock.lib.folialib"
     relocate "com.zaxxer.hikari", "io.github.syferie.magicblock.lib.hikari"

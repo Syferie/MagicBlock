@@ -56,8 +56,8 @@ public class BlockListener implements Listener {
     }
 
     private boolean isTallBlock(Material material) {
-        return material.toString().contains("DOOR") || 
-               material == Material.TALL_GRASS || 
+        return material.toString().contains("DOOR") ||
+               material == Material.TALL_GRASS ||
                material == Material.LARGE_FERN ||
                material == Material.TALL_SEAGRASS ||
                material == Material.SUNFLOWER ||
@@ -110,10 +110,10 @@ public class BlockListener implements Listener {
 
     private void updateWallConnections(Block wall, List<Block> adjacentBlocks) {
         org.bukkit.block.data.type.Wall wallData = (org.bukkit.block.data.type.Wall) wall.getBlockData();
-        
+
         // 更新当前墙的连接状态
         for (BlockFace face : BlockFace.values()) {
-            if (face == BlockFace.NORTH || face == BlockFace.SOUTH || 
+            if (face == BlockFace.NORTH || face == BlockFace.SOUTH ||
                 face == BlockFace.EAST || face == BlockFace.WEST) {
                 Block adjacent = wall.getRelative(face);
                 if (adjacent.getType() == wall.getType()) {
@@ -129,7 +129,7 @@ public class BlockListener implements Listener {
         for (Block adjacent : adjacentBlocks) {
             org.bukkit.block.data.type.Wall adjacentWallData = (org.bukkit.block.data.type.Wall) adjacent.getBlockData();
             for (BlockFace face : BlockFace.values()) {
-                if (face == BlockFace.NORTH || face == BlockFace.SOUTH || 
+                if (face == BlockFace.NORTH || face == BlockFace.SOUTH ||
                     face == BlockFace.EAST || face == BlockFace.WEST) {
                     Block relative = adjacent.getRelative(face);
                     if (relative.getType() == adjacent.getType()) {
@@ -145,13 +145,13 @@ public class BlockListener implements Listener {
 
     private void updateFenceConnections(Block fence, List<Block> adjacentBlocks) {
         org.bukkit.block.data.type.Fence fenceData = (org.bukkit.block.data.type.Fence) fence.getBlockData();
-        
+
         // 更新当前栅栏的连接状态
         for (BlockFace face : BlockFace.values()) {
-            if (face == BlockFace.NORTH || face == BlockFace.SOUTH || 
+            if (face == BlockFace.NORTH || face == BlockFace.SOUTH ||
                 face == BlockFace.EAST || face == BlockFace.WEST) {
                 Block adjacent = fence.getRelative(face);
-                fenceData.setFace(face, adjacent.getType() == fence.getType() || 
+                fenceData.setFace(face, adjacent.getType() == fence.getType() ||
                                      adjacent.getType().toString().contains("FENCE_GATE"));
             }
         }
@@ -162,10 +162,10 @@ public class BlockListener implements Listener {
             if (adjacent.getBlockData() instanceof org.bukkit.block.data.type.Fence) {
                 org.bukkit.block.data.type.Fence adjacentFenceData = (org.bukkit.block.data.type.Fence) adjacent.getBlockData();
                 for (BlockFace face : BlockFace.values()) {
-                    if (face == BlockFace.NORTH || face == BlockFace.SOUTH || 
+                    if (face == BlockFace.NORTH || face == BlockFace.SOUTH ||
                         face == BlockFace.EAST || face == BlockFace.WEST) {
                         Block relative = adjacent.getRelative(face);
-                        adjacentFenceData.setFace(face, relative.getType() == adjacent.getType() || 
+                        adjacentFenceData.setFace(face, relative.getType() == adjacent.getType() ||
                                                      relative.getType().toString().contains("FENCE_GATE"));
                     }
                 }
@@ -176,10 +176,10 @@ public class BlockListener implements Listener {
 
     private void updatePaneConnections(Block pane, List<Block> adjacentBlocks) {
         org.bukkit.block.data.type.GlassPane paneData = (org.bukkit.block.data.type.GlassPane) pane.getBlockData();
-        
+
         // 更新当前玻璃板的连接状态
         for (BlockFace face : BlockFace.values()) {
-            if (face == BlockFace.NORTH || face == BlockFace.SOUTH || 
+            if (face == BlockFace.NORTH || face == BlockFace.SOUTH ||
                 face == BlockFace.EAST || face == BlockFace.WEST) {
                 Block adjacent = pane.getRelative(face);
                 paneData.setFace(face, adjacent.getType() == pane.getType());
@@ -192,7 +192,7 @@ public class BlockListener implements Listener {
             if (adjacent.getBlockData() instanceof org.bukkit.block.data.type.GlassPane) {
                 org.bukkit.block.data.type.GlassPane adjacentPaneData = (org.bukkit.block.data.type.GlassPane) adjacent.getBlockData();
                 for (BlockFace face : BlockFace.values()) {
-                    if (face == BlockFace.NORTH || face == BlockFace.SOUTH || 
+                    if (face == BlockFace.NORTH || face == BlockFace.SOUTH ||
                         face == BlockFace.EAST || face == BlockFace.WEST) {
                         Block relative = adjacent.getRelative(face);
                         adjacentPaneData.setFace(face, relative.getType() == adjacent.getType());
@@ -221,7 +221,7 @@ public class BlockListener implements Listener {
         ItemStack item = event.getItemInHand();
         if (plugin.hasMagicLore(item.getItemMeta())) {
             handleMagicBlockPlace(event, item);
-            
+
             // 对于床方块，保存所有放置的方块位置
             if (item.getType().toString().contains("_BED")) {
                 for (org.bukkit.block.BlockState state : event.getReplacedBlockStates()) {
@@ -240,10 +240,10 @@ public class BlockListener implements Listener {
         if (useTimes <= 0) {
             event.setCancelled(true);
             plugin.sendMessage(player, "messages.block-removed");
-            
+
             // 处理耗尽的方块
             plugin.getBlockBindManager().handleDepleted(item);
-            
+
             // 如果配置为移除耗尽的方块
             if (plugin.getConfig().getBoolean("remove-depleted-blocks", false)) {
                 // 从玩家手中移除物品
@@ -252,12 +252,15 @@ public class BlockListener implements Listener {
             return;
         }
 
+        // 检查绑定系统是否启用
+        boolean bindingEnabled = plugin.getConfig().getBoolean("enable-binding-system", true);
+
         // 检查是否已绑定
         UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(item);
-        if (boundPlayer == null) {
+        if (bindingEnabled && boundPlayer == null) {
             // 第一次使用时自动绑定
             plugin.getBlockBindManager().bindBlock(player, item);
-        } else if (!boundPlayer.equals(player.getUniqueId())) {
+        } else if (boundPlayer != null && !boundPlayer.equals(player.getUniqueId())) {
             // 检查是否允许使用已绑定的方块
             if (!plugin.getConfig().getBoolean("allow-use-bound-blocks", false)) {
                 event.setCancelled(true);
@@ -296,11 +299,11 @@ public class BlockListener implements Listener {
     private void saveMagicBlockLocation(Location loc) {
         String locationString = serializeLocation(loc);
         PersistentDataContainer container = loc.getChunk().getPersistentDataContainer();
-        
+
         // 获取现有的位置列表
         List<String> locations = getLocationsFromContainer(container);
         locations.add(locationString);
-        
+
         // 保存更新后的位置列表
         String joinedLocations = String.join(";", locations);
         container.set(magicBlockKey, PersistentDataType.STRING, joinedLocations);
@@ -331,9 +334,9 @@ public class BlockListener implements Listener {
     }
 
     private String serializeLocation(Location loc) {
-        return loc.getWorld().getName() + "," + 
-               loc.getBlockX() + "," + 
-               loc.getBlockY() + "," + 
+        return loc.getWorld().getName() + "," +
+               loc.getBlockX() + "," +
+               loc.getBlockY() + "," +
                loc.getBlockZ();
     }
 
@@ -410,23 +413,26 @@ public class BlockListener implements Listener {
         if (eventBlock.getType().toString().contains("_BED")) {
             org.bukkit.block.data.type.Bed bedData = (org.bukkit.block.data.type.Bed) eventBlock.getBlockData();
             Block otherPart;
-            
+
             // 根据当前部分找到另一部分
             if (bedData.getPart() == org.bukkit.block.data.type.Bed.Part.HEAD) {
                 otherPart = eventBlock.getRelative(bedData.getFacing().getOppositeFace());
             } else {
                 otherPart = eventBlock.getRelative(bedData.getFacing());
             }
-            
+
             // 如果任一部分是魔法方块，则两部分都视为魔法方块
             boolean isOtherPartMagic = isMagicBlockLocation(otherPart.getLocation());
             if (isOtherPartMagic || isMagicBlock) {
                 isMagicBlock = true;
                 Player player = event.getPlayer();
                 ItemStack blockItem = new ItemStack(eventBlock.getType());
-                
+
+                // 检查绑定系统是否启用
+                boolean bindingEnabled = plugin.getConfig().getBoolean("enable-binding-system", true);
+
                 // 检查绑定状态
-                if (plugin.getBlockBindManager().isBlockBound(blockItem)) {
+                if (bindingEnabled && plugin.getBlockBindManager().isBlockBound(blockItem)) {
                     UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(blockItem);
                     if (boundPlayer != null && !boundPlayer.equals(player.getUniqueId())) {
                         event.setCancelled(true);
@@ -434,18 +440,18 @@ public class BlockListener implements Listener {
                         return;
                     }
                 }
-                
+
                 // 取消原有的掉落
                 event.setDropItems(false);
                 event.setExpToDrop(0);
-                
+
                 // 清理绑定数据
                 plugin.getBlockBindManager().cleanupBindings(blockItem);
-                
+
                 // 移除两个部分的位置记录
                 removeMagicBlockLocation(blockLocation);
                 removeMagicBlockLocation(otherPart.getLocation());
-                
+
                 // 移除另一部分，不产生掉落物
                 otherPart.setType(Material.AIR);
             }
@@ -471,9 +477,12 @@ public class BlockListener implements Listener {
         if (isMagicBlock) {
             Player player = event.getPlayer();
             ItemStack blockItem = new ItemStack(targetBlock.getType());
-            
+
+            // 检查绑定系统是否启用
+            boolean bindingEnabled = plugin.getConfig().getBoolean("enable-binding-system", true);
+
             // 检查绑定状态
-            if (plugin.getBlockBindManager().isBlockBound(blockItem)) {
+            if (bindingEnabled && plugin.getBlockBindManager().isBlockBound(blockItem)) {
                 UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(blockItem);
                 if (boundPlayer != null && !boundPlayer.equals(player.getUniqueId())) {
                     event.setCancelled(true);
@@ -481,10 +490,10 @@ public class BlockListener implements Listener {
                     return;
                 }
             }
-            
+
             event.setDropItems(false);
             event.setExpToDrop(0);
-            
+
             // 清理绑定数据
             plugin.getBlockBindManager().cleanupBindings(blockItem);
             removeMagicBlockLocation(blockLocation);
@@ -533,7 +542,7 @@ public class BlockListener implements Listener {
 
         Player player = event.getPlayer();
         Block clickedBlock = event.getClickedBlock();
-        
+
         // 只处理右键交互
         if (clickedBlock != null && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             Location clickedLocation = clickedBlock.getLocation();
@@ -558,27 +567,27 @@ public class BlockListener implements Listener {
             // 如果是魔法方块且是门，取消原事件并手动处理门的状态
             if (isMagicBlock && targetBlock.getType().toString().contains("DOOR")) {
                 org.bukkit.block.data.Bisected.Half half = ((org.bukkit.block.data.Bisected)targetBlock.getBlockData()).getHalf();
-                Block otherHalf = half == org.bukkit.block.data.Bisected.Half.BOTTOM ? 
+                Block otherHalf = half == org.bukkit.block.data.Bisected.Half.BOTTOM ?
                     targetBlock.getRelative(BlockFace.UP) : targetBlock.getRelative(BlockFace.DOWN);
-                
+
                 // 获取门的数据
                 org.bukkit.block.data.type.Door doorData = (org.bukkit.block.data.type.Door)targetBlock.getBlockData();
                 org.bukkit.block.data.type.Door otherDoorData = (org.bukkit.block.data.type.Door)otherHalf.getBlockData();
-                
+
                 // 切换门的开关状态
                 boolean isOpen = !doorData.isOpen();
                 doorData.setOpen(isOpen);
                 otherDoorData.setOpen(isOpen);
-                
+
                 // 应用更改
                 targetBlock.setBlockData(doorData);
                 otherHalf.setBlockData(otherDoorData);
-                
+
                 // 播放门的声音
-                player.getWorld().playSound(targetBlock.getLocation(), 
-                    isOpen ? Sound.BLOCK_WOODEN_DOOR_OPEN : Sound.BLOCK_WOODEN_DOOR_CLOSE, 
+                player.getWorld().playSound(targetBlock.getLocation(),
+                    isOpen ? Sound.BLOCK_WOODEN_DOOR_OPEN : Sound.BLOCK_WOODEN_DOOR_CLOSE,
                     1.0f, 1.0f);
-                
+
                 event.setCancelled(true);
                 return;
             }
@@ -599,12 +608,17 @@ public class BlockListener implements Listener {
                     return;
                 }
 
+                // 检查绑定系统是否启用
+                boolean bindingEnabled = plugin.getConfig().getBoolean("enable-binding-system", true);
+
                 // 检查绑定状态
-                UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(item);
-                if (boundPlayer != null && !boundPlayer.equals(player.getUniqueId())) {
-                    plugin.sendMessage(player, "messages.not-bound-to-you");
-                    event.setCancelled(true);
-                    return;
+                if (bindingEnabled) {
+                    UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(item);
+                    if (boundPlayer != null && !boundPlayer.equals(player.getUniqueId())) {
+                        plugin.sendMessage(player, "messages.not-bound-to-you");
+                        event.setCancelled(true);
+                        return;
+                    }
                 }
 
                 // 设置冷却时间
@@ -628,7 +642,7 @@ public class BlockListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerItemHeld(PlayerItemHeldEvent event) {
         Player player = event.getPlayer();
-        
+
         if (GUIManager.isPlayerSearching(player)) {
             ItemStack item = player.getInventory().getItem(event.getNewSlot());
             ItemMeta meta = (item != null) ? item.getItemMeta() : null;
@@ -645,11 +659,11 @@ public class BlockListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
-        
+
         String title = ChatColor.stripColor(event.getView().getTitle());
         String expectedTitle = ChatColor.stripColor(plugin.getMessage("gui.title"));
         String boundBlocksTitle = ChatColor.stripColor(plugin.getMessage("gui.bound-blocks-title"));
-        
+
         if (title.equals(expectedTitle)) {
             event.setCancelled(true);
             ItemStack clickedItem = event.getCurrentItem();
@@ -675,7 +689,7 @@ public class BlockListener implements Listener {
                 if (lastClick != null && currentTime - lastClick < GUI_OPEN_COOLDOWN) {
                     return;
                 }
-                
+
                 // 将搜索相关的处理委托给GUIManager
                 guiManager.getBlockSelectionGUI().handleInventoryClick(event, player);
                 return;
@@ -694,7 +708,7 @@ public class BlockListener implements Listener {
                     // 检查玩家是否已经有相同ID的方块
                     ItemMeta clickedMeta = clickedItem.getItemMeta();
                     if (clickedMeta == null) return;
-                    
+
                     String blockId = clickedMeta.getPersistentDataContainer().get(
                         new NamespacedKey(plugin, "block_id"),
                         PersistentDataType.STRING
@@ -805,7 +819,7 @@ public class BlockListener implements Listener {
             task -> {
                 Collection<Entity> nearbyEntities = event.getLocation().getWorld().getNearbyEntities(
                         event.getLocation(), 10, 10, 10);
-                
+
                 for (Entity entity : nearbyEntities) {
                     if (entity instanceof Item) {
                         Item item = (Item) entity;
@@ -917,7 +931,7 @@ public class BlockListener implements Listener {
             case SWEET_BERRY_BUSH:
                 return true;
             default:
-                return material.name().endsWith("_PRESSURE_PLATE") || 
+                return material.name().endsWith("_PRESSURE_PLATE") ||
                        material.name().endsWith("_BUTTON") ||
                        material.name().endsWith("_SIGN") ||
                        material.name().endsWith("_BANNER");
