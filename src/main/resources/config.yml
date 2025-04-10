@@ -55,6 +55,9 @@ display:
     # %magicblock_remaining_uses% - Current block's remaining uses
     # %magicblock_max_uses%       - Current block's maximum uses
     # %magicblock_uses_progress%  - Usage progress (percentage)
+    # %magicblock_progress_bar%   - Progress bar with default length (20 chars)
+    # %magicblock_progressbar_10% - Progress bar with custom length (10 chars)
+    # %magicblock_progressbar_15% - Progress bar with custom length (15 chars)
     #
     # Common Variables:
     # %player_name%     - Bound player's name
@@ -64,6 +67,8 @@ display:
     # - "&7Bound to: %player_name%"
     # - "&7Total Uses: %magicblock_block_uses%"
     # - "&7Progress: %magicblock_uses_progress%%"
+    # - "&7Progress Bar: %magicblock_progress_bar%"
+    # - "&7Custom Bar: %magicblock_progressbar_15%"
     lines:
       - "&7This is a magical block."
       - "&7It is imbued with the power of magic."

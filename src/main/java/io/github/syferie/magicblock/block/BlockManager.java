@@ -34,7 +34,7 @@ public class BlockManager implements IMagicBlock {
     public void setUseTimes(ItemStack item, int times) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
-        
+
         // 设置当前使用次数
         if (times == -1) {
             // 如果是无限次数，设置一个非常大的值（20亿次）
@@ -48,7 +48,7 @@ public class BlockManager implements IMagicBlock {
                 meta.getPersistentDataContainer().set(maxTimesKey, PersistentDataType.INTEGER, times);
             }
         }
-        
+
         // 更新物品说明
         updateLore(item, times == -1 ? Integer.MAX_VALUE - 100 : times);
         item.setItemMeta(meta);
@@ -58,7 +58,7 @@ public class BlockManager implements IMagicBlock {
     public int getUseTimes(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return 0;
-        
+
         PersistentDataContainer container = meta.getPersistentDataContainer();
         return container.getOrDefault(useTimesKey, PersistentDataType.INTEGER, 0);
     }
@@ -74,14 +74,14 @@ public class BlockManager implements IMagicBlock {
         PersistentDataContainer container = meta.getPersistentDataContainer();
         container.set(useTimesKey, PersistentDataType.INTEGER, currentTimes);
         item.setItemMeta(meta);
-        
+
         // 检查是否是"无限"次数（大数值）
         int maxTimes = getMaxUseTimes(item);
         if (maxTimes == Integer.MAX_VALUE - 100) {
             updateLore(item, currentTimes);
             return currentTimes;
         }
-        
+
         // 如果是绑定的方块，更新配置文件
         if (isBlockBound(item)) {
             UUID boundPlayer = getBoundPlayer(item);
@@ -103,7 +103,7 @@ public class BlockManager implements IMagicBlock {
                 }
             }
         }
-        
+
         updateLore(item, currentTimes);
         return currentTimes;
     }
@@ -121,14 +121,14 @@ public class BlockManager implements IMagicBlock {
         if (meta == null) return;
 
         List<String> lore = new ArrayList<>();
-        
+
         // 获取物品的最大使用次数
         int maxTimes = getMaxUseTimes(item);
         if (maxTimes <= 0) return;
 
         // 检查是否是"无限"次数（大数值）
         boolean isInfinite = maxTimes == Integer.MAX_VALUE - 100;
-        
+
         // 添加魔法方块标识
         lore.add(plugin.getMagicLore());
 
@@ -149,6 +149,8 @@ public class BlockManager implements IMagicBlock {
                 String processedLine = ChatColor.translateAlternateColorCodes('&', line);
                 // 如果服务器安装了PlaceholderAPI，处理变量
                 if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+                    // 将当前物品的使用次数信息传递给PAPI处理器
+                    // 这样即使进度条显示被禁用，仍然可以通过PAPI变量使用进度条
                     processedLine = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(owner, processedLine);
                 }
                 lore.add(processedLine);
@@ -186,7 +188,7 @@ public class BlockManager implements IMagicBlock {
             double usedPercentage = (double) remainingTimes / maxTimes;
             int barLength = 10;
             int filledBars = (int) Math.round(usedPercentage * barLength);
-            
+
             StringBuilder progressBar = new StringBuilder();
             progressBar.append(ChatColor.GRAY).append("[");
             for (int i = 0; i < barLength; i++) {
@@ -221,7 +223,7 @@ public class BlockManager implements IMagicBlock {
     public void setMaxUseTimes(ItemStack item, int maxTimes) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
-        
+
         meta.getPersistentDataContainer().set(maxTimesKey, PersistentDataType.INTEGER, maxTimes);
         item.setItemMeta(meta);
     }
@@ -230,17 +232,17 @@ public class BlockManager implements IMagicBlock {
         if (!isMagicBlock(item)) return 0;
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return 0;
-        
+
         PersistentDataContainer container = meta.getPersistentDataContainer();
         Integer maxTimes = container.get(maxTimesKey, PersistentDataType.INTEGER);
-        
+
         // 如果没有存储的最大次数，则使用默认值
         if (maxTimes == null) {
             maxTimes = plugin.getDefaultBlockTimes();
             // 存储默认值作为最大次数
             setMaxUseTimes(item, maxTimes);
         }
-        
+
         return maxTimes;
     }
-} 
+}
