@@ -407,7 +407,35 @@ public class MagicBlockPlugin extends JavaPlugin {
     public boolean hasMagicLore(ItemMeta meta) {
         if (meta == null || !meta.hasLore()) return false;
         List<String> lore = meta.getLore();
-        return lore != null && lore.contains(getMagicLore());
+        if (lore == null) return false;
+
+        // 获取配置中的magic-lore
+        String configMagicLore = getMagicLore();
+
+        // 循环检查每一行的lore
+        for (String loreLine : lore) {
+            // 先检查精确匹配
+            if (loreLine.equals(configMagicLore)) {
+                return true;
+            }
+
+            // 如果不精确匹配，则尝试忽略格式代码进行比较
+            // 先移除所有格式代码（包括删除线等）
+            String strippedLoreLine = ChatColor.stripColor(loreLine);
+            String strippedConfigLore = ChatColor.stripColor(configMagicLore);
+
+            // 如果移除格式代码后的文本相同，则认为是魔法方块
+            if (strippedLoreLine.equals(strippedConfigLore)) {
+                return true;
+            }
+
+            // 如果上述方法仍然不匹配，尝试检查是否包含“MagicBlock”文本
+            if (strippedLoreLine.contains("MagicBlock")) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void reloadPluginAllowedMaterials() {

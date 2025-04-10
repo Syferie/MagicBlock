@@ -744,7 +744,8 @@ public class BlockListener implements Listener {
             return false;
         }
         ItemMeta meta = item.getItemMeta();
-        return meta.hasLore() && meta.getLore().contains(plugin.getMagicLore());
+        // 使用插件的hasMagicLore方法进行检查，该方法已经增强以处理格式代码
+        return plugin.hasMagicLore(meta);
     }
 
     @EventHandler
