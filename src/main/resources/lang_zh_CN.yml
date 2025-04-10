@@ -11,6 +11,11 @@ general:
   config-load-error: "&c✖ &7加载配置文件时出错！"
   config-created: "&a✔ &7创建新的配置文件: {0}"
   config-updated: "&a✔ &7配置文件 {0} 已更新"
+  database-connected: "&a✔ &7成功连接到数据库！"
+  database-error: "&c✖ &7数据库错误: {0}"
+  database-tables-created: "&a✔ &7数据库表创建成功！"
+  database-migration-start: "&e⚠ &7开始迁移数据到数据库..."
+  database-migration-complete: "&a✔ &7数据迁移完成！"
   config-key-added: "&7在 {0} 中添加了缺失的配置项: {1}"
   update-found: "&e发现新版本: &b{0}"
   current-version: "&e当前版本: &b{0}"
@@ -126,7 +131,7 @@ blocks:
   GOLD_ORE: "金矿石"
   IRON_ORE: "铁矿石"
   COAL_ORE: "煤矿石"
-  
+
   # 木材
   OAK_WOOD: "橡木"
   SPRUCE_WOOD: "云杉木"
@@ -140,7 +145,7 @@ blocks:
   JUNGLE_LOG: "丛林原木"
   ACACIA_LOG: "金合欢原木"
   DARK_OAK_LOG: "深色橡木原木"
-  
+
   # 矿物方块
   GOLD_BLOCK: "金块"
   IRON_BLOCK: "铁块"
@@ -148,7 +153,7 @@ blocks:
   EMERALD_BLOCK: "绿宝石块"
   LAPIS_BLOCK: "青金石块"
   REDSTONE_BLOCK: "红石"
-  
+
   # 石材
   GRANITE: "花岗岩"
   DIORITE: "闪长岩"
@@ -156,7 +161,7 @@ blocks:
   STONE_BRICKS: "石砖"
   MOSSY_STONE_BRICKS: "苔石砖"
   CRACKED_STONE_BRICKS: "裂石砖"
-  
+
   # 装饰方块
   GLASS: "玻璃"
   BOOKSHELF: "书架"
@@ -165,18 +170,18 @@ blocks:
   SEA_LANTERN: "海晶灯"
   CLAY: "粘土"
   TERRACOTTA: "陶瓦"
-  
+
   # 下界方块
   NETHERRACK: "下界岩"
   SOUL_SAND: "灵魂沙"
   NETHER_BRICKS: "下界砖"
   MAGMA_BLOCK: "岩浆块"
-  
+
   # 末地方块
   END_STONE: "末地石"
   PURPUR_BLOCK: "紫珀块"
   END_STONE_BRICKS: "末地石砖"
-  
+
   # 混凝土
   WHITE_CONCRETE: "白色混凝土"
   ORANGE_CONCRETE: "橙色混凝土"
@@ -194,7 +199,7 @@ blocks:
   GREEN_CONCRETE: "绿色混凝土"
   RED_CONCRETE: "红色混凝土"
   BLACK_CONCRETE: "黑色混凝土"
-  
+
   # 特殊权限方块
   BEACON: "信标"
   DRAGON_EGG: "龙蛋"

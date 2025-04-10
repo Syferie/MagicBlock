@@ -4,6 +4,7 @@ import com.tcoded.folialib.FoliaLib;
 import io.github.syferie.magicblock.block.BlockManager;
 import io.github.syferie.magicblock.command.CommandManager;
 import io.github.syferie.magicblock.command.handler.TabCompleter;
+import io.github.syferie.magicblock.database.DatabaseManager;
 import io.github.syferie.magicblock.food.FoodManager;
 import io.github.syferie.magicblock.food.FoodService;
 import io.github.syferie.magicblock.hook.PlaceholderHook;
@@ -50,6 +51,7 @@ public class MagicBlockPlugin extends JavaPlugin {
     private List<Material> allowedMaterials;
     private LanguageManager languageManager;
     private FoliaLib foliaLib;
+    private DatabaseManager databaseManager;
 
     @Override
     public void onEnable() {
@@ -61,7 +63,7 @@ public class MagicBlockPlugin extends JavaPlugin {
 
         // 初始化配置
         initializeConfig();
-        
+
         // 初始化允许的材料列表
         this.allowedMaterials = loadMaterialsFromConfig();
 
@@ -74,7 +76,7 @@ public class MagicBlockPlugin extends JavaPlugin {
         initializeMembers();
         registerEventsAndCommands();
         saveFoodConfig();
-        
+
         // 初始化统计
         if(getConfig().getBoolean("enable-statistics")) {
             statistics = new Statistics(this);
@@ -104,23 +106,23 @@ public class MagicBlockPlugin extends JavaPlugin {
         Metrics metrics = new Metrics(this, pluginId);
 
         // 统计在线玩家数量
-        metrics.addCustomChart(new Metrics.SingleLineChart("online_players", () -> 
+        metrics.addCustomChart(new Metrics.SingleLineChart("online_players", () ->
             Bukkit.getOnlinePlayers().size()));
 
         // 统计使用过魔法方块的玩家数量
-        metrics.addCustomChart(new Metrics.SingleLineChart("unique_users", () -> 
+        metrics.addCustomChart(new Metrics.SingleLineChart("unique_users", () ->
             playerUsage.size()));
 
         // 统计使用的语言分布
-        metrics.addCustomChart(new Metrics.SimplePie("language", () -> 
+        metrics.addCustomChart(new Metrics.SimplePie("language", () ->
             getConfig().getString("language", "en")));
 
         // 统计服务器版本
-        metrics.addCustomChart(new Metrics.SimplePie("server_version", () -> 
+        metrics.addCustomChart(new Metrics.SimplePie("server_version", () ->
             Bukkit.getVersion()));
 
         // 统计是否启用了PlaceholderAPI
-        metrics.addCustomChart(new Metrics.SimplePie("using_placeholderapi", () -> 
+        metrics.addCustomChart(new Metrics.SimplePie("using_placeholderapi", () ->
             String.valueOf(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null)));
 
         // 统计总使用次数
@@ -153,11 +155,11 @@ public class MagicBlockPlugin extends JavaPlugin {
         }));
 
         // 统计是否启用了调试模式
-        metrics.addCustomChart(new Metrics.SimplePie("debug_mode", () -> 
+        metrics.addCustomChart(new Metrics.SimplePie("debug_mode", () ->
             String.valueOf(getConfig().getBoolean("debug-mode"))));
 
         // 统计是否启用了更新检查
-        metrics.addCustomChart(new Metrics.SimplePie("update_check", () -> 
+        metrics.addCustomChart(new Metrics.SimplePie("update_check", () ->
             String.valueOf(getConfig().getBoolean("check-updates"))));
     }
 
@@ -183,12 +185,17 @@ public class MagicBlockPlugin extends JavaPlugin {
         if (statistics != null) {
             statistics.saveStats();
         }
-        
+
         // 取消所有FoliaLib任务
         if (foliaLib != null) {
             foliaLib.getScheduler().cancelAllTasks();
         }
-        
+
+        // 关闭数据库连接
+        if (databaseManager != null) {
+            databaseManager.close();
+        }
+
         getLogger().info(languageManager.getMessage("general.plugin-disabled"));
     }
 
@@ -222,7 +229,7 @@ public class MagicBlockPlugin extends JavaPlugin {
         int bars = 20;
         float percent = (float) current / max;
         int filledBars = (int) (bars * percent);
-        
+
         StringBuilder bar = new StringBuilder("§a");
         for(int i = 0; i < bars; i++) {
             if(i < filledBars) {
@@ -237,12 +244,12 @@ public class MagicBlockPlugin extends JavaPlugin {
     private void checkAndUpdateAllConfigs() {
         // 检查主配置文件
         checkAndUpdateConfig("config.yml", true);
-        
+
         // 检查语言文件
         for (String langCode : languageManager.getSupportedLanguages().keySet()) {
             checkAndUpdateConfig("lang_" + langCode + ".yml", false);
         }
-        
+
         // 检查食物配置文件
         checkAndUpdateConfig("foodconf.yml", false);
     }
@@ -279,7 +286,7 @@ public class MagicBlockPlugin extends JavaPlugin {
             for (Map.Entry<String, Object> entry : missingEntries.entrySet()) {
                 String key = entry.getKey();
                 Object value = entry.getValue();
-                
+
                 // 获取父节点的注释（如果有）
                 String parentPath = key.contains(".") ? key.substring(0, key.lastIndexOf('.')) : "";
                 if (!parentPath.isEmpty() && defaultConfig.contains(parentPath)) {
@@ -288,13 +295,13 @@ public class MagicBlockPlugin extends JavaPlugin {
                         currentConfig.setComments(parentPath, comments);
                     }
                 }
-                
+
                 // 获取键的注释
                 List<String> comments = defaultConfig.getComments(key);
                 if (comments != null && !comments.isEmpty()) {
                     currentConfig.setComments(key, comments);
                 }
-                
+
                 currentConfig.set(key, value);
                 getLogger().info(languageManager.getMessage("general.config-key-added", fileName, key));
             }
@@ -358,12 +365,12 @@ public class MagicBlockPlugin extends JavaPlugin {
         if (meta != null) {
             // 根据当前语言获取方块名称
             String blockName = languageManager.getMessage("blocks.STONE");
-            
+
             // 在原有名称两侧添加装饰符号
             String nameFormat = getConfig().getString("display.block-name-format", "&b✦ %s &b✦");
-            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', 
+            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&',
                 String.format(nameFormat, blockName)));
-            
+
             ArrayList<String> lore = new ArrayList<>();
             lore.add(getMagicLore());
 
@@ -393,7 +400,7 @@ public class MagicBlockPlugin extends JavaPlugin {
         reloadConfig();
         languageManager.reloadLanguage();
         reloadFoodConfig();
-        
+
         // 重新加载食物管理器
         if (magicFood != null) {
             // 不需要重新注册事件监听器，只需要重新创建实例
@@ -438,10 +445,10 @@ public class MagicBlockPlugin extends JavaPlugin {
     private void initializeConfig() {
         saveDefaultConfig();
         reloadConfig();
-        
+
         // 检查并更新所有配置文件
         checkAndUpdateAllConfigs();
-        
+
         // 初始化食物配置
         File foodConfigFile = new File(getDataFolder(), "foodconf.yml");
         if (!foodConfigFile.exists()) {
@@ -461,6 +468,14 @@ public class MagicBlockPlugin extends JavaPlugin {
         this.listener = new BlockListener(this, allowedMaterials);
         this.magicFood = new FoodManager(this);
         this.blacklistedWorlds = getConfig().getStringList("blacklisted-worlds");
+
+        // 初始化数据库管理器
+        if (getConfig().getBoolean("database.enabled", false)) {
+            this.databaseManager = new DatabaseManager(this);
+            if (this.databaseManager.isEnabled()) {
+                this.blockBindManager.setDatabaseManager(this.databaseManager);
+            }
+        }
     }
 
     private void registerEventsAndCommands() {
@@ -474,7 +489,7 @@ public class MagicBlockPlugin extends JavaPlugin {
     private List<Material> loadMaterialsFromConfig() {
         List<Material> materials = new ArrayList<>();
         List<String> configMaterials = getConfig().getStringList("allowed-materials");
-        
+
         for (String materialName : configMaterials) {
             try {
                 Material material = Material.valueOf(materialName.toUpperCase());
@@ -487,7 +502,7 @@ public class MagicBlockPlugin extends JavaPlugin {
                 getLogger().warning("Invalid material name in config: " + materialName);
             }
         }
-        
+
         return materials;
     }
 

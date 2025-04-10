@@ -11,9 +11,9 @@ repositories {
     maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
     maven { url 'https://repo.extendedclip.com/releases/' }
     maven { url 'https://repo.papermc.io/repository/maven-public/' }
-    maven { 
+    maven {
         name = "jitpack"
-        url = "https://jitpack.io" 
+        url = "https://jitpack.io"
     }
 }
 
@@ -22,6 +22,7 @@ dependencies {
     compileOnly 'me.clip:placeholderapi:2.11.6'
     compileOnly 'org.jetbrains:annotations:24.0.0'
     implementation "com.github.technicallycoded:FoliaLib:main-SNAPSHOT"
+    implementation 'com.zaxxer:HikariCP:5.0.1'
 }
 
 java {
@@ -37,7 +38,19 @@ tasks.withType(JavaCompile) {
 }
 
 shadowJar {
+    // 只包含必要的依赖类
+    minimize()
+
+    // 重定位依赖包以避免冲突
     relocate "com.tcoded.folialib", "io.github.syferie.magicblock.lib.folialib"
+    relocate "com.zaxxer.hikari", "io.github.syferie.magicblock.lib.hikari"
+
+    // 排除不必要的文件
+    exclude "META-INF/LICENSE*"
+    exclude "META-INF/NOTICE*"
+    exclude "META-INF/maven/**"
+    exclude "META-INF/versions/**"
+
     archiveFileName = "MagicBlock-${version}.jar"
 }
 

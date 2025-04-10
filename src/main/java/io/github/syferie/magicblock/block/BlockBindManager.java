@@ -1,6 +1,7 @@
 package io.github.syferie.magicblock.block;
 
 import io.github.syferie.magicblock.MagicBlockPlugin;
+import io.github.syferie.magicblock.database.DatabaseManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -29,12 +30,26 @@ public class BlockBindManager {
     private FileConfiguration bindConfig;
     private final Map<UUID, Map<String, Long>> lastClickTimes = new HashMap<>();
     private static final long DOUBLE_CLICK_TIME = 500; // 双击时间窗口（毫秒）
+    private DatabaseManager databaseManager;
 
     public BlockBindManager(MagicBlockPlugin plugin) {
         this.plugin = plugin;
         this.bindKey = new NamespacedKey(plugin, "magicblock_bind");
         this.bindFile = new File(plugin.getDataFolder(), "bindings.yml");
         loadBindConfig();
+    }
+
+    /**
+     * 设置数据库管理器
+     * @param databaseManager 数据库管理器实例
+     */
+    public void setDatabaseManager(DatabaseManager databaseManager) {
+        this.databaseManager = databaseManager;
+
+        // 如果数据库已启用且配置文件存在，则迁移数据
+        if (databaseManager != null && databaseManager.isEnabled() && bindFile.exists()) {
+            databaseManager.migrateFromFile(bindConfig);
+        }
     }
 
     private void loadBindConfig() {
@@ -61,13 +76,13 @@ public class BlockBindManager {
     }
 
     public String getBindLorePrefix() {
-        return ChatColor.translateAlternateColorCodes('&', 
+        return ChatColor.translateAlternateColorCodes('&',
             "&7" + plugin.getMessage("messages.bound-to") + " &b");
     }
 
     public void bindBlock(Player player, ItemStack item) {
         if (!plugin.getBlockManager().isMagicBlock(item)) return;
-        
+
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
@@ -91,7 +106,7 @@ public class BlockBindManager {
                 break;
             }
         }
-        
+
         // 在magic-lore后面添加绑定信息
         if (magicLoreIndex != -1) {
             // 找到装饰性lore的结束位置
@@ -105,7 +120,7 @@ public class BlockBindManager {
         } else {
             lore.add(getBindLorePrefix() + player.getName());
         }
-        
+
         meta.setLore(lore);
         item.setItemMeta(meta);
 
@@ -113,13 +128,9 @@ public class BlockBindManager {
         int currentUses = plugin.getBlockManager().getUseTimes(item);
         int maxUses = plugin.getBlockManager().getMaxUseTimes(item);
 
-        // 保存到配置文件
+        // 生成方块ID
         String itemId = UUID.randomUUID().toString();
-        String path = "bindings." + uuid + "." + itemId;
-        bindConfig.set(path + ".material", item.getType().name());
-        bindConfig.set(path + ".uses", currentUses);
-        bindConfig.set(path + ".max_uses", maxUses);
-        
+
         // 存储方块ID到物品中
         meta.getPersistentDataContainer().set(
             new NamespacedKey(plugin, "block_id"),
@@ -127,7 +138,26 @@ public class BlockBindManager {
             itemId
         );
         item.setItemMeta(meta);
-        saveBindConfig();
+
+        // 保存绑定数据
+        if (databaseManager != null && databaseManager.isEnabled()) {
+            // 使用数据库存储
+            databaseManager.saveBinding(
+                player.getUniqueId(),
+                player.getName(),
+                itemId,
+                item.getType().name(),
+                currentUses,
+                maxUses
+            );
+        } else {
+            // 使用文件存储
+            String path = "bindings." + uuid + "." + itemId;
+            bindConfig.set(path + ".material", item.getType().name());
+            bindConfig.set(path + ".uses", currentUses);
+            bindConfig.set(path + ".max_uses", maxUses);
+            saveBindConfig();
+        }
 
         plugin.sendMessage(player, "messages.bind-success");
     }
@@ -135,7 +165,7 @@ public class BlockBindManager {
     // 更新绑定方块的材质和使用次数
     public void updateBlockMaterial(ItemStack item) {
         if (!isBlockBound(item)) return;
-        
+
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
 
@@ -148,17 +178,31 @@ public class BlockBindManager {
         UUID boundPlayer = getBoundPlayer(item);
         if (boundPlayer == null) return;
 
-        String path = "bindings." + boundPlayer.toString() + "." + blockId;
-        if (bindConfig.contains(path)) {
-            // 更新材质
-            bindConfig.set(path + ".material", item.getType().name());
-            // 同步当前使用次数
-            int currentUses = plugin.getBlockManager().getUseTimes(item);
-            bindConfig.set(path + ".uses", currentUses);
-            // 同步最大使用次数
-            int maxUses = plugin.getBlockManager().getMaxUseTimes(item);
-            bindConfig.set(path + ".max_uses", maxUses);
-            saveBindConfig();
+        // 获取当前使用次数和最大使用次数
+        int currentUses = plugin.getBlockManager().getUseTimes(item);
+        int maxUses = plugin.getBlockManager().getMaxUseTimes(item);
+
+        if (databaseManager != null && databaseManager.isEnabled()) {
+            // 使用数据库更新
+            databaseManager.updateBinding(
+                boundPlayer,
+                blockId,
+                item.getType().name(),
+                currentUses,
+                maxUses
+            );
+        } else {
+            // 使用文件更新
+            String path = "bindings." + boundPlayer.toString() + "." + blockId;
+            if (bindConfig.contains(path)) {
+                // 更新材质
+                bindConfig.set(path + ".material", item.getType().name());
+                // 同步当前使用次数
+                bindConfig.set(path + ".uses", currentUses);
+                // 同步最大使用次数
+                bindConfig.set(path + ".max_uses", maxUses);
+                saveBindConfig();
+            }
         }
     }
 
@@ -178,45 +222,77 @@ public class BlockBindManager {
     }
 
     public void openBindList(Player player) {
-        String uuid = player.getUniqueId().toString();
-        if (!bindConfig.contains("bindings." + uuid)) {
-            plugin.sendMessage(player, "messages.no-bound-blocks");
-            return;
-        }
+        UUID playerUUID = player.getUniqueId();
+        String uuid = playerUUID.toString();
+        Map<String, Map<String, Object>> bindings;
 
         // 清理使用次数为0的方块
-        Set<String> blocks = Objects.requireNonNull(bindConfig.getConfigurationSection("bindings." + uuid)).getKeys(false);
-        for (String blockId : new ArrayList<>(blocks)) {
-            removeZeroUsageBlocks(uuid, blockId);
-        }
+        if (databaseManager != null && databaseManager.isEnabled()) {
+            databaseManager.cleanupZeroUsageBlocks(playerUUID);
+            bindings = databaseManager.getPlayerBindings(playerUUID);
 
-        // 重新检查是否还有绑定的方块
-        if (!bindConfig.contains("bindings." + uuid) || 
-            bindConfig.getConfigurationSection("bindings." + uuid).getKeys(false).isEmpty()) {
-            plugin.sendMessage(player, "messages.no-bound-blocks");
-            return;
+            if (bindings.isEmpty()) {
+                plugin.sendMessage(player, "messages.no-bound-blocks");
+                return;
+            }
+        } else {
+            if (!bindConfig.contains("bindings." + uuid)) {
+                plugin.sendMessage(player, "messages.no-bound-blocks");
+                return;
+            }
+
+            // 清理使用次数为0的方块
+            Set<String> blocks = Objects.requireNonNull(bindConfig.getConfigurationSection("bindings." + uuid)).getKeys(false);
+            for (String blockId : new ArrayList<>(blocks)) {
+                removeZeroUsageBlocks(uuid, blockId);
+            }
+
+            // 重新检查是否还有绑定的方块
+            if (!bindConfig.contains("bindings." + uuid) ||
+                bindConfig.getConfigurationSection("bindings." + uuid).getKeys(false).isEmpty()) {
+                plugin.sendMessage(player, "messages.no-bound-blocks");
+                return;
+            }
+
+            // 从文件中构建绑定数据
+            bindings = new HashMap<>();
+            blocks = Objects.requireNonNull(bindConfig.getConfigurationSection("bindings." + uuid)).getKeys(false);
+            for (String blockId : blocks) {
+                String path = "bindings." + uuid + "." + blockId;
+                if (bindConfig.getBoolean(path + ".hidden", false)) {
+                    continue;
+                }
+
+                Map<String, Object> blockData = new HashMap<>();
+                blockData.put("material", bindConfig.getString(path + ".material"));
+                blockData.put("uses", bindConfig.getInt(path + ".uses"));
+                blockData.put("max_uses", bindConfig.getInt(path + ".max_uses"));
+                blockData.put("hidden", bindConfig.getBoolean(path + ".hidden", false));
+
+                bindings.put(blockId, blockData);
+            }
         }
 
         Inventory gui = Bukkit.createInventory(null, 54, plugin.getMessage("gui.bound-blocks-title"));
-        blocks = Objects.requireNonNull(bindConfig.getConfigurationSection("bindings." + uuid)).getKeys(false);
 
         int slot = 0;
-        for (String blockId : blocks) {
+        for (Map.Entry<String, Map<String, Object>> entry : bindings.entrySet()) {
             if (slot >= 54) break;
-            
-            String path = "bindings." + uuid + "." + blockId;
-            
+
+            String blockId = entry.getKey();
+            Map<String, Object> blockData = entry.getValue();
+
             // 跳过被隐藏的方块
-            if (bindConfig.getBoolean(path + ".hidden", false)) {
+            if ((boolean) blockData.getOrDefault("hidden", false)) {
                 continue;
             }
 
-            Material material = Material.valueOf(bindConfig.getString(path + ".material"));
-            
+            Material material = Material.valueOf((String) blockData.get("material"));
+
             // 尝试从玩家背包中找到对应的方块以获取实际使用次数
-            int uses = bindConfig.getInt(path + ".uses");
-            int maxUses = bindConfig.getInt(path + ".max_uses", uses);
-            
+            int uses = (int) blockData.get("uses");
+            int maxUses = (int) blockData.get("max_uses");
+
             // 查找玩家背包中的对应方块
             for (ItemStack item : player.getInventory().getContents()) {
                 if (item != null && plugin.getBlockManager().isMagicBlock(item) && isBlockBound(item)) {
@@ -230,10 +306,16 @@ public class BlockBindManager {
                             // 使用实际的使用次数
                             uses = plugin.getBlockManager().getUseTimes(item);
                             maxUses = plugin.getBlockManager().getMaxUseTimes(item);
-                            // 更新配置中的使用次数
-                            bindConfig.set(path + ".uses", uses);
-                            bindConfig.set(path + ".max_uses", maxUses);
-                            saveBindConfig();
+
+                            // 更新数据
+                            if (databaseManager != null && databaseManager.isEnabled()) {
+                                databaseManager.updateBinding(playerUUID, blockId, material.name(), uses, maxUses);
+                            } else {
+                                String path = "bindings." + uuid + "." + blockId;
+                                bindConfig.set(path + ".uses", uses);
+                                bindConfig.set(path + ".max_uses", maxUses);
+                                saveBindConfig();
+                            }
                             break;
                         }
                     }
@@ -242,7 +324,11 @@ public class BlockBindManager {
 
             // 如果使用次数为0，跳过这个方块
             if (uses <= 0) {
-                removeZeroUsageBlocks(uuid, blockId);
+                if (databaseManager != null && databaseManager.isEnabled()) {
+                    databaseManager.deleteBinding(playerUUID, blockId);
+                } else {
+                    removeZeroUsageBlocks(uuid, blockId);
+                }
                 continue;
             }
 
@@ -277,7 +363,7 @@ public class BlockBindManager {
 
     public void retrieveBlock(Player player, ItemStack displayItem) {
         if (!isBlockBound(displayItem)) return;
-        
+
         UUID boundUUID = getBoundPlayer(displayItem);
         if (boundUUID == null || !boundUUID.equals(player.getUniqueId())) {
             plugin.sendMessage(player, "messages.not-bound-to-you");
@@ -287,21 +373,32 @@ public class BlockBindManager {
         // 获取方块ID
         ItemMeta displayMeta = displayItem.getItemMeta();
         if (displayMeta == null) return;
-        
+
         String blockId = displayMeta.getPersistentDataContainer().get(
             new NamespacedKey(plugin, "block_id"),
             PersistentDataType.STRING
         );
         if (blockId == null) return;
 
-        // 从配置文件获取使用次数信息
-        String uuid = player.getUniqueId().toString();
-        String path = "bindings." + uuid + "." + blockId;
-        if (!bindConfig.contains(path)) return;
-
         Material blockType = displayItem.getType();
-        int uses = bindConfig.getInt(path + ".uses");
-        int maxUses = bindConfig.getInt(path + ".max_uses", uses);
+        int uses;
+        int maxUses;
+
+        // 从数据库或配置文件获取使用次数信息
+        if (databaseManager != null && databaseManager.isEnabled()) {
+            Map<String, Object> blockData = databaseManager.getBlockBinding(blockId);
+            if (blockData == null) return;
+
+            uses = (int) blockData.get("uses");
+            maxUses = (int) blockData.get("max_uses");
+        } else {
+            String uuid = player.getUniqueId().toString();
+            String path = "bindings." + uuid + "." + blockId;
+            if (!bindConfig.contains(path)) return;
+
+            uses = bindConfig.getInt(path + ".uses");
+            maxUses = bindConfig.getInt(path + ".max_uses", uses);
+        }
 
         // 清理所有相同的绑定方块
         // 1. 清理在线玩家背包中的方块
@@ -336,7 +433,7 @@ public class BlockBindManager {
                     Container container = (Container) blockState;
                     ItemStack[] containerContents = container.getInventory().getContents();
                     boolean updated = false;
-                    
+
                     for (int i = 0; i < containerContents.length; i++) {
                         ItemStack item = containerContents[i];
                         if (isSameBoundBlock(item, player.getUniqueId(), blockType)) {
@@ -344,7 +441,7 @@ public class BlockBindManager {
                             updated = true;
                         }
                     }
-                    
+
                     if (updated) {
                         container.update();
                     }
@@ -375,7 +472,7 @@ public class BlockBindManager {
                     break;
                 }
             }
-            
+
             // 在magic-lore后面添加绑定信息
             if (magicLoreIndex != -1) {
                 // 找到装饰性lore的结束位置
@@ -389,7 +486,7 @@ public class BlockBindManager {
             } else {
                 lore.add(getBindLorePrefix() + player.getName());
             }
-            
+
             meta.setLore(lore);
             newBlock.setItemMeta(meta);
         }
@@ -414,10 +511,10 @@ public class BlockBindManager {
         if (item == null || !plugin.getBlockManager().isMagicBlock(item) || !isBlockBound(item)) {
             return false;
         }
-        
+
         UUID boundPlayer = getBoundPlayer(item);
-        return boundPlayer != null && 
-               boundPlayer.equals(playerUUID) && 
+        return boundPlayer != null &&
+               boundPlayer.equals(playerUUID) &&
                item.getType() == type;
     }
 
@@ -429,7 +526,7 @@ public class BlockBindManager {
 
     public void cleanupBindings(ItemStack item) {
         if (!isBlockBound(item)) return;
-        
+
         UUID boundUUID = getBoundPlayer(item);
         if (boundUUID == null) return;
 
@@ -458,7 +555,7 @@ public class BlockBindManager {
     private void removeZeroUsageBlocks(String uuid, String blockId) {
         String path = "bindings." + uuid + "." + blockId;
         int uses = bindConfig.getInt(path + ".uses", 0);
-        
+
         if (uses <= 0) {
             bindConfig.set(path, null);
             // 如果该玩家没有绑定的方块了，删除整个节点
@@ -472,7 +569,7 @@ public class BlockBindManager {
     // 处理绑定列表中的点击事件
     public void handleBindListClick(Player player, ItemStack clickedItem) {
         if (!isBlockBound(clickedItem)) return;
-        
+
         ItemMeta meta = clickedItem.getItemMeta();
         if (meta == null) return;
 
@@ -484,7 +581,7 @@ public class BlockBindManager {
 
         // 获取玩家的点击记录
         Map<String, Long> playerClicks = lastClickTimes.computeIfAbsent(
-            player.getUniqueId(), 
+            player.getUniqueId(),
             k -> new HashMap<>()
         );
 
@@ -494,14 +591,14 @@ public class BlockBindManager {
         if (lastClickTime != null && currentTime - lastClickTime < DOUBLE_CLICK_TIME) {
             // 双击确认，隐藏方块
             hideBlockFromList(player, blockId);
-            
+
             // 刷新界面
             player.closeInventory();
             openBindList(player);
-            
+
             // 发送确认消息
             plugin.sendMessage(player, "messages.block-bind-removed");
-            
+
             // 清除点击记录
             playerClicks.remove(blockId);
         } else {
@@ -513,36 +610,46 @@ public class BlockBindManager {
     }
 
     private void hideBlockFromList(Player player, String blockId) {
-        String uuid = player.getUniqueId().toString();
-        String path = "bindings." + uuid + "." + blockId + ".hidden";
-        bindConfig.set(path, true);
-        saveBindConfig();
+        if (databaseManager != null && databaseManager.isEnabled()) {
+            databaseManager.setBlockHidden(player.getUniqueId(), blockId, true);
+        } else {
+            String uuid = player.getUniqueId().toString();
+            String path = "bindings." + uuid + "." + blockId + ".hidden";
+            bindConfig.set(path, true);
+            saveBindConfig();
+        }
     }
 
     public void handleDepleted(ItemStack item) {
         if (!isBlockBound(item)) return;
-        
+
         UUID boundPlayer = getBoundPlayer(item);
         if (boundPlayer == null) return;
 
-        String uuid = boundPlayer.toString();
-        if (!bindConfig.contains("bindings." + uuid)) return;
+        // 获取方块ID
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return;
 
-        Set<String> blocks = Objects.requireNonNull(bindConfig.getConfigurationSection("bindings." + uuid)).getKeys(false);
-        for (String blockId : blocks) {
-            String path = "bindings." + uuid + "." + blockId;
-            String material = bindConfig.getString(path + ".material");
-            int uses = bindConfig.getInt(path + ".uses", 0);
+        String blockId = meta.getPersistentDataContainer().get(
+            new NamespacedKey(plugin, "block_id"),
+            PersistentDataType.STRING
+        );
+        if (blockId == null) return;
 
-            if (material != null && material.equals(item.getType().name()) && uses <= 0) {
-                // 如果配置为移除耗尽的方块
-                if (plugin.getConfig().getBoolean("remove-depleted-blocks", false)) {
-                    // 从绑定列表中移除
-                    bindConfig.set(path, null);
-                    saveBindConfig();
-                }
-                break;
+        // 如果配置为移除耗尽的方块
+        if (plugin.getConfig().getBoolean("remove-depleted-blocks", false)) {
+            if (databaseManager != null && databaseManager.isEnabled()) {
+                // 从数据库中移除
+                databaseManager.deleteBinding(boundPlayer, blockId);
+            } else {
+                // 从文件中移除
+                String uuid = boundPlayer.toString();
+                if (!bindConfig.contains("bindings." + uuid)) return;
+
+                String path = "bindings." + uuid + "." + blockId;
+                bindConfig.set(path, null);
+                saveBindConfig();
             }
         }
     }
-} 
+}

@@ -11,6 +11,11 @@ general:
   config-load-error: "&c✖ &7Error loading configuration!"
   config-created: "&a✔ &7Created new configuration file: {0}"
   config-updated: "&a✔ &7Configuration file {0} has been updated"
+  database-connected: "&a✔ &7Successfully connected to database!"
+  database-error: "&c✖ &7Database error: {0}"
+  database-tables-created: "&a✔ &7Database tables created successfully!"
+  database-migration-start: "&e⚠ &7Starting data migration to database..."
+  database-migration-complete: "&a✔ &7Data migration completed successfully!"
   config-key-added: "&7Added missing configuration key in {0}: {1}"
   update-found: "&eNew version available: &b{0}"
   current-version: "&eCurrent version: &b{0}"
@@ -126,7 +131,7 @@ blocks:
   GOLD_ORE: "Gold Ore"
   IRON_ORE: "Iron Ore"
   COAL_ORE: "Coal Ore"
-  
+
   # Wood Types
   OAK_WOOD: "Oak Wood"
   SPRUCE_WOOD: "Spruce Wood"
@@ -140,7 +145,7 @@ blocks:
   JUNGLE_LOG: "Jungle Log"
   ACACIA_LOG: "Acacia Log"
   DARK_OAK_LOG: "Dark Oak Log"
-  
+
   # Mineral Blocks
   GOLD_BLOCK: "Gold Block"
   IRON_BLOCK: "Iron Block"
@@ -148,7 +153,7 @@ blocks:
   EMERALD_BLOCK: "Emerald Block"
   LAPIS_BLOCK: "Lapis Block"
   REDSTONE_BLOCK: "Redstone Block"
-  
+
   # Stone Types
   GRANITE: "Granite"
   DIORITE: "Diorite"
@@ -156,7 +161,7 @@ blocks:
   STONE_BRICKS: "Stone Bricks"
   MOSSY_STONE_BRICKS: "Mossy Stone Bricks"
   CRACKED_STONE_BRICKS: "Cracked Stone Bricks"
-  
+
   # Decorative Blocks
   GLASS: "Glass"
   BOOKSHELF: "Bookshelf"
@@ -165,18 +170,18 @@ blocks:
   SEA_LANTERN: "Sea Lantern"
   CLAY: "Clay"
   TERRACOTTA: "Terracotta"
-  
+
   # Nether Blocks
   NETHERRACK: "Netherrack"
   SOUL_SAND: "Soul Sand"
   NETHER_BRICKS: "Nether Bricks"
   MAGMA_BLOCK: "Magma Block"
-  
+
   # End Blocks
   END_STONE: "End Stone"
   PURPUR_BLOCK: "Purpur Block"
   END_STONE_BRICKS: "End Stone Bricks"
-  
+
   # Concrete Colors
   WHITE_CONCRETE: "White Concrete"
   ORANGE_CONCRETE: "Orange Concrete"
@@ -194,7 +199,7 @@ blocks:
   GREEN_CONCRETE: "Green Concrete"
   RED_CONCRETE: "Red Concrete"
   BLACK_CONCRETE: "Black Concrete"
-  
+
   # Special Permission Blocks
   BEACON: "Beacon"
   DRAGON_EGG: "Dragon Egg"
