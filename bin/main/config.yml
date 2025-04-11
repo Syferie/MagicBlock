@@ -55,6 +55,9 @@ display:
     # %magicblock_remaining_uses% - Current block's remaining uses
     # %magicblock_max_uses%       - Current block's maximum uses
     # %magicblock_uses_progress%  - Usage progress (percentage)
+    # %magicblock_progress_bar%   - Progress bar with default length (20 chars)
+    # %magicblock_progressbar_10% - Progress bar with custom length (10 chars)
+    # %magicblock_progressbar_15% - Progress bar with custom length (15 chars)
     #
     # Common Variables:
     # %player_name%     - Bound player's name
@@ -64,6 +67,8 @@ display:
     # - "&7Bound to: %player_name%"
     # - "&7Total Uses: %magicblock_block_uses%"
     # - "&7Progress: %magicblock_uses_progress%%"
+    # - "&7Progress Bar: %magicblock_progress_bar%"
+    # - "&7Custom Bar: %magicblock_progressbar_15%"
     lines:
       - "&7This is a magical block."
       - "&7It is imbued with the power of magic."
@@ -89,6 +94,11 @@ usage-lore-prefix: "§7Uses:"
 # Default usage times for Magic Blocks obtained through the /mb get command.
 default-block-times: 1000000000
 
+# Whether to enable the block binding system
+# If set to true, players can bind blocks to themselves and retrieve them later
+# If set to false, the binding system will be disabled and blocks won't be bound to players
+enable-binding-system: true
+
 # Whether to allow other players to use blocks that are bound to another player
 # If set to true, players can use blocks even if they are bound to someone else
 # This only affects block usage, not the binding system or UI
@@ -98,6 +108,21 @@ allow-use-bound-blocks: false
 # If set to true, the block will be removed from the player's inventory and bound list when uses reach 0
 # If set to false, the block will remain but cannot be used (default behavior)
 remove-depleted-blocks: false
+
+# Database Settings
+# -------------------------------------------------------------
+# Settings for MySQL database connection for cross-server data storage
+database:
+  # Whether to use MySQL for data storage (if false, will use file-based storage)
+  enabled: false
+  # MySQL connection settings
+  host: localhost
+  port: 3306
+  database: magicblock
+  username: root
+  password: password
+  # Table prefix for all plugin tables
+  table-prefix: mb_
 
 # Allowed Materials
 # -------------------------------------------------------------
@@ -133,7 +158,7 @@ allowed-materials:
   - GOLD_ORE
   - IRON_ORE
   - COAL_ORE
-  
+
   # Wood Types
   - OAK_WOOD
   - SPRUCE_WOOD
@@ -147,7 +172,7 @@ allowed-materials:
   - JUNGLE_LOG
   - ACACIA_LOG
   - DARK_OAK_LOG
-  
+
   # Mineral Blocks
   - GOLD_BLOCK
   - IRON_BLOCK
@@ -155,7 +180,7 @@ allowed-materials:
   - EMERALD_BLOCK
   - LAPIS_BLOCK
   - REDSTONE_BLOCK
-  
+
   # Stone Types
   - GRANITE
   - DIORITE
@@ -163,7 +188,7 @@ allowed-materials:
   - STONE_BRICKS
   - MOSSY_STONE_BRICKS
   - CRACKED_STONE_BRICKS
-  
+
   # Decorative Blocks
   - GLASS
   - BOOKSHELF
@@ -172,18 +197,18 @@ allowed-materials:
   - SEA_LANTERN
   - CLAY
   - TERRACOTTA
-  
+
   # Nether Blocks
   - NETHERRACK
   - SOUL_SAND
   - NETHER_BRICKS
   - MAGMA_BLOCK
-  
+
   # End Blocks
   - END_STONE
   - PURPUR_BLOCK
   - END_STONE_BRICKS
-  
+
   # Concrete Colors
   - WHITE_CONCRETE
   - ORANGE_CONCRETE
@@ -214,7 +239,7 @@ group:
     - DIAMOND_BLOCK
     - EMERALD_BLOCK
     - GOLD_BLOCK
-  
+
   # MVP group materials
   mvp-material:
     # Example: Adds Beacon, Dragon Egg, and Netherite Block for players with the 'magicblock.group.mvp-material' permission.

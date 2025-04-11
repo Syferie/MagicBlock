@@ -239,7 +239,10 @@ public class BlockListener implements Listener {
         int useTimes = plugin.getBlockManager().getUseTimes(item);
         if (useTimes <= 0) {
             event.setCancelled(true);
-            plugin.sendMessage(player, "messages.block-removed");
+            // 直接发送消息，不使用参数
+            String message = plugin.getLanguageManager().getMessage("messages.block-removed");
+            String prefix = plugin.getLanguageManager().getMessage("general.prefix");
+            player.sendMessage(prefix + message);
 
             // 处理耗尽的方块
             plugin.getBlockBindManager().handleDepleted(item);

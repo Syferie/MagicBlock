@@ -55,10 +55,10 @@ public class FoodManager implements Listener, IMagicFood {
 
         // 获取食物名称
         String foodName = plugin.getMessage("foods." + material.name());
-        
+
         // 使用配置的名称格式
         String nameFormat = plugin.getFoodConfig().getString("display.food-name-format", "&b✦ %s &b✦");
-        meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', 
+        meta.setDisplayName(ChatColor.translateAlternateColorCodes('&',
             String.format(nameFormat, foodName)));
 
         List<String> lore = new ArrayList<>();
@@ -75,12 +75,12 @@ public class FoodManager implements Listener, IMagicFood {
                     line = line.replace("%magicfood_food_level%", String.valueOf(foodSection.getInt("food-level", 0)))
                              .replace("%magicfood_saturation%", String.valueOf(foodSection.getDouble("saturation", 0.0)))
                              .replace("%magicfood_heal%", String.valueOf(foodSection.getDouble("heal", 0.0)));
-                    
+
                     // 如果安装了PAPI，处理其他变量
                     if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
                         line = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(null, line);
                     }
-                    
+
                     lore.add(ChatColor.translateAlternateColorCodes('&', line));
                 }
             }
@@ -88,7 +88,7 @@ public class FoodManager implements Listener, IMagicFood {
 
         meta.setLore(lore);
         item.setItemMeta(meta);
-        
+
         return item;
     }
 
@@ -96,21 +96,21 @@ public class FoodManager implements Listener, IMagicFood {
     public void setUseTimes(ItemStack item, int times) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
-        
+
         if (times == -1) {
             int infiniteValue = Integer.MAX_VALUE - 100;
             meta.getPersistentDataContainer().set(useTimesKey, PersistentDataType.INTEGER, infiniteValue);
         } else {
             meta.getPersistentDataContainer().set(useTimesKey, PersistentDataType.INTEGER, times);
         }
-        
+
         item.setItemMeta(meta);
     }
 
     public void setMaxUseTimes(ItemStack item, int maxTimes) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
-        
+
         if (maxTimes == -1) {
             meta.getPersistentDataContainer().set(maxTimesKey, PersistentDataType.INTEGER, Integer.MAX_VALUE - 100);
         } else {
@@ -135,7 +135,7 @@ public class FoodManager implements Listener, IMagicFood {
     public int getUseTimes(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return 0;
-        
+
         PersistentDataContainer container = meta.getPersistentDataContainer();
         return container.getOrDefault(useTimesKey, PersistentDataType.INTEGER, 0);
     }
@@ -143,7 +143,7 @@ public class FoodManager implements Listener, IMagicFood {
     public int getMaxUseTimes(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return 0;
-        
+
         PersistentDataContainer container = meta.getPersistentDataContainer();
         Integer maxTimes = container.get(maxTimesKey, PersistentDataType.INTEGER);
         return maxTimes != null ? maxTimes : 0;
@@ -155,14 +155,14 @@ public class FoodManager implements Listener, IMagicFood {
         if (meta == null) return;
 
         List<String> lore = new ArrayList<>();
-        
+
         // 获取物品的最大使用次数
         int maxTimes = getMaxUseTimes(item);
         if (maxTimes <= 0) return;
 
         // 检查是否是"无限"次数
         boolean isInfinite = maxTimes == Integer.MAX_VALUE - 100;
-        
+
         // 添加特殊标识
         lore.add(plugin.getFoodConfig().getString("special-lore", "§7MagicFood"));
 
@@ -176,12 +176,12 @@ public class FoodManager implements Listener, IMagicFood {
                     line = line.replace("%magicfood_food_level%", String.valueOf(foodSection.getInt("food-level", 0)))
                              .replace("%magicfood_saturation%", String.valueOf(foodSection.getDouble("saturation", 0.0)))
                              .replace("%magicfood_heal%", String.valueOf(foodSection.getDouble("heal", 0.0)));
-                    
+
                     // 如果安装了PAPI，处理其他变量
                     if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
                         line = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(null, line);
                     }
-                    
+
                     lore.add(ChatColor.translateAlternateColorCodes('&', line));
                 }
             }
@@ -207,7 +207,7 @@ public class FoodManager implements Listener, IMagicFood {
         if (!isInfinite && plugin.getFoodConfig().getBoolean("display.show-info.progress-bar", true)) {
             StringBuilder progressBar = new StringBuilder();
             progressBar.append(ChatColor.GRAY).append("[");
-            
+
             int barLength = 10;
             double progress = (double) times / maxTimes;
             int filledBars = (int) Math.round(progress * barLength);
@@ -243,7 +243,9 @@ public class FoodManager implements Listener, IMagicFood {
 
         // 恢复生命值
         if (heal > 0) {
-            double newHealth = Math.min(player.getHealth() + heal, player.getMaxHealth());
+            // 使用兼容 1.18 的方式获取最大生命值
+            double maxHealth = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue();
+            double newHealth = Math.min(player.getHealth() + heal, maxHealth);
             player.setHealth(newHealth);
         }
 
@@ -283,8 +285,8 @@ public class FoodManager implements Listener, IMagicFood {
             double spreadZ = plugin.getFoodConfig().getDouble("particles.spread.z", 0.5);
             try {
                 Particle particle = Particle.valueOf(particleType);
-                player.getWorld().spawnParticle(particle, 
-                    player.getLocation().add(0, 1, 0), 
+                player.getWorld().spawnParticle(particle,
+                    player.getLocation().add(0, 1, 0),
                     count, spreadX, spreadY, spreadZ);
             } catch (IllegalArgumentException ignored) {}
         }
@@ -299,7 +301,7 @@ public class FoodManager implements Listener, IMagicFood {
         Player player = event.getPlayer();
 
         // 检查是否允许在饱食度满时使用
-        if (!plugin.getFoodConfig().getBoolean("allow-use-when-full", true) 
+        if (!plugin.getFoodConfig().getBoolean("allow-use-when-full", true)
             && player.getFoodLevel() >= 20) {
             plugin.sendMessage(player, "messages.food-full");
             return;
@@ -307,11 +309,12 @@ public class FoodManager implements Listener, IMagicFood {
 
         // 创建物品的副本以避免并发修改问题
         ItemStack item = originalItem.clone();
-        
+
         // 检查当前使用次数
         int currentTimes = getUseTimes(item);
         if (currentTimes <= 0) {
-            removeItemFromHand(player, event.getHand());
+            // 在 1.18 中，消耗物品总是在主手进行的
+            removeItemFromHand(player, EquipmentSlot.HAND);
             return;
         }
 
@@ -321,15 +324,17 @@ public class FoodManager implements Listener, IMagicFood {
 
         // 减少使用次数
         currentTimes--;
-        
+
         // 更新物品状态
         if (currentTimes <= 0) {
-            removeItemFromHand(player, event.getHand());
+            // 在 1.18 中，消耗物品总是在主手进行的
+            removeItemFromHand(player, EquipmentSlot.HAND);
             plugin.sendMessage(player, "messages.food-removed");
         } else {
             setUseTimes(item, currentTimes);
             updateLore(item, currentTimes);
-            updateItemInHand(player, event.getHand(), item);
+            // 在 1.18 中，消耗物品总是在主手进行的
+            updateItemInHand(player, EquipmentSlot.HAND, item);
         }
     }
 

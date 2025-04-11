@@ -3,6 +3,7 @@ package io.github.syferie.magicblock.hook;
 import io.github.syferie.magicblock.MagicBlockPlugin;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public class PlaceholderHook extends PlaceholderExpansion {
@@ -53,7 +54,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         // 获取玩家剩余的魔法方块使用次数
         if (params.equalsIgnoreCase("remaining_uses")) {
             if (player.isOnline() && player.getPlayer() != null) {
-                var item = player.getPlayer().getInventory().getItemInMainHand();
+                ItemStack item = player.getPlayer().getInventory().getItemInMainHand();
                 if (plugin.getBlockManager().getUseTimes(item) > 0) {
                     return String.valueOf(plugin.getBlockManager().getUseTimes(item));
                 }
@@ -64,7 +65,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         // 获取玩家是否持有魔法方块
         if (params.equalsIgnoreCase("has_block")) {
             if (player.isOnline() && player.getPlayer() != null) {
-                var item = player.getPlayer().getInventory().getItemInMainHand();
+                ItemStack item = player.getPlayer().getInventory().getItemInMainHand();
                 return String.valueOf(plugin.getBlockManager().isMagicBlock(item));
             }
             return "false";
@@ -73,7 +74,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         // 获取玩家是否持有魔法食物
         if (params.equalsIgnoreCase("has_food")) {
             if (player.isOnline() && player.getPlayer() != null && plugin.getMagicFood() != null) {
-                var item = player.getPlayer().getInventory().getItemInMainHand();
+                ItemStack item = player.getPlayer().getInventory().getItemInMainHand();
                 return String.valueOf(plugin.getMagicFood().isMagicFood(item));
             }
             return "false";
@@ -82,7 +83,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         // 获取玩家魔法方块的最大使用次数
         if (params.equalsIgnoreCase("max_uses")) {
             if (player.isOnline() && player.getPlayer() != null) {
-                var item = player.getPlayer().getInventory().getItemInMainHand();
+                ItemStack item = player.getPlayer().getInventory().getItemInMainHand();
                 if (plugin.getBlockManager().isMagicBlock(item)) {
                     return String.valueOf(plugin.getBlockManager().getMaxUseTimes(item));
                 }
@@ -93,7 +94,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         // 获取玩家魔法方块的使用进度(百分比)
         if (params.equalsIgnoreCase("uses_progress")) {
             if (player.isOnline() && player.getPlayer() != null) {
-                var item = player.getPlayer().getInventory().getItemInMainHand();
+                ItemStack item = player.getPlayer().getInventory().getItemInMainHand();
                 if (plugin.getBlockManager().isMagicBlock(item)) {
                     int maxUses = plugin.getBlockManager().getMaxUseTimes(item);
                     int remainingUses = plugin.getBlockManager().getUseTimes(item);
@@ -109,7 +110,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
         // 获取玩家魔法方块的进度条
         if (params.equalsIgnoreCase("progress_bar") || params.equalsIgnoreCase("progressbar")) {
             if (player.isOnline() && player.getPlayer() != null) {
-                var item = player.getPlayer().getInventory().getItemInMainHand();
+                ItemStack item = player.getPlayer().getInventory().getItemInMainHand();
                 if (plugin.getBlockManager().isMagicBlock(item)) {
                     int maxUses = plugin.getBlockManager().getMaxUseTimes(item);
                     int remainingUses = plugin.getBlockManager().getUseTimes(item);
@@ -136,7 +137,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
                 if (barLength <= 0) barLength = 10; // 默认长度
 
                 if (player.isOnline() && player.getPlayer() != null) {
-                    var item = player.getPlayer().getInventory().getItemInMainHand();
+                    ItemStack item = player.getPlayer().getInventory().getItemInMainHand();
                     if (plugin.getBlockManager().isMagicBlock(item)) {
                         int maxUses = plugin.getBlockManager().getMaxUseTimes(item);
                         int remainingUses = plugin.getBlockManager().getUseTimes(item);

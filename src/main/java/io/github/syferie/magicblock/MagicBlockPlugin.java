@@ -181,8 +181,21 @@ public class MagicBlockPlugin extends JavaPlugin {
 
     // 发送消息方法
     public void sendMessage(CommandSender sender, String path, Object... args) {
-        String message = languageManager.getMessage(path, args);
-        sender.sendMessage(languageManager.getMessage("general.prefix") + message);
+        // 获取消息内容
+        String message;
+
+        // 特殊处理某些消息，确保它们不会有额外的参数
+        if (path.equals("messages.block-removed") || path.equals("messages.food-removed")) {
+            message = languageManager.getMessage(path); // 不传递参数
+        } else {
+            message = languageManager.getMessage(path, args);
+        }
+
+        // 获取前缀
+        String prefix = languageManager.getMessage("general.prefix");
+
+        // 发送带前缀的消息
+        sender.sendMessage(prefix + message);
     }
 
     public LanguageManager getLanguageManager() {
