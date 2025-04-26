@@ -10,6 +10,7 @@ import io.github.syferie.magicblock.food.FoodService;
 import io.github.syferie.magicblock.hook.PlaceholderHook;
 import io.github.syferie.magicblock.listener.BlockListener;
 import io.github.syferie.magicblock.metrics.Metrics;
+import io.github.syferie.magicblock.util.MinecraftLangManager;
 import io.github.syferie.magicblock.util.Statistics;
 import io.github.syferie.magicblock.util.LanguageManager;
 import io.github.syferie.magicblock.block.BlockBindManager;
@@ -50,6 +51,7 @@ public class MagicBlockPlugin extends JavaPlugin {
     private final HashMap<UUID, Integer> playerUsage = new HashMap<>();
     private List<Material> allowedMaterials;
     private LanguageManager languageManager;
+    private MinecraftLangManager minecraftLangManager;
     private FoliaLib foliaLib;
     private DatabaseManager databaseManager;
 
@@ -57,6 +59,7 @@ public class MagicBlockPlugin extends JavaPlugin {
     public void onEnable() {
         // 初始化语言管理器
         this.languageManager = new LanguageManager(this);
+        this.minecraftLangManager = new MinecraftLangManager(this);
 
         try {
             // 初始化FoliaLib
@@ -200,6 +203,10 @@ public class MagicBlockPlugin extends JavaPlugin {
 
     public LanguageManager getLanguageManager() {
         return languageManager;
+    }
+
+    public MinecraftLangManager getMinecraftLangManager() {
+        return minecraftLangManager;
     }
 
     @Override
@@ -391,7 +398,7 @@ public class MagicBlockPlugin extends JavaPlugin {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             // 根据当前语言获取方块名称
-            String blockName = languageManager.getMessage("blocks.STONE");
+            String blockName = languageManager.getMessage(getMinecraftLangManager().getItemStackName(item));
 
             // 在原有名称两侧添加装饰符号
             String nameFormat = getConfig().getString("display.block-name-format", "&b✦ %s &b✦");
