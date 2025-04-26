@@ -24,7 +24,7 @@ dependencies {
     compileOnly 'org.jetbrains:annotations:24.0.0'
     implementation "com.github.technicallycoded:FoliaLib:main-SNAPSHOT"
     implementation 'com.zaxxer:HikariCP:5.0.1'
-    implementation 'cn.chengzhiya:MHDF-LangUtil:1.2.0'
+    implementation 'cn.chengzhiya:MHDF-LangUtil:1.2.2'
 }
 
 java {

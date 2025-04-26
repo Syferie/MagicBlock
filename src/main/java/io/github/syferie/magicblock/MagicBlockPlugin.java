@@ -398,7 +398,7 @@ public class MagicBlockPlugin extends JavaPlugin {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             // 根据当前语言获取方块名称
-            String blockName = languageManager.getMessage(getMinecraftLangManager().getItemStackName(item));
+            String blockName = getMinecraftLangManager().getItemStackName(item);
 
             // 在原有名称两侧添加装饰符号
             String nameFormat = getConfig().getString("display.block-name-format", "&b✦ %s &b✦");

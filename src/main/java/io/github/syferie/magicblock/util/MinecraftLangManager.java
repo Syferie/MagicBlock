@@ -25,7 +25,9 @@ public class MinecraftLangManager {
 
     private void loadLanguage() {
         currentLanguage = plugin.getConfig().getString("minecraftLanguage", "en_us");
-        langManager = new LangManager(currentLanguage);
+        langManager = langAPI.getLangManager(currentLanguage);
+        langManager.downloadLang();
+        langManager.reloadLang();
     }
 
     public String getItemStackName(ItemStack itemStack) {
