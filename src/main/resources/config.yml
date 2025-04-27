@@ -22,7 +22,7 @@ language: "en"
 # For example languages:
 # - en_gb (English)
 # - zh_cn (Simplified Chinese)
-minecraftLanguage: "en_us"
+minecraftLanguage: "en_gb"
 
 # Message prefix displayed before plugin messages.
 prefix: "§7[MagicBlock] "
