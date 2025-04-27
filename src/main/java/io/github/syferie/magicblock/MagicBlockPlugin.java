@@ -59,7 +59,6 @@ public class MagicBlockPlugin extends JavaPlugin {
     public void onEnable() {
         // 初始化语言管理器
         this.languageManager = new LanguageManager(this);
-        this.minecraftLangManager = new MinecraftLangManager(this);
 
         try {
             // 初始化FoliaLib
@@ -75,6 +74,9 @@ public class MagicBlockPlugin extends JavaPlugin {
 
         // 初始化配置
         initializeConfig();
+
+        // 初始化MC语言管理器
+        this.minecraftLangManager = new MinecraftLangManager(this);
 
         // 初始化允许的材料列表
         this.allowedMaterials = loadMaterialsFromConfig();
