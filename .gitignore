@@ -9,3 +9,5 @@ out/
 .DS_Store 
 none
 gradle.properties
+build/tmp/compileJava/previous-compilation-data.bin
+
