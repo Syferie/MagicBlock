@@ -10,4 +10,4 @@ out/
 none
 gradle.properties
 build/tmp/compileJava/previous-compilation-data.bin
-
+build/
