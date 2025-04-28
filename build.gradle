@@ -4,13 +4,14 @@ plugins {
 }
 
 group 'io.github.syferie.magicblock'
-version '3.1.4'
+version '3.1.5'
 
 repositories {
     mavenCentral()
     maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
     maven { url 'https://repo.extendedclip.com/releases/' }
     maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://maven.chengzhimeow.cn/releases/' }
     maven {
         name = "jitpack"
         url = "https://jitpack.io"
@@ -23,6 +24,7 @@ dependencies {
     compileOnly 'org.jetbrains:annotations:24.0.0'
     implementation "com.github.technicallycoded:FoliaLib:main-SNAPSHOT"
     implementation 'com.zaxxer:HikariCP:5.0.1'
+    implementation 'cn.chengzhiya:MHDF-LangUtil:1.2.4'
 }
 
 java {
@@ -41,6 +43,7 @@ shadowJar {
     // 重定位依赖包以避免冲突
     relocate "com.tcoded.folialib", "io.github.syferie.magicblock.lib.folialib"
     relocate "com.zaxxer.hikari", "io.github.syferie.magicblock.lib.hikari"
+    relocate "cn.chengzhiya.langutil", "io.github.syferie.magicblock.lib.langutil"
 
     // 排除不必要的文件
     exclude "META-INF/LICENSE*"

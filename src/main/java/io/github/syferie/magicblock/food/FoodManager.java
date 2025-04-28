@@ -54,7 +54,7 @@ public class FoodManager implements Listener, IMagicFood {
         if (meta == null) return null;
 
         // 获取食物名称
-        String foodName = plugin.getMessage("foods." + material.name());
+        String foodName =plugin.getMinecraftLangManager().getItemStackName(item);
 
         // 使用配置的名称格式
         String nameFormat = plugin.getFoodConfig().getString("display.food-name-format", "&b✦ %s &b✦");

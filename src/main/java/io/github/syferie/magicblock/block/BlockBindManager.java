@@ -341,7 +341,7 @@ public class BlockBindManager {
             ItemStack displayItem = new ItemStack(material, 1);
             ItemMeta meta = displayItem.getItemMeta();
             if (meta != null) {
-                meta.setDisplayName(ChatColor.AQUA + plugin.getLanguageManager().getMessage("blocks." + material.name()));
+                meta.setDisplayName(ChatColor.AQUA + plugin.getMinecraftLangManager().getItemStackName(displayItem));
                 List<String> lore = new ArrayList<>();
                 lore.add(plugin.getMagicLore());
                 lore.add(getBindLorePrefix() + player.getName());

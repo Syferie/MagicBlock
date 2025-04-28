@@ -107,7 +107,7 @@ public class BlockSelectionGUI {
             List<Material> results = allMaterials.stream()
                 .filter(material -> {
                     String materialName = material.name().toLowerCase();
-                    String localizedName = plugin.getMessage("blocks." + material.name());
+                    String localizedName = plugin.getMessage(plugin.getMinecraftLangManager().getItemStackName(new ItemStack(material)));
                     return materialName.contains(lowercaseQuery) || 
                            localizedName.toLowerCase().contains(lowercaseQuery);
                 })
@@ -192,7 +192,7 @@ public class BlockSelectionGUI {
                 ItemMeta originalMeta = originalItem.getItemMeta();
                 ItemMeta newMeta = newItem.getItemMeta();
                 if (originalMeta != null && newMeta != null) {
-                    String blockName = getChineseBlockName(clickedItem.getType());
+                    String blockName = plugin.getMinecraftLangManager().getItemStackName(clickedItem);
                     String nameFormat = plugin.getConfig().getString("display.block-name-format", "&b✦ %s &b✦");
                     newMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', 
                         String.format(nameFormat, blockName)));
@@ -205,7 +205,7 @@ public class BlockSelectionGUI {
                 }
                 
                 player.getInventory().setItemInMainHand(newItem);
-                plugin.sendMessage(player, "messages.success-replace", getChineseBlockName(clickedItem.getType()));
+                plugin.sendMessage(player, "messages.success-replace", plugin.getMinecraftLangManager().getItemStackName(clickedItem));
                 
                 // 清理记录
                 clearPlayerData(playerId);
@@ -241,7 +241,7 @@ public class BlockSelectionGUI {
         ItemStack block = new ItemStack(material);
         ItemMeta meta = block.getItemMeta();
         if (meta != null) {
-            String blockName = getChineseBlockName(material);
+            String blockName = plugin.getMinecraftLangManager().getItemStackName(block);
             // 在原有名称两侧添加装饰符号
             String nameFormat = plugin.getConfig().getString("display.block-name-format", "&b✦ %s &b✦");
             meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', 
@@ -250,18 +250,6 @@ public class BlockSelectionGUI {
             block.setItemMeta(meta);
         }
         return block;
-    }
-
-    private String getChineseBlockName(Material material) {
-        // 从语言文件获取
-        String langKey = "blocks." + material.name();
-        String langName = plugin.getMessage(langKey);
-        if (!langName.startsWith("Missing message")) {
-            return langName;
-        }
-        
-        // 如果没有翻译，返回格式化的英文名称
-        return material.name().toLowerCase().replace('_', ' ');
     }
 
     public void clearPlayerData(UUID playerUUID) {

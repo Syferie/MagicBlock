@@ -514,10 +514,30 @@ public class BlockListener implements Listener {
         Block block = event.getBlock();
         if (isMagicBlockLocation(block.getLocation())) {
             Material type = block.getType();
-            // 允许压力板、按钮等红石元件的状态改变，但阻止它们被破坏
+            // 允许红石组件的状态改变，但阻止它们被破坏
             if (isRedstoneComponent(type)) {
                 // 如果是由于方块更新引起的状态改变，允许它
                 if (event.getChangedType() == type) {
+                    return;
+                }
+
+                // 特殊处理需要更新红石状态的方块
+                if (type == Material.POWERED_RAIL ||
+                    type == Material.DETECTOR_RAIL ||
+                    type == Material.ACTIVATOR_RAIL ||
+                    type == Material.REDSTONE_LAMP ||
+                    type == Material.DISPENSER ||
+                    type == Material.DROPPER ||
+                    type == Material.HOPPER ||
+                    type == Material.PISTON ||
+                    type == Material.STICKY_PISTON ||
+                    type == Material.OBSERVER ||
+                    type == Material.NOTE_BLOCK ||
+                    type == Material.DAYLIGHT_DETECTOR ||
+                    type.name().contains("DOOR") ||
+                    type.name().contains("TRAPDOOR") ||
+                    type.name().contains("GATE")) {
+                    // 允许这些方块的状态改变
                     return;
                 }
             }
@@ -525,6 +545,8 @@ public class BlockListener implements Listener {
             event.setCancelled(true);
         }
     }
+
+
 
     private boolean isRedstoneComponent(Material material) {
         return material.name().endsWith("_PRESSURE_PLATE") ||
@@ -534,7 +556,26 @@ public class BlockListener implements Listener {
                material == Material.REPEATER ||
                material == Material.COMPARATOR ||
                material == Material.REDSTONE_TORCH ||
-               material == Material.REDSTONE_WALL_TORCH;
+               material == Material.REDSTONE_WALL_TORCH ||
+               material == Material.POWERED_RAIL ||
+               material == Material.DETECTOR_RAIL ||
+               material == Material.ACTIVATOR_RAIL ||
+               material == Material.REDSTONE_LAMP ||
+               material == Material.DISPENSER ||
+               material == Material.DROPPER ||
+               material == Material.HOPPER ||
+               material == Material.OBSERVER ||
+               material == Material.PISTON ||
+               material == Material.STICKY_PISTON ||
+               material == Material.DAYLIGHT_DETECTOR ||
+               material == Material.TARGET ||
+               material == Material.TRIPWIRE ||
+               material == Material.TRIPWIRE_HOOK ||
+               material == Material.NOTE_BLOCK ||
+               material == Material.BELL ||
+               material.name().contains("DOOR") ||
+               material.name().contains("TRAPDOOR") ||
+               material.name().contains("GATE");
     }
 
     @EventHandler
@@ -751,16 +792,37 @@ public class BlockListener implements Listener {
         return plugin.hasMagicLore(meta);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onEntityChangeBlock(EntityChangeBlockEvent event) {
         Block block = event.getBlock();
         Location blockLocation = block.getLocation();
+        Material blockType = block.getType();
 
         // 检查是否是魔法方块
         if (isMagicBlockLocation(blockLocation)) {
-            // 如果是水流破坏，直接移除方块和记录，不产生掉落物
-            removeMagicBlockLocation(blockLocation);
-            event.setCancelled(false);
+            // 取消事件，防止方块变化和掉落物生成
+            event.setCancelled(true);
+
+            // 如果是重力方块（沙子、砂砾等）或红石组件类方块，直接移除它们而不产生掉落物
+            if (block.getType().hasGravity() || isRedstoneComponent(blockType)) {
+                // 对于红石组件类方块，立即设置为空气，防止掉落物生成
+                if (isRedstoneComponent(blockType)) {
+                    block.setType(Material.AIR);
+
+                    // 然后移除记录
+                    foliaLib.getScheduler().runLater(() -> {
+                        removeMagicBlockLocation(blockLocation);
+                    }, 1L);
+                } else {
+                    // 对于其他类型的方块，使用原来的处理方式
+                    foliaLib.getScheduler().runLater(() -> {
+                        if (isMagicBlockLocation(blockLocation)) {
+                            block.setType(Material.AIR);
+                            removeMagicBlockLocation(blockLocation);
+                        }
+                    }, 1L);
+                }
+            }
             return;
         }
 
@@ -768,9 +830,70 @@ public class BlockListener implements Listener {
         if (isAttachable(block.getType())) {
             Block blockBelow = block.getRelative(BlockFace.DOWN);
             if (isMagicBlockLocation(blockBelow.getLocation())) {
-                // 如果是水流破坏，直接移除方块和记录，不产生掉落物
-                removeMagicBlockLocation(blockLocation);
-                event.setCancelled(false);
+                // 取消事件，防止方块变化和掉落物生成
+                event.setCancelled(true);
+
+                // 对于红石组件类方块，立即设置为空气，防止掉落物生成
+                if (isRedstoneComponent(blockType)) {
+                    block.setType(Material.AIR);
+
+                    // 然后移除记录
+                    foliaLib.getScheduler().runLater(() -> {
+                        removeMagicBlockLocation(blockLocation);
+                    }, 1L);
+                } else {
+                    // 对于其他类型的方块，使用原来的处理方式
+                    foliaLib.getScheduler().runLater(() -> {
+                        if (isMagicBlockLocation(blockLocation)) {
+                            block.setType(Material.AIR);
+                            removeMagicBlockLocation(blockLocation);
+                        }
+                    }, 1L);
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockFromTo(BlockFromToEvent event) {
+        // 处理液体流动事件
+        Block toBlock = event.getToBlock();
+        Material toBlockType = toBlock.getType();
+
+        // 检查目标方块是否是魔法方块
+        if (isMagicBlockLocation(toBlock.getLocation())) {
+            // 取消事件，防止液体破坏魔法方块
+            event.setCancelled(true);
+
+            // 对于红石组件类方块，立即设置为空气，防止掉落物生成
+            if (isRedstoneComponent(toBlockType)) {
+                toBlock.setType(Material.AIR);
+
+                // 然后移除记录
+                final Location blockLocation = toBlock.getLocation();
+                foliaLib.getScheduler().runLater(() -> {
+                    removeMagicBlockLocation(blockLocation);
+                }, 1L);
+            }
+
+            return;
+        }
+
+        // 检查目标方块下方是否有魔法方块，且目标方块是可附着的
+        Block belowBlock = toBlock.getRelative(BlockFace.DOWN);
+        if (isAttachable(toBlock.getType()) && isMagicBlockLocation(belowBlock.getLocation())) {
+            // 取消事件，防止液体破坏附着在魔法方块上的方块
+            event.setCancelled(true);
+
+            // 对于红石组件类方块，立即设置为空气，防止掉落物生成
+            if (isRedstoneComponent(toBlockType)) {
+                toBlock.setType(Material.AIR);
+
+                // 然后移除记录
+                final Location blockLocation = toBlock.getLocation();
+                foliaLib.getScheduler().runLater(() -> {
+                    removeMagicBlockLocation(blockLocation);
+                }, 1L);
             }
         }
     }
@@ -804,10 +927,35 @@ public class BlockListener implements Listener {
         for (Block block : event.blockList()) {
             if (isMagicBlockLocation(block.getLocation())) {
                 blocksToKeep.add(block);
+
+                // 获取方块类型，用于后续处理
+                Material blockType = block.getType();
+
+                // 延迟1tick移除方块和记录，确保不会产生掉落物
+                final Location blockLocation = block.getLocation();
+
+                // 对于红石组件类方块，需要特别处理
+                if (isRedstoneComponent(blockType)) {
+                    // 立即设置为空气，防止掉落物生成
+                    block.setType(Material.AIR);
+
+                    // 然后移除记录
+                    foliaLib.getScheduler().runLater(() -> {
+                        removeMagicBlockLocation(blockLocation);
+                    }, 1L);
+                } else {
+                    // 对于其他类型的方块，使用原来的处理方式
+                    foliaLib.getScheduler().runLater(() -> {
+                        if (isMagicBlockLocation(blockLocation)) {
+                            block.setType(Material.AIR);
+                            removeMagicBlockLocation(blockLocation);
+                        }
+                    }, 1L);
+                }
             }
         }
 
-        // 只从爆炸列表中移除魔法方块
+        // 从爆炸列表中移除魔法方块，防止它们被爆炸破坏并产生掉落物
         event.blockList().removeAll(blocksToKeep);
     }
 
@@ -842,9 +990,34 @@ public class BlockListener implements Listener {
         for (Block block : event.blockList()) {
             if (isMagicBlockLocation(block.getLocation())) {
                 blocksToKeep.add(block);
+
+                // 获取方块类型，用于后续处理
+                Material blockType = block.getType();
+
+                // 延迟1tick移除方块和记录，确保不会产生掉落物
+                final Location blockLocation = block.getLocation();
+
+                // 对于红石组件类方块，需要特别处理
+                if (isRedstoneComponent(blockType)) {
+                    // 立即设置为空气，防止掉落物生成
+                    block.setType(Material.AIR);
+
+                    // 然后移除记录
+                    foliaLib.getScheduler().runLater(() -> {
+                        removeMagicBlockLocation(blockLocation);
+                    }, 1L);
+                } else {
+                    // 对于其他类型的方块，使用原来的处理方式
+                    foliaLib.getScheduler().runLater(() -> {
+                        if (isMagicBlockLocation(blockLocation)) {
+                            block.setType(Material.AIR);
+                            removeMagicBlockLocation(blockLocation);
+                        }
+                    }, 1L);
+                }
             }
         }
-        // 只从爆炸列表中移除魔法方块
+        // 从爆炸列表中移除魔法方块，防止它们被爆炸破坏并产生掉落物
         event.blockList().removeAll(blocksToKeep);
     }
 
@@ -867,6 +1040,48 @@ public class BlockListener implements Listener {
                 }
                 return;
             }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockRedstone(BlockRedstoneEvent event) {
+        Block block = event.getBlock();
+
+        // 检查周围的红石组件
+        BlockFace[] faces = {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN};
+        for (BlockFace face : faces) {
+            Block adjacent = block.getRelative(face);
+            Material type = adjacent.getType();
+
+            // 如果是魔法方块位置上的红石组件，确保它们可以接收红石信号
+            if (isMagicBlockLocation(adjacent.getLocation()) && isRedstoneComponent(type)) {
+                // 不取消事件，允许红石信号传递
+
+                // 对于特定的方块，可能需要手动更新状态
+                if (type == Material.REDSTONE_LAMP ||
+                    type == Material.DISPENSER ||
+                    type == Material.DROPPER ||
+                    type == Material.HOPPER ||
+                    type == Material.PISTON ||
+                    type == Material.STICKY_PISTON ||
+                    type == Material.OBSERVER ||
+                    type == Material.NOTE_BLOCK ||
+                    type == Material.POWERED_RAIL ||
+                    type == Material.DETECTOR_RAIL ||
+                    type == Material.ACTIVATOR_RAIL) {
+
+                    // 使用FoliaLib延迟1tick更新方块状态
+                    final Block targetBlock = adjacent;
+                    foliaLib.getScheduler().runLater(() -> {
+                        targetBlock.getState().update(true, true);
+                    }, 1L);
+                }
+            }
+        }
+
+        // 如果当前方块本身是魔法方块位置上的红石组件，确保它可以正常工作
+        if (isMagicBlockLocation(block.getLocation()) && isRedstoneComponent(block.getType())) {
+            // 不取消事件，允许红石信号传递
         }
     }
 
