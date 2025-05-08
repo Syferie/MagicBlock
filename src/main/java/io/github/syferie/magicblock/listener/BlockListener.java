@@ -451,12 +451,35 @@ public class BlockListener implements Listener {
                 // 清理绑定数据
                 plugin.getBlockBindManager().cleanupBindings(blockItem);
 
-                // 移除两个部分的位置记录
-                removeMagicBlockLocation(blockLocation);
-                removeMagicBlockLocation(otherPart.getLocation());
+                final Location finalBlockLocation = blockLocation;
+                final Block finalOtherPart = otherPart; // Effectively final for lambda
+                final Location finalOtherPartLocation = finalOtherPart.getLocation();
 
-                // 移除另一部分，不产生掉落物
-                otherPart.setType(Material.AIR);
+                plugin.getFoliaLib().getScheduler().runLater(() -> {
+                    Block blockAtLocation = finalBlockLocation.getBlock();
+                    Block otherPartAtLocation = finalOtherPartLocation.getBlock();
+
+                    if (blockAtLocation.getType() == Material.AIR && otherPartAtLocation.getType() == Material.AIR) {
+                        // 移除两个部分的位置记录
+                        removeMagicBlockLocation(finalBlockLocation);
+                        removeMagicBlockLocation(finalOtherPartLocation);
+                        // 确保另一部分也被正确清理（虽然事件通常会处理这个，但双重保险）
+                        // finalOtherPart.setType(Material.AIR); // 这行可能不需要，因为破坏事件应该已经处理了
+                                                              // 但如果 otherPartAtLocation.getType() == Material.AIR 已经是真的，
+                                                              // 再次设置它也没坏处。或者，如果上层逻辑确保了它会被破坏，
+                                                              // 那么这里主要关注的是 removeMagicBlockLocation。
+                                                              // 为了安全，如果 otherPart 在破坏时没有被正确处理，这里可以补救。
+                                                              // 考虑到 otherPart 已经是 AIR 了，这一行可以省略。
+                    } else if (blockAtLocation.getType() == Material.AIR) {
+                        // 如果主方块是 AIR，但另一部分不是（可能被其他插件阻止破坏），
+                        // 至少移除主方块的记录。
+                        removeMagicBlockLocation(finalBlockLocation);
+                        // 尝试移除另一部分，如果它不是 AIR，它可能不会被移除，但位置记录可以尝试移除
+                        finalOtherPart.setType(Material.AIR); // 再次尝试确保它被破坏
+                        removeMagicBlockLocation(finalOtherPartLocation);
+                    }
+                    // 如果 blockAtLocation 不是 AIR，则不执行任何操作，因为主破坏未成功。
+                }, 1L);
             }
             return;
         }
@@ -499,13 +522,22 @@ public class BlockListener implements Listener {
 
             // 清理绑定数据
             plugin.getBlockBindManager().cleanupBindings(blockItem);
-            removeMagicBlockLocation(blockLocation);
+            // Schedule a task to remove the magic block location after 1 tick,
+            // only if the block is actually air (not replaced by Residence or other plugins)
+            final Location finalBlockLocation = blockLocation; // Effectively final for lambda
+            final Block finalTargetBlock = targetBlock; // Make targetBlock effectively final for lambda
+            plugin.getFoliaLib().getScheduler().runLater(() -> {
+                Block blockAtLocation = finalBlockLocation.getBlock();
+                if (blockAtLocation.getType() == Material.AIR) {
+                    removeMagicBlockLocation(finalBlockLocation);
 
-            // 如果是双格高方块，同时移除另一半的位置记录
-            if (isTallBlock(targetBlock.getType())) {
-                Block topBlock = targetBlock.getRelative(BlockFace.UP);
-                removeMagicBlockLocation(topBlock.getLocation());
-            }
+                    // 如果是双格高方块，同时移除另一半的位置记录
+                    if (isTallBlock(finalTargetBlock.getType())) {
+                        Block topBlock = finalTargetBlock.getRelative(BlockFace.UP);
+                        removeMagicBlockLocation(topBlock.getLocation());
+                    }
+                }
+            }, 1L);
         }
     }
 

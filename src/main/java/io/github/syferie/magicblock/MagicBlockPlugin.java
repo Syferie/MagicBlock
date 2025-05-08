@@ -60,6 +60,9 @@ public class MagicBlockPlugin extends JavaPlugin {
         // 初始化语言管理器
         this.languageManager = new LanguageManager(this);
 
+        // 初始化配置
+        initializeConfig();
+
         try {
             // 初始化FoliaLib
             this.foliaLib = new FoliaLib(this);
@@ -71,9 +74,6 @@ public class MagicBlockPlugin extends JavaPlugin {
             getLogger().info(languageManager.getMessage("general.plugin-enabled"));
             return; // 不要继续初始化插件
         }
-
-        // 初始化配置
-        initializeConfig();
 
         // 初始化MC语言管理器
         this.minecraftLangManager = new MinecraftLangManager(this);
@@ -463,6 +463,10 @@ public class MagicBlockPlugin extends JavaPlugin {
     public void reloadPluginAllowedMaterials() {
         reloadConfig();
         languageManager.reloadLanguage();
+
+        // 重新初始化MC语言管理器，使其使用新的语言设置
+        this.minecraftLangManager = new MinecraftLangManager(this);
+
         reloadFoodConfig();
 
         // 重新加载食物管理器

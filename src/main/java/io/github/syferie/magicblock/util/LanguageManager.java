@@ -15,10 +15,15 @@ public class LanguageManager {
     private FileConfiguration langConfig;
     private String currentLanguage;
     private static final Map<String, String> SUPPORTED_LANGUAGES = new HashMap<>();
+    private static final Map<String, String> LANGUAGE_TO_MINECRAFT = new HashMap<>();
 
     static {
         SUPPORTED_LANGUAGES.put("en", "English");
         SUPPORTED_LANGUAGES.put("zh_CN", "简体中文");
+
+        // 映射插件语言代码到Minecraft语言代码
+        LANGUAGE_TO_MINECRAFT.put("en", "en_gb");
+        LANGUAGE_TO_MINECRAFT.put("zh_CN", "zh_cn");
     }
 
     public LanguageManager(MagicBlockPlugin plugin) {
@@ -122,5 +127,13 @@ public class LanguageManager {
 
     public Map<String, String> getSupportedLanguages() {
         return SUPPORTED_LANGUAGES;
+    }
+
+    /**
+     * 获取当前语言对应的Minecraft语言代码
+     * @return Minecraft语言代码
+     */
+    public String getMinecraftLanguageCode() {
+        return LANGUAGE_TO_MINECRAFT.getOrDefault(currentLanguage, "en_gb");
     }
 }
