@@ -12,17 +12,11 @@
 # Debug mode: Enables verbose logging for troubleshooting.
 debug-mode: false
 
-# Language setting for plugin messages.
+# Language setting for plugin messages and block names.
 # Available languages:
-# - en (English)
-# - zh_CN (Simplified Chinese)
+# - en (English, will use en_gb for block names)
+# - zh_CN (Simplified Chinese, will use zh_cn for block names)
 language: "en"
-
-# Language settings for minecraft
-# For example languages:
-# - en_gb (English)
-# - zh_cn (Simplified Chinese)
-minecraftLanguage: "en_gb"
 
 # Message prefix displayed before plugin messages.
 prefix: "§7[MagicBlock] "

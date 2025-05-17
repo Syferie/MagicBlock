@@ -24,7 +24,8 @@ public class MinecraftLangManager {
     }
 
     private void loadLanguage() {
-        currentLanguage = plugin.getConfig().getString("minecraftLanguage", "en_us");
+        // 使用LanguageManager获取对应的Minecraft语言代码
+        currentLanguage = plugin.getLanguageManager().getMinecraftLanguageCode();
         langManager = langAPI.getLangManager(currentLanguage);
         langManager.downloadLang();
         langManager.reloadLang();

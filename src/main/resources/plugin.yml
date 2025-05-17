@@ -1,5 +1,5 @@
 name: MagicBlock
-version: '3.1.4'
+version: '3.1.5'
 main: io.github.syferie.magicblock.MagicBlockPlugin
 api-version: '1.18'
 authors: [Syferie]
