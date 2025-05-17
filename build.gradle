@@ -41,15 +41,17 @@ tasks.withType(JavaCompile) {
 
 shadowJar {
     // 重定位依赖包以避免冲突
+    relocate "com.alibaba.fastjson2", "io.github.syferie.magicblock.lib.fastjson"
     relocate "com.tcoded.folialib", "io.github.syferie.magicblock.lib.folialib"
     relocate "com.zaxxer.hikari", "io.github.syferie.magicblock.lib.hikari"
+    relocate "org.intellij.lang.annotations", "io.github.syferie.magicblock.lib.intellij.annotations"
+    relocate "org.jetbrains.annotations", "io.github.syferie.magicblock.lib.jetbrains.annotations"
+    relocate "org.slf4j", "io.github.syferie.magicblock.lib.slf4j"
     relocate "cn.chengzhiya.langutil", "io.github.syferie.magicblock.lib.langutil"
 
     // 排除不必要的文件
-    exclude "META-INF/LICENSE*"
-    exclude "META-INF/NOTICE*"
-    exclude "META-INF/maven/**"
-    exclude "META-INF/versions/**"
+    exclude "META-INF/"
+    exclude "schema/"
 
     archiveFileName = "MagicBlock-${version}.jar"
 }
