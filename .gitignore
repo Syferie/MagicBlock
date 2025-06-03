@@ -118,3 +118,5 @@ run/
 /.classpath
 /.project
 /paper/
+
+bin/*

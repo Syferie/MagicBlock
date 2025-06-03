@@ -32,6 +32,12 @@ public class BlockSelectionGUI {
     }
 
     public void openInventory(Player player) {
+        // 检查使用权限
+        if (!player.hasPermission("magicblock.use")) {
+            plugin.sendMessage(player, "messages.no-permission-use");
+            return;
+        }
+        
         // 记录原始物品
         originalItems.put(player.getUniqueId(), player.getInventory().getItemInMainHand().clone());
         // 重置搜索状态
@@ -126,6 +132,14 @@ public class BlockSelectionGUI {
     }
 
     public void handleInventoryClick(InventoryClickEvent event, Player player) {
+        // 检查使用权限
+        if (!player.hasPermission("magicblock.use")) {
+            plugin.sendMessage(player, "messages.no-permission-use");
+            event.setCancelled(true);
+            player.closeInventory();
+            return;
+        }
+        
         // 检查冷却时间
         long currentTime = System.currentTimeMillis();
         long openTime = lastGuiOpenTime.getOrDefault(player.getUniqueId(), 0L);

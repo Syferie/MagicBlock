@@ -204,6 +204,12 @@ public class CommandManager implements CommandExecutor {
             return;
         }
 
+        // 检查使用权限
+        if (!player.hasPermission("magicblock.use")) {
+            plugin.sendMessage(player, "messages.no-permission-use");
+            return;
+        }
+
         int times = plugin.getDefaultBlockTimes();
         if (args.length > 1) {
             try {
@@ -308,6 +314,12 @@ public class CommandManager implements CommandExecutor {
             return;
         }
 
+        // 检查使用权限
+        if (!player.hasPermission("magicblock.use")) {
+            plugin.sendMessage(player, "messages.no-permission-use");
+            return;
+        }
+
         if (args.length < 2) {
             plugin.sendMessage(player, "commands.settimes.usage");
             return;
@@ -334,6 +346,12 @@ public class CommandManager implements CommandExecutor {
     private void handleAddTimes(Player player, String[] args) {
         if (!player.hasPermission("magicblock.addtimes")) {
             plugin.sendMessage(player, "commands.addtimes.no-permission");
+            return;
+        }
+
+        // 检查使用权限
+        if (!player.hasPermission("magicblock.use")) {
+            plugin.sendMessage(player, "messages.no-permission-use");
             return;
         }
 
@@ -395,6 +413,12 @@ public class CommandManager implements CommandExecutor {
     }
 
     private void handleList(Player player) {
+        // 检查使用权限
+        if (!player.hasPermission("magicblock.use")) {
+            plugin.sendMessage(player, "messages.no-permission-use");
+            return;
+        }
+        
         plugin.getBlockBindManager().openBindList(player);
     }
 }

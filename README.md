@@ -53,8 +53,9 @@ Subcommands:
 
 ### Basic Permissions
 * `magicblock.use`
-   * Allows basic magic block functionality
-   * Default: All players
+   * Grants permission to use the basic features of MagicBlock
+   * Default: `true` (enabled by default for all users)
+   * Administrators can deny this permission to specific users or groups to prevent them from using MagicBlock functionalities
    * Command: `/mb get`
 
 ### Management Permissions

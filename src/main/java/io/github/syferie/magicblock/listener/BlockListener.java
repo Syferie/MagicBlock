@@ -235,6 +235,13 @@ public class BlockListener implements Listener {
         Block block = event.getBlock();
         Player player = event.getPlayer();
 
+        // 检查使用权限
+        if (!player.hasPermission("magicblock.use")) {
+            event.setCancelled(true);
+            plugin.sendMessage(player, "messages.no-permission-use");
+            return;
+        }
+
         // 检查使用次数
         int useTimes = plugin.getBlockManager().getUseTimes(item);
         if (useTimes <= 0) {
@@ -429,6 +436,14 @@ public class BlockListener implements Listener {
             if (isOtherPartMagic || isMagicBlock) {
                 isMagicBlock = true;
                 Player player = event.getPlayer();
+                
+                // 检查使用权限
+                if (!player.hasPermission("magicblock.use")) {
+                    event.setCancelled(true);
+                    plugin.sendMessage(player, "messages.no-permission-use");
+                    return;
+                }
+                
                 ItemStack blockItem = new ItemStack(eventBlock.getType());
 
                 // 检查绑定系统是否启用
@@ -502,6 +517,14 @@ public class BlockListener implements Listener {
 
         if (isMagicBlock) {
             Player player = event.getPlayer();
+            
+            // 检查使用权限
+            if (!player.hasPermission("magicblock.use")) {
+                event.setCancelled(true);
+                plugin.sendMessage(player, "messages.no-permission-use");
+                return;
+            }
+            
             ItemStack blockItem = new ItemStack(targetBlock.getType());
 
             // 检查绑定系统是否启用
@@ -677,6 +700,13 @@ public class BlockListener implements Listener {
         // 处理Shift+左键打开GUI
         if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
             if (player.isSneaking()) {
+                // 检查使用权限
+                if (!player.hasPermission("magicblock.use")) {
+                    plugin.sendMessage(player, "messages.no-permission-use");
+                    event.setCancelled(true);
+                    return;
+                }
+                
                 // 检查冷却时间
                 long currentTime = System.currentTimeMillis();
                 Long lastTime = lastGuiOpenTime.get(player.getUniqueId());
