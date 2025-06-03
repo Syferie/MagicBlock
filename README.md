@@ -19,6 +19,11 @@ MagicBlock is a feature-rich Minecraft plugin that enables players to use magic 
 * PlaceholderAPI Support
 * Detailed Usage Statistics
 * Permission System
+* Performance Optimization System
+   * Smart caching mechanism
+   * Asynchronous database operations
+   * Batch processing optimization
+   * Real-time performance monitoring
 
 ## Requirements
 * Minecraft Server Version: 1.19+
@@ -37,6 +42,7 @@ Subcommands:
 * `/mb addtimes <times>` - Add uses to held magic block
 * `/mb list` - View bound blocks
 * `/mb reload` - Reload plugin configuration
+* `/mb performance` or `/mb perf` - View plugin performance report
 
 ## Permissions
 ### Administrator Permission
@@ -85,6 +91,10 @@ Subcommands:
    * Allows viewing bound block list
    * Default: All players
    * Command: `/mb list`
+* `magicblock.performance`
+   * Allows viewing plugin performance reports
+   * Default: OP only
+   * Command: `/mb performance` or `/mb perf`
 
 ### Special Block Permissions
 * `magicblock.vip` - Allows using VIP-exclusive blocks
@@ -123,6 +133,24 @@ default-block-times: 1000000000
 blacklisted-worlds:
   - world_nether
   - world_the_end
+
+# Performance optimization settings
+performance:
+  # Lore cache settings
+  lore-cache:
+    enabled: true        # Enable caching
+    duration: 5000       # Cache duration (milliseconds)
+    max-size: 1000       # Maximum cache entries
+
+  # Statistics save settings
+  statistics:
+    batch-threshold: 50   # Batch save threshold
+    save-interval: 30000  # Auto-save interval (milliseconds)
+
+  # Database optimization
+  database-optimization:
+    async-operations: true  # Asynchronous database operations
+    batch-updates: true     # Batch updates
 ```
 
 ### foodconf.yml Food Configuration
@@ -162,6 +190,12 @@ permissions:
   - magicblock.admin
 ```
 
+4. Performance monitoring permissions:
+```yaml
+permissions:
+  - magicblock.performance
+```
+
 ## PlaceholderAPI Variables
 Supported variables:
 * `%magicblock_block_uses%` - Total magic block uses
@@ -188,6 +222,16 @@ group:
 ### Statistics
 * Plugin automatically records magic block and food usage
 * Supports displaying statistics via PlaceholderAPI
+
+### Performance Monitoring
+* Use `/mb performance` to view detailed performance reports
+* Real-time monitoring of cache hit rates, database operation times, and other key metrics
+* Smart performance suggestions to help optimize server configuration
+* Supported performance metrics:
+  * Lore system performance (update count, cache hit rate, average time)
+  * Database operation statistics (operation count, average time, async operations)
+  * Task scheduling status (current active tasks)
+  * Runtime statistics
 
 ## Important Notes
 1. Magic blocks disappear when uses are depleted
@@ -224,40 +268,5 @@ Modified MIT License:
 For issues or suggestions:
 * GitHub Issues (Include reproducible steps for bugs)
 * QQ Group: [134484522]
-
-## Changelog
-
-**MagicBlock 3.1.0 Changelog**
-
-**New Features:**
-
-*   MagicBlock items now support multi-line lores (thanks to suggestion #3).
-*   Added config option to allow/disallow players using MagicBlocks bound by other players.
-*   Added support for Folia server (resolves #6).
-
-**Fixes:**
-
-*   Fixed connection issues between fences, walls, glass panes, etc.
-*   Fixed a bug where MagicBlocks would be accidentally disintegrated in furnaces and workbenches.
-*   Fixed a bug where MagicBlocks would be accidentally replaced when players clicked on an item in their backpack.
-*   Fixed pressure plate redstone behavior and prevented attached blocks from dropping unexpectedly (resolves #9).
-
-**Improvements:**
-
-*   Improved the configuration description in config.
-
-**In summary,** this update mainly adds support for Folia server, implements multi-line lore support for MagicBlock items, and fixes several important bugs.
-
-
-MagicBlock v3.0.0 Changelog
-
-* Enhanced multilingual support
-* Optimized GUI display
-* Improved block binding
-* Code cleanup
-* Performance improvements
-* Complete restructure
-* Many more changes...
-* Note: Backup config before updating from 2.X
 
 © 2024 MagicBlock. All Rights Reserved.

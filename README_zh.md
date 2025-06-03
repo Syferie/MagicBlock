@@ -19,6 +19,11 @@ MagicBlock 是一个功能丰富的 Minecraft 插件，允许玩家使用具有�
 * PlaceholderAPI 支持
 * 详细的使用统计
 * 权限系统
+* 性能优化系统
+   * 智能缓存机制
+   * 异步数据库操作
+   * 批量处理优化
+   * 实时性能监控
 
 ## 安装要求
 * Minecraft 服务器版本: 1.19+
@@ -37,6 +42,7 @@ MagicBlock 是一个功能丰富的 Minecraft 插件，允许玩家使用具有�
 * `/mb addtimes <次数>` - 增加手持魔法方块的使用次数
 * `/mb list` - 查看已绑定的方块
 * `/mb reload` - 重载插件配置
+* `/mb performance` 或 `/mb perf` - 查看插件性能报告
 
 ## 权限节点
 ### 管理员权限
@@ -85,6 +91,10 @@ MagicBlock 是一个功能丰富的 Minecraft 插件，允许玩家使用具有�
    * 允许查看已绑定的方块列表
    * 默认所有玩家拥有
    * 命令: `/mb list`
+* `magicblock.performance`
+   * 允许查看插件性能报告
+   * 默认仅 OP 拥有
+   * 命令: `/mb performance` 或 `/mb perf`
 
 ### 特殊方块权限
 * `magicblock.vip` - 允许使用VIP专属方块
@@ -123,6 +133,24 @@ default-block-times: 1000000000
 blacklisted-worlds:
   - world_nether
   - world_the_end
+
+# 性能优化设置
+performance:
+  # Lore 缓存设置
+  lore-cache:
+    enabled: true        # 启用缓存
+    duration: 5000       # 缓存时间（毫秒）
+    max-size: 1000       # 最大缓存条目数
+
+  # 统计保存设置
+  statistics:
+    batch-threshold: 50   # 批量保存阈值
+    save-interval: 30000  # 自动保存间隔（毫秒）
+
+  # 数据库优化
+  database-optimization:
+    async-operations: true  # 异步数据库操作
+    batch-updates: true     # 批量更新
 ```
 
 ### foodconf.yml 食物配置
@@ -162,6 +190,12 @@ permissions:
   - magicblock.admin
 ```
 
+4. 给予玩家性能监控权限：
+```yaml
+permissions:
+  - magicblock.performance
+```
+
 ## PlaceholderAPI 变量
 支持的变量：
 * `%magicblock_block_uses%` - 显示玩家使用魔法方块的总次数
@@ -188,6 +222,16 @@ group:
 ### 统计功能
 * 插件会自动记录玩家使用魔法方块和魔法食物的次数
 * 支持通过 PlaceholderAPI 在计分板等地方显示统计信息
+
+### 性能监控功能
+* 使用 `/mb performance` 查看详细的性能报告
+* 实时监控缓存命中率、数据库操作时间等关键指标
+* 智能性能建议，帮助优化服务器配置
+* 支持的性能指标：
+  * Lore 系统性能（更新次数、缓存命中率、平均时间）
+  * 数据库操作统计（操作次数、平均时间、异步操作数）
+  * 任务调度状态（当前活跃任务数）
+  * 运行时间统计
 
 ## 注意事项
 1. 魔法方块在使用次数耗尽后会自动消失
@@ -225,39 +269,5 @@ group:
 * GitHub Issues，BUG反馈请在能够进行复现的情况下反馈，否则无法修复，功能建议并不是提了就会添加，是否能够实现需要根据实际情况决定。
 * QQ交流群：[134484522]
 
-## 更新日志
-
-好的，以下是 MagicBlock 插件从 3.0.3 版本更新到 3.1.0 版本的简单更新日志：
-
-**MagicBlock 3.1.0 更新日志**
-
-**新特性:**
-
-*   MagicBlock 的物品现在支持多行 lore (感谢 #3 建议)。
-*   新增配置选项，允许/禁止玩家使用被其他玩家绑定的 MagicBlock。
-*   添加 Folia 服务端支持 (解决 #6)。
-
-**修复:**
-
-*   修复了连接围栏、墙、玻璃板等方块时的问题。
-*   修复了熔炉和工作台中 MagicBlock 会被意外销毁的错误。
-*   修复了玩家点击背包中的物品时，MagicBlock 会被意外替换的错误。
-*   修复了压力板红石行为和附属方块意外掉落的问题 (解决 #9)。
-
-**优化:**
-
-*   优化了配置文件的描述。
-
-**总而言之**，此次更新主要添加了对 Folia 服务端的支持，并实现了 MagicBlock 物品支持多行 lore 的功能，同时修复了多个重要的 bug。
-
-**MagicBlock 3.0.0 更新日志**
-* 完善多语言支持系统
-* 优化GUI界面显示
-* 改进方块绑定机制
-* 清理冗余代码
-* 提升性能和稳定性
-* 整体重构
-* 过多内容不进行一一列举………………………………
-* 注：3.0版本与2.X版本之间改动过多，请注意备份您的配置之后删除原配置文件夹，进行重新生成
 
 © 2024 MagicBlock. All Rights Reserved.
