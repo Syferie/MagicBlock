@@ -13,6 +13,7 @@ import io.github.syferie.magicblock.metrics.Metrics;
 import io.github.syferie.magicblock.util.MinecraftLangManager;
 import io.github.syferie.magicblock.util.Statistics;
 import io.github.syferie.magicblock.util.LanguageManager;
+import io.github.syferie.magicblock.util.PerformanceMonitor;
 import io.github.syferie.magicblock.block.BlockBindManager;
 import io.github.syferie.magicblock.util.UpdateChecker;
 
@@ -54,11 +55,15 @@ public class MagicBlockPlugin extends JavaPlugin {
     private MinecraftLangManager minecraftLangManager;
     private FoliaLib foliaLib;
     private DatabaseManager databaseManager;
+    private PerformanceMonitor performanceMonitor;
 
     @Override
     public void onEnable() {
         // 初始化语言管理器
         this.languageManager = new LanguageManager(this);
+
+        // 初始化性能监控器
+        this.performanceMonitor = new PerformanceMonitor(this);
 
         // 初始化配置
         initializeConfig();
@@ -596,5 +601,9 @@ public class MagicBlockPlugin extends JavaPlugin {
 
     public Statistics getStatistics() {
         return statistics;
+    }
+
+    public PerformanceMonitor getPerformanceMonitor() {
+        return performanceMonitor;
     }
 }

@@ -82,6 +82,7 @@ commands:
     addtimes: "&7/mb addtimes <次数> &8- &7增加手持MagicBlock的使用次数"
     list: "&7/mb list &8- &7查看已绑定的方块"
     reload: "&7/mb reload &8- &7重载插件配置"
+    performance: "&7/mb performance &8- &7查看插件性能报告"
     tip: "&7潜行 + 右键 &8- &7绑定方块"
     gui-tip: "&7潜行 + 左键 &8- &7打开方块选择界面"
   get:
@@ -121,3 +122,5 @@ commands:
   reload:
     no-permission: "&c✖ &7你没有权限使用此命令！"
     success: "&a✔ &7配置重载成功！"
+  performance:
+    no-permission: "&c✖ &7你没有权限使用此命令！"

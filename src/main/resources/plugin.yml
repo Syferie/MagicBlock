@@ -26,6 +26,7 @@ permissions:
       magicblock.addtimes: true
       magicblock.getfood: true
       magicblock.list: true
+      magicblock.performance: true
   magicblock.use:
     description: Allows basic usage of MagicBlock
     default: true
@@ -50,3 +51,6 @@ permissions:
   magicblock.list:
     description: Allows viewing bound blocks list
     default: true
+  magicblock.performance:
+    description: Allows viewing plugin performance reports
+    default: op

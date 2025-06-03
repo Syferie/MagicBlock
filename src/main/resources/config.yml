@@ -109,6 +109,34 @@ allow-use-bound-blocks: false
 # If set to false, the block will remain but cannot be used (default behavior)
 remove-depleted-blocks: false
 
+# Performance Settings
+# -------------------------------------------------------------
+# These settings help optimize plugin performance for high-traffic servers
+
+performance:
+  # Lore caching settings
+  lore-cache:
+    # Enable lore caching to reduce string operations (recommended: true)
+    enabled: true
+    # Cache duration in milliseconds (default: 5000 = 5 seconds)
+    duration: 5000
+    # Maximum cache size before cleanup (default: 1000)
+    max-size: 1000
+
+  # Statistics saving settings
+  statistics:
+    # Batch save threshold - save after this many operations (default: 50)
+    batch-threshold: 50
+    # Auto-save interval in milliseconds (default: 30000 = 30 seconds)
+    save-interval: 30000
+
+  # Database optimization
+  database-optimization:
+    # Use async database operations to prevent main thread blocking (recommended: true)
+    async-operations: true
+    # Batch database updates to reduce I/O operations (recommended: true)
+    batch-updates: true
+
 # Database Settings
 # -------------------------------------------------------------
 # Settings for MySQL database connection for cross-server data storage

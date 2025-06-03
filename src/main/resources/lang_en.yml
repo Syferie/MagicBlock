@@ -82,6 +82,7 @@ commands:
     addtimes: "&7/mb addtimes <uses> &8- &7Add uses to held MagicBlock"
     list: "&7/mb list &8- &7View bound blocks"
     reload: "&7/mb reload &8- &7Reload plugin configuration"
+    performance: "&7/mb performance &8- &7View plugin performance report"
     tip: "&7Sneak + Right Click &8- &7Bind block"
     gui-tip: "&7Sneak + Left Click &8- &7Open block selection menu"
   get:
@@ -121,3 +122,5 @@ commands:
   reload:
     no-permission: "&c✖ &7You don't have permission to use this command!"
     success: "&a✔ &7Configuration reloaded successfully!"
+  performance:
+    no-permission: "&c✖ &7You don't have permission to use this command!"

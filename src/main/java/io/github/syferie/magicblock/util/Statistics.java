@@ -18,6 +18,10 @@ public class Statistics {
     private final ConcurrentHashMap<UUID, Integer> blockUses = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Integer> foodUses = new ConcurrentHashMap<>();
 
+    // 性能优化：批量保存和缓存
+    private volatile boolean needsSave = false;
+    private long lastSaveTime = 0;
+
     public Statistics(MagicBlockPlugin plugin) {
         this.plugin = plugin;
         this.statsFile = new File(plugin.getDataFolder(), "stats.yml");
@@ -52,10 +56,9 @@ public class Statistics {
         int uses = stats.getInt(path, 0) + 1;
         stats.set(path, uses);
         blockUses.put(playerUUID, uses);
-        
-        if (uses % 100 == 0) {
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, this::saveStats);
-        }
+
+        // 性能优化：智能保存策略
+        scheduleSmartSave(uses);
     }
 
     public void logFoodUse(Player player, ItemStack food) {
@@ -64,9 +67,32 @@ public class Statistics {
         int uses = stats.getInt(path, 0) + 1;
         stats.set(path, uses);
         foodUses.put(playerUUID, uses);
-        
-        if (uses % 100 == 0) {
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, this::saveStats);
+
+        // 性能优化：智能保存策略
+        scheduleSmartSave(uses);
+    }
+
+    // 性能优化：智能保存策略
+    private void scheduleSmartSave(int totalUses) {
+        needsSave = true;
+        long currentTime = System.currentTimeMillis();
+
+        // 从配置读取性能设置
+        int batchThreshold = plugin.getConfig().getInt("performance.statistics.batch-threshold", 50);
+        long saveInterval = plugin.getConfig().getLong("performance.statistics.save-interval", 30000);
+
+        // 条件1：达到批量保存阈值
+        // 条件2：距离上次保存超过指定时间间隔
+        if (totalUses % batchThreshold == 0 ||
+            (currentTime - lastSaveTime) > saveInterval) {
+
+            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+                if (needsSave) {
+                    saveStats();
+                    needsSave = false;
+                    lastSaveTime = System.currentTimeMillis();
+                }
+            });
         }
     }
 

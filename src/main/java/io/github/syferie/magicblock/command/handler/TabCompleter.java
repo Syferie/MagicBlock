@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class TabCompleter implements org.bukkit.command.TabCompleter {
     private final MagicBlockPlugin plugin;
-    private final List<String> commands = Arrays.asList("get", "reload", "settimes", "addtimes", "getfood", "help", "give", "list");
+    private final List<String> commands = Arrays.asList("get", "reload", "settimes", "addtimes", "getfood", "help", "give", "list", "performance", "perf");
 
     public TabCompleter(MagicBlockPlugin plugin) {
         this.plugin = plugin;
@@ -50,6 +50,10 @@ public class TabCompleter implements org.bukkit.command.TabCompleter {
                 }
                 if (sender.hasPermission("magicblock.reload")) {
                     availableCommands.add("reload");
+                }
+                if (sender.hasPermission("magicblock.performance")) {
+                    availableCommands.add("performance");
+                    availableCommands.add("perf");
                 }
 
                 // 过滤并返回匹配的命令

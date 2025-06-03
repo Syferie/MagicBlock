@@ -3,7 +3,7 @@ package io.github.syferie.magicblock.block;
 import io.github.syferie.magicblock.MagicBlockPlugin;
 import io.github.syferie.magicblock.api.IMagicBlock;
 import io.github.syferie.magicblock.util.Constants;
-import io.github.syferie.magicblock.util.MessageUtil;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
@@ -18,11 +18,17 @@ import java.util.List;
 import java.util.UUID;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 public class BlockManager implements IMagicBlock {
     private final MagicBlockPlugin plugin;
     private final NamespacedKey useTimesKey;
     private final NamespacedKey maxTimesKey;
+
+    // 性能优化：Lore 缓存
+    private final Map<String, List<String>> loreCache = new ConcurrentHashMap<>();
+    private final Map<String, Long> loreCacheTime = new ConcurrentHashMap<>();
 
     public BlockManager(MagicBlockPlugin plugin) {
         this.plugin = plugin;
@@ -71,6 +77,7 @@ public class BlockManager implements IMagicBlock {
 
         // 正常减少次数
         currentTimes--;
+        final int finalCurrentTimes = currentTimes; // 为 lambda 表达式创建 final 变量
         PersistentDataContainer container = meta.getPersistentDataContainer();
         container.set(useTimesKey, PersistentDataType.INTEGER, currentTimes);
         item.setItemMeta(meta);
@@ -82,25 +89,16 @@ public class BlockManager implements IMagicBlock {
             return currentTimes;
         }
 
-        // 如果是绑定的方块，更新配置文件
+        // 性能优化：延迟数据库更新，减少频繁写入
         if (isBlockBound(item)) {
             UUID boundPlayer = getBoundPlayer(item);
             if (boundPlayer != null) {
-                String uuid = boundPlayer.toString();
-                if (plugin.getBlockBindManager().getBindConfig().contains("bindings." + uuid)) {
-                    Set<String> blocks = Objects.requireNonNull(plugin.getBlockBindManager().getBindConfig()
-                            .getConfigurationSection("bindings." + uuid)).getKeys(false);
-                    for (String blockId : blocks) {
-                        String path = "bindings." + uuid + "." + blockId;
-                        String material = plugin.getBlockBindManager().getBindConfig().getString(path + ".material");
-                        if (material != null && material.equals(item.getType().name())) {
-                            // 更新使用次数
-                            plugin.getBlockBindManager().getBindConfig().set(path + ".uses", currentTimes);
-                            plugin.getBlockBindManager().saveBindConfig();
-                            break;
-                        }
-                    }
-                }
+                final UUID finalBoundPlayer = boundPlayer;
+                final ItemStack finalItem = item.clone(); // 创建物品副本避免并发问题
+                // 使用异步任务更新绑定数据，避免阻塞主线程
+                plugin.getFoliaLib().getScheduler().runAsync(task -> {
+                    updateBindingDataAsync(finalBoundPlayer, finalItem, finalCurrentTimes);
+                });
             }
         }
 
@@ -117,10 +115,10 @@ public class BlockManager implements IMagicBlock {
 
     @Override
     public void updateLore(ItemStack item, int remainingTimes) {
+        long startTime = System.nanoTime(); // 开始计时
+
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
-
-        List<String> lore = new ArrayList<>();
 
         // 获取物品的最大使用次数
         int maxTimes = getMaxUseTimes(item);
@@ -128,6 +126,27 @@ public class BlockManager implements IMagicBlock {
 
         // 检查是否是"无限"次数（大数值）
         boolean isInfinite = maxTimes == Integer.MAX_VALUE - 100;
+
+        // 性能优化：生成缓存键
+        String cacheKey = generateLoreCacheKey(item, remainingTimes, maxTimes, isInfinite);
+
+        // 检查缓存
+        List<String> cachedLore = getCachedLore(cacheKey);
+        if (cachedLore != null) {
+            plugin.getPerformanceMonitor().recordCacheHit();
+            meta.setLore(new ArrayList<>(cachedLore)); // 创建副本避免并发修改
+            item.setItemMeta(meta);
+
+            // 记录性能数据
+            long duration = (System.nanoTime() - startTime) / 1_000_000; // 转换为毫秒
+            plugin.getPerformanceMonitor().recordLoreUpdate(duration);
+            return;
+        }
+
+        // 缓存未命中
+        plugin.getPerformanceMonitor().recordCacheMiss();
+
+        List<String> lore = new ArrayList<>();
 
         // 添加魔法方块标识
         lore.add(plugin.getMagicLore());
@@ -204,6 +223,13 @@ public class BlockManager implements IMagicBlock {
 
         meta.setLore(lore);
         item.setItemMeta(meta);
+
+        // 缓存生成的 lore
+        cacheLore(cacheKey, lore);
+
+        // 记录性能数据
+        long duration = (System.nanoTime() - startTime) / 1_000_000; // 转换为毫秒
+        plugin.getPerformanceMonitor().recordLoreUpdate(duration);
     }
 
     public boolean isMagicBlock(ItemStack item) {
@@ -245,5 +271,97 @@ public class BlockManager implements IMagicBlock {
         }
 
         return maxTimes;
+    }
+
+    // 性能优化：缓存相关方法
+    private String generateLoreCacheKey(ItemStack item, int remainingTimes, int maxTimes, boolean isInfinite) {
+        StringBuilder keyBuilder = new StringBuilder();
+        keyBuilder.append(item.getType().name())
+                  .append("_")
+                  .append(remainingTimes)
+                  .append("_")
+                  .append(maxTimes)
+                  .append("_")
+                  .append(isInfinite);
+
+        // 添加绑定状态到缓存键
+        if (isBlockBound(item)) {
+            UUID boundPlayer = getBoundPlayer(item);
+            if (boundPlayer != null) {
+                keyBuilder.append("_bound_").append(boundPlayer.toString());
+            }
+        }
+
+        return keyBuilder.toString();
+    }
+
+    private List<String> getCachedLore(String cacheKey) {
+        // 检查是否启用缓存
+        if (!plugin.getConfig().getBoolean("performance.lore-cache.enabled", true)) {
+            return null;
+        }
+
+        Long cacheTime = loreCacheTime.get(cacheKey);
+        long cacheDuration = plugin.getConfig().getLong("performance.lore-cache.duration", 5000);
+
+        if (cacheTime == null || System.currentTimeMillis() - cacheTime > cacheDuration) {
+            // 缓存过期，清理
+            loreCache.remove(cacheKey);
+            loreCacheTime.remove(cacheKey);
+            return null;
+        }
+        return loreCache.get(cacheKey);
+    }
+
+    private void cacheLore(String cacheKey, List<String> lore) {
+        // 检查是否启用缓存
+        if (!plugin.getConfig().getBoolean("performance.lore-cache.enabled", true)) {
+            return;
+        }
+
+        loreCache.put(cacheKey, new ArrayList<>(lore)); // 存储副本
+        loreCacheTime.put(cacheKey, System.currentTimeMillis());
+
+        // 定期清理过期缓存（简单的清理策略）
+        int maxSize = plugin.getConfig().getInt("performance.lore-cache.max-size", 1000);
+        if (loreCache.size() > maxSize) {
+            cleanExpiredCache();
+        }
+    }
+
+    private void cleanExpiredCache() {
+        long currentTime = System.currentTimeMillis();
+        long cacheDuration = plugin.getConfig().getLong("performance.lore-cache.duration", 5000);
+
+        loreCacheTime.entrySet().removeIf(entry -> {
+            boolean expired = currentTime - entry.getValue() > cacheDuration;
+            if (expired) {
+                loreCache.remove(entry.getKey());
+            }
+            return expired;
+        });
+    }
+
+    // 性能优化：异步更新绑定数据
+    private void updateBindingDataAsync(UUID boundPlayer, ItemStack item, int currentTimes) {
+        try {
+            String uuid = boundPlayer.toString();
+            if (plugin.getBlockBindManager().getBindConfig().contains("bindings." + uuid)) {
+                Set<String> blocks = Objects.requireNonNull(plugin.getBlockBindManager().getBindConfig()
+                        .getConfigurationSection("bindings." + uuid)).getKeys(false);
+                for (String blockId : blocks) {
+                    String path = "bindings." + uuid + "." + blockId;
+                    String material = plugin.getBlockBindManager().getBindConfig().getString(path + ".material");
+                    if (material != null && material.equals(item.getType().name())) {
+                        // 更新使用次数
+                        plugin.getBlockBindManager().getBindConfig().set(path + ".uses", currentTimes);
+                        plugin.getBlockBindManager().saveBindConfig();
+                        break;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("异步更新绑定数据时出错: " + e.getMessage());
+        }
     }
 }

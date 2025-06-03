@@ -1,7 +1,7 @@
 package io.github.syferie.magicblock.listener;
 
 import com.tcoded.folialib.FoliaLib;
-import com.tcoded.folialib.wrapper.task.WrappedTask;
+
 import io.github.syferie.magicblock.MagicBlockPlugin;
 import io.github.syferie.magicblock.gui.GUIManager;
 
@@ -288,8 +288,8 @@ public class BlockListener implements Listener {
             saveMagicBlockLocation(topBlock.getLocation());
         }
 
-        // 如果是连接型方块，更新连接状态
-        if (isConnectableBlock(item.getType())) {
+        // 性能优化：只在必要时更新连接状态
+        if (isConnectableBlock(item.getType()) && hasAdjacentConnectableBlocks(block)) {
             // 使用FoliaLib延迟1tick更新连接状态，确保方块已完全放置
             foliaLib.getScheduler().runLater(() -> {
                 updateConnectedBlocks(block);
@@ -1217,5 +1217,19 @@ public class BlockListener implements Listener {
                        material.name().endsWith("_SIGN") ||
                        material.name().endsWith("_BANNER");
         }
+    }
+
+    // 性能优化：检查是否有相邻的可连接方块
+    private boolean hasAdjacentConnectableBlocks(Block block) {
+        BlockFace[] faces = {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
+        Material blockType = block.getType();
+
+        for (BlockFace face : faces) {
+            Block adjacent = block.getRelative(face);
+            if (adjacent.getType() == blockType) {
+                return true; // 找到至少一个相邻的同类型方块
+            }
+        }
+        return false;
     }
 }

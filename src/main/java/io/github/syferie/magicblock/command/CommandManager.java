@@ -1,8 +1,7 @@
 package io.github.syferie.magicblock.command;
 
 import io.github.syferie.magicblock.MagicBlockPlugin;
-import io.github.syferie.magicblock.block.BlockManager;
-import io.github.syferie.magicblock.food.FoodService;
+
 import me.clip.placeholderapi.PlaceholderAPI;
 
 import org.bukkit.Bukkit;
@@ -84,6 +83,10 @@ public class CommandManager implements CommandExecutor {
             case "give":
                 handleGive(sender, args);
                 break;
+            case "performance":
+            case "perf":
+                handlePerformance(sender);
+                break;
             default:
                 if (sender instanceof Player) {
                     sendHelpMessage((Player) sender);
@@ -123,7 +126,11 @@ public class CommandManager implements CommandExecutor {
         if (player.hasPermission("magicblock.reload")) {
             plugin.sendMessage(player, "commands.help.reload");
         }
-        
+
+        if (player.hasPermission("magicblock.performance")) {
+            plugin.sendMessage(player, "commands.help.performance");
+        }
+
         // 基础功能提示
         plugin.sendMessage(player, "commands.help.tip");
         plugin.sendMessage(player, "commands.help.gui-tip");
@@ -420,5 +427,15 @@ public class CommandManager implements CommandExecutor {
         }
         
         plugin.getBlockBindManager().openBindList(player);
+    }
+
+    private void handlePerformance(CommandSender sender) {
+        if (!sender.hasPermission("magicblock.performance")) {
+            plugin.sendMessage(sender, "commands.performance.no-permission");
+            return;
+        }
+
+        // 发送性能报告
+        plugin.getPerformanceMonitor().sendPerformanceReport(sender);
     }
 }
