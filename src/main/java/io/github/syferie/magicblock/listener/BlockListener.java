@@ -663,32 +663,95 @@ public class BlockListener implements Listener {
                 targetBlock = clickedBlock;
             }
 
-            // 如果是魔法方块且是门，取消原事件并手动处理门的状态
-            if (isMagicBlock && targetBlock.getType().toString().contains("DOOR")) {
-                org.bukkit.block.data.Bisected.Half half = ((org.bukkit.block.data.Bisected)targetBlock.getBlockData()).getHalf();
-                Block otherHalf = half == org.bukkit.block.data.Bisected.Half.BOTTOM ?
-                    targetBlock.getRelative(BlockFace.UP) : targetBlock.getRelative(BlockFace.DOWN);
+            // 处理魔法方块的特殊交互
+            if (isMagicBlock) {
+                ItemStack itemInHand = player.getInventory().getItemInMainHand();
 
-                // 获取门的数据
-                org.bukkit.block.data.type.Door doorData = (org.bukkit.block.data.type.Door)targetBlock.getBlockData();
-                org.bukkit.block.data.type.Door otherDoorData = (org.bukkit.block.data.type.Door)otherHalf.getBlockData();
+                // 检查是否是斧头削皮或去氧化操作
+                if (itemInHand != null && isAxe(itemInHand.getType())) {
+                    Material currentType = targetBlock.getType();
+                    Material newType = getStrippedOrScrapedType(currentType);
 
-                // 切换门的开关状态
-                boolean isOpen = !doorData.isOpen();
-                doorData.setOpen(isOpen);
-                otherDoorData.setOpen(isOpen);
+                    if (newType != null && newType != currentType) {
+                        // 这是一个会改变方块状态的操作，需要特殊处理
+                        event.setCancelled(true);
 
-                // 应用更改
-                targetBlock.setBlockData(doorData);
-                otherHalf.setBlockData(otherDoorData);
+                        // 检查使用权限
+                        if (!player.hasPermission("magicblock.use")) {
+                            plugin.sendMessage(player, "messages.no-permission-use");
+                            return;
+                        }
 
-                // 播放门的声音
-                player.getWorld().playSound(targetBlock.getLocation(),
-                    isOpen ? Sound.BLOCK_WOODEN_DOOR_OPEN : Sound.BLOCK_WOODEN_DOOR_CLOSE,
-                    1.0f, 1.0f);
+                        // 检查绑定状态
+                        ItemStack blockItem = new ItemStack(currentType);
+                        boolean bindingEnabled = plugin.getConfig().getBoolean("enable-binding-system", true);
+                        if (bindingEnabled && plugin.getBlockBindManager().isBlockBound(blockItem)) {
+                            UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(blockItem);
+                            if (boundPlayer != null && !boundPlayer.equals(player.getUniqueId())) {
+                                plugin.sendMessage(player, "messages.not-bound-to-you");
+                                return;
+                            }
+                        }
 
-                event.setCancelled(true);
-                return;
+                        // 执行方块状态改变
+                        targetBlock.setType(newType);
+
+                        // 更新魔法方块位置记录（保持原有的魔法方块状态）
+                        // 不需要移除和重新添加，因为位置没有改变，只是方块类型改变了
+
+                        // 播放相应的声音效果
+                        if (isLogType(currentType)) {
+                            player.getWorld().playSound(targetBlock.getLocation(), Sound.ITEM_AXE_STRIP, 1.0f, 1.0f);
+                        } else if (isCopperType(currentType)) {
+                            player.getWorld().playSound(targetBlock.getLocation(), Sound.ITEM_AXE_SCRAPE, 1.0f, 1.0f);
+                        }
+
+                        // 损耗斧头耐久度
+                        if (itemInHand.getType().getMaxDurability() > 0) {
+                            org.bukkit.inventory.meta.Damageable damageable = (org.bukkit.inventory.meta.Damageable) itemInHand.getItemMeta();
+                            if (damageable != null) {
+                                damageable.setDamage(damageable.getDamage() + 1);
+                                itemInHand.setItemMeta(damageable);
+
+                                // 检查是否损坏
+                                if (damageable.getDamage() >= itemInHand.getType().getMaxDurability()) {
+                                    player.getInventory().setItemInMainHand(null);
+                                    player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 1.0f);
+                                }
+                            }
+                        }
+
+                        return;
+                    }
+                }
+
+                // 如果是魔法方块且是门，取消原事件并手动处理门的状态
+                if (targetBlock.getType().toString().contains("DOOR")) {
+                    org.bukkit.block.data.Bisected.Half half = ((org.bukkit.block.data.Bisected)targetBlock.getBlockData()).getHalf();
+                    Block otherHalf = half == org.bukkit.block.data.Bisected.Half.BOTTOM ?
+                        targetBlock.getRelative(BlockFace.UP) : targetBlock.getRelative(BlockFace.DOWN);
+
+                    // 获取门的数据
+                    org.bukkit.block.data.type.Door doorData = (org.bukkit.block.data.type.Door)targetBlock.getBlockData();
+                    org.bukkit.block.data.type.Door otherDoorData = (org.bukkit.block.data.type.Door)otherHalf.getBlockData();
+
+                    // 切换门的开关状态
+                    boolean isOpen = !doorData.isOpen();
+                    doorData.setOpen(isOpen);
+                    otherDoorData.setOpen(isOpen);
+
+                    // 应用更改
+                    targetBlock.setBlockData(doorData);
+                    otherHalf.setBlockData(otherDoorData);
+
+                    // 播放门的声音
+                    player.getWorld().playSound(targetBlock.getLocation(),
+                        isOpen ? Sound.BLOCK_WOODEN_DOOR_OPEN : Sound.BLOCK_WOODEN_DOOR_CLOSE,
+                        1.0f, 1.0f);
+
+                    event.setCancelled(true);
+                    return;
+                }
             }
         }
 
@@ -1091,6 +1154,43 @@ public class BlockListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockDamage(BlockDamageEvent event) {
+        Block block = event.getBlock();
+        if (isMagicBlockLocation(block.getLocation())) {
+            // 对于魔法方块，我们不希望它们被损坏
+            // 但允许正常的破坏事件处理
+            return;
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockForm(BlockFormEvent event) {
+        Block block = event.getBlock();
+        if (isMagicBlockLocation(block.getLocation())) {
+            // 阻止魔法方块形成其他方块（如冰形成等）
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockGrow(BlockGrowEvent event) {
+        Block block = event.getBlock();
+        if (isMagicBlockLocation(block.getLocation())) {
+            // 阻止魔法方块生长（如作物生长等）
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockSpread(BlockSpreadEvent event) {
+        Block block = event.getBlock();
+        if (isMagicBlockLocation(block.getLocation())) {
+            // 阻止魔法方块传播（如火焰传播等）
+            event.setCancelled(true);
+        }
+    }
+
     @EventHandler(priority = EventPriority.HIGH)
     public void onCraftItem(CraftItemEvent event) {
         // 检查合成材料中是否包含魔法方块
@@ -1231,5 +1331,64 @@ public class BlockListener implements Listener {
             }
         }
         return false;
+    }
+
+    /**
+     * 检查材料是否是斧头
+     */
+    private boolean isAxe(Material material) {
+        return material == Material.WOODEN_AXE ||
+               material == Material.STONE_AXE ||
+               material == Material.IRON_AXE ||
+               material == Material.GOLDEN_AXE ||
+               material == Material.DIAMOND_AXE ||
+               material == Material.NETHERITE_AXE;
+    }
+
+    /**
+     * 检查材料是否是原木类型
+     */
+    private boolean isLogType(Material material) {
+        return material.name().contains("_LOG") && !material.name().contains("STRIPPED");
+    }
+
+    /**
+     * 检查材料是否是铜类型
+     */
+    private boolean isCopperType(Material material) {
+        return material.name().contains("COPPER") &&
+               (material.name().contains("EXPOSED") ||
+                material.name().contains("WEATHERED") ||
+                material.name().contains("OXIDIZED")) &&
+               !material.name().contains("WAXED");
+    }
+
+    /**
+     * 获取削皮或去氧化后的方块类型
+     */
+    private Material getStrippedOrScrapedType(Material material) {
+        String materialName = material.name();
+
+        // 处理原木削皮
+        if (materialName.contains("_LOG") && !materialName.contains("STRIPPED")) {
+            try {
+                return Material.valueOf("STRIPPED_" + materialName);
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+
+        // 处理铜去氧化
+        if (materialName.contains("COPPER") && !materialName.contains("WAXED")) {
+            if (materialName.contains("OXIDIZED")) {
+                return Material.valueOf(materialName.replace("OXIDIZED_", "WEATHERED_"));
+            } else if (materialName.contains("WEATHERED")) {
+                return Material.valueOf(materialName.replace("WEATHERED_", "EXPOSED_"));
+            } else if (materialName.contains("EXPOSED")) {
+                return Material.valueOf(materialName.replace("EXPOSED_", ""));
+            }
+        }
+
+        return null;
     }
 }
