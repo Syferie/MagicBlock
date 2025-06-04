@@ -24,7 +24,7 @@ dependencies {
     compileOnly 'org.jetbrains:annotations:24.0.0'
     implementation "com.github.technicallycoded:FoliaLib:main-SNAPSHOT"
     implementation 'com.zaxxer:HikariCP:5.0.1'
-    implementation 'cn.chengzhiya:MHDF-LangUtil:1.2.5'
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
 
 java {
@@ -47,7 +47,7 @@ shadowJar {
     relocate "org.intellij.lang.annotations", "io.github.syferie.magicblock.lib.intellij.annotations"
     relocate "org.jetbrains.annotations", "io.github.syferie.magicblock.lib.jetbrains.annotations"
     relocate "org.slf4j", "io.github.syferie.magicblock.lib.slf4j"
-    relocate "cn.chengzhiya.langutil", "io.github.syferie.magicblock.lib.langutil"
+    relocate "com.google.gson", "io.github.syferie.magicblock.lib.gson"
 
     // 排除不必要的文件
     exclude "META-INF/"

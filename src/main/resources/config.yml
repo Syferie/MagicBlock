@@ -18,6 +18,25 @@ debug-mode: false
 # - zh_CN (Simplified Chinese, will use zh_cn for block names)
 language: "en"
 
+# Custom Block Translations
+# -------------------------------------------------------------
+# Override or add custom translations for specific blocks.
+# These translations will be used regardless of the language setting.
+# Format: MATERIAL_NAME: "Custom Display Name"
+#
+# Examples:
+# - Override existing translations: GRASS_BLOCK: "草草方块"
+# - Add missing translations: HEAVY_CORE: "重型核心"
+# - Support new version blocks: CHERRY_BLOSSOM_BLOCK: "樱花方块"
+#
+# Note: Use the exact Material name from Minecraft (case-sensitive)
+custom-block-translations:
+  # Example entries (remove # to enable):
+  # HEAVY_CORE: "重型核心"
+  # TRIAL_SPAWNER: "试炼刷怪笼"
+  # COPPER_GRATE: "铜格栅"
+  # GRASS_BLOCK: "草草方块"
+
 # Message prefix displayed before plugin messages.
 prefix: "§7[MagicBlock] "
 

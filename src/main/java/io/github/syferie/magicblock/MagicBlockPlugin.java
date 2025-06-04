@@ -469,8 +469,13 @@ public class MagicBlockPlugin extends JavaPlugin {
         reloadConfig();
         languageManager.reloadLanguage();
 
-        // 重新初始化MC语言管理器，使其使用新的语言设置
-        this.minecraftLangManager = new MinecraftLangManager(this);
+        // 重新加载MC语言管理器（包括自定义翻译）
+        if (minecraftLangManager != null) {
+            minecraftLangManager.reload();
+        } else {
+            // 如果为null，重新初始化
+            this.minecraftLangManager = new MinecraftLangManager(this);
+        }
 
         reloadFoodConfig();
 
