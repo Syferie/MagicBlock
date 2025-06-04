@@ -55,16 +55,7 @@ public class BlockListener implements Listener {
         this.buildingMaterials.addAll(materials);
     }
 
-    private boolean isTallBlock(Material material) {
-        return material.toString().contains("DOOR") ||
-               material == Material.TALL_GRASS ||
-               material == Material.LARGE_FERN ||
-               material == Material.TALL_SEAGRASS ||
-               material == Material.SUNFLOWER ||
-               material == Material.LILAC ||
-               material == Material.ROSE_BUSH ||
-               material == Material.PEONY;
-    }
+
 
     private boolean isConnectableBlock(Material material) {
         return material.toString().contains("WALL") ||
@@ -221,13 +212,6 @@ public class BlockListener implements Listener {
         ItemStack item = event.getItemInHand();
         if (plugin.hasMagicLore(item.getItemMeta())) {
             handleMagicBlockPlace(event, item);
-
-            // 对于床方块，保存所有放置的方块位置
-            if (item.getType().toString().contains("_BED")) {
-                for (org.bukkit.block.BlockState state : event.getReplacedBlockStates()) {
-                    saveMagicBlockLocation(state.getLocation());
-                }
-            }
         }
     }
 
@@ -282,11 +266,7 @@ public class BlockListener implements Listener {
         // 保存方块位置
         saveMagicBlockLocation(block.getLocation());
 
-        // 如果是双格高方块，保存上半部分的位置
-        if (isTallBlock(item.getType())) {
-            Block topBlock = block.getRelative(BlockFace.UP);
-            saveMagicBlockLocation(topBlock.getLocation());
-        }
+
 
         // 性能优化：只在必要时更新连接状态
         if (isConnectableBlock(item.getType()) && hasAdjacentConnectableBlocks(block)) {
@@ -386,7 +366,6 @@ public class BlockListener implements Listener {
         Location blockLocation = eventBlock.getLocation();
         boolean isMagicBlock = isMagicBlockLocation(blockLocation);
         Block targetBlock = eventBlock;
-        Block blockAbove = eventBlock.getRelative(BlockFace.UP);
 
         // 检查是否是连接型方块
         if (isConnectableBlock(eventBlock.getType())) {
@@ -395,125 +374,26 @@ public class BlockListener implements Listener {
             BlockFace[] faces = {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
             for (BlockFace face : faces) {
                 Block adjacent = eventBlock.getRelative(face);
-                if (adjacent.getType() == eventBlock.getType()) {
+                if (isConnectableBlock(adjacent.getType())) {
                     adjacentBlocks.add(adjacent);
                 }
             }
 
-            // 在方块被破坏后更新相邻方块
+            // 在方块被破坏后更新相邻方块的连接状态
             if (!adjacentBlocks.isEmpty()) {
-                final Material blockType = eventBlock.getType();
                 foliaLib.getScheduler().runLater(() -> {
                     for (Block adjacent : adjacentBlocks) {
-                        if (adjacent.getType() == blockType) {
-                            adjacent.getState().update(true, true);
-                        }
+                        updateAdjacentBlockConnections(adjacent);
                     }
                 }, 1L);
             }
         }
 
-        // 检查上方是否有附着类方块（无论下面是不是魔术方块）
-        if (isAttachable(blockAbove.getType()) && isMagicBlockLocation(blockAbove.getLocation())) {
-            blockAbove.setType(Material.AIR);
-            removeMagicBlockLocation(blockAbove.getLocation());
-        }
 
-        // 检查是否是床方块
-        if (eventBlock.getType().toString().contains("_BED")) {
-            org.bukkit.block.data.type.Bed bedData = (org.bukkit.block.data.type.Bed) eventBlock.getBlockData();
-            Block otherPart;
 
-            // 根据当前部分找到另一部分
-            if (bedData.getPart() == org.bukkit.block.data.type.Bed.Part.HEAD) {
-                otherPart = eventBlock.getRelative(bedData.getFacing().getOppositeFace());
-            } else {
-                otherPart = eventBlock.getRelative(bedData.getFacing());
-            }
 
-            // 如果任一部分是魔法方块，则两部分都视为魔法方块
-            boolean isOtherPartMagic = isMagicBlockLocation(otherPart.getLocation());
-            if (isOtherPartMagic || isMagicBlock) {
-                isMagicBlock = true;
-                Player player = event.getPlayer();
-                
-                // 检查使用权限
-                if (!player.hasPermission("magicblock.use")) {
-                    event.setCancelled(true);
-                    plugin.sendMessage(player, "messages.no-permission-use");
-                    return;
-                }
-                
-                ItemStack blockItem = new ItemStack(eventBlock.getType());
 
-                // 检查绑定系统是否启用
-                boolean bindingEnabled = plugin.getConfig().getBoolean("enable-binding-system", true);
 
-                // 检查绑定状态
-                if (bindingEnabled && plugin.getBlockBindManager().isBlockBound(blockItem)) {
-                    UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(blockItem);
-                    if (boundPlayer != null && !boundPlayer.equals(player.getUniqueId())) {
-                        event.setCancelled(true);
-                        plugin.sendMessage(player, "messages.not-bound-to-you");
-                        return;
-                    }
-                }
-
-                // 取消原有的掉落
-                event.setDropItems(false);
-                event.setExpToDrop(0);
-
-                // 清理绑定数据
-                plugin.getBlockBindManager().cleanupBindings(blockItem);
-
-                final Location finalBlockLocation = blockLocation;
-                final Block finalOtherPart = otherPart; // Effectively final for lambda
-                final Location finalOtherPartLocation = finalOtherPart.getLocation();
-
-                plugin.getFoliaLib().getScheduler().runLater(() -> {
-                    Block blockAtLocation = finalBlockLocation.getBlock();
-                    Block otherPartAtLocation = finalOtherPartLocation.getBlock();
-
-                    if (blockAtLocation.getType() == Material.AIR && otherPartAtLocation.getType() == Material.AIR) {
-                        // 移除两个部分的位置记录
-                        removeMagicBlockLocation(finalBlockLocation);
-                        removeMagicBlockLocation(finalOtherPartLocation);
-                        // 确保另一部分也被正确清理（虽然事件通常会处理这个，但双重保险）
-                        // finalOtherPart.setType(Material.AIR); // 这行可能不需要，因为破坏事件应该已经处理了
-                                                              // 但如果 otherPartAtLocation.getType() == Material.AIR 已经是真的，
-                                                              // 再次设置它也没坏处。或者，如果上层逻辑确保了它会被破坏，
-                                                              // 那么这里主要关注的是 removeMagicBlockLocation。
-                                                              // 为了安全，如果 otherPart 在破坏时没有被正确处理，这里可以补救。
-                                                              // 考虑到 otherPart 已经是 AIR 了，这一行可以省略。
-                    } else if (blockAtLocation.getType() == Material.AIR) {
-                        // 如果主方块是 AIR，但另一部分不是（可能被其他插件阻止破坏），
-                        // 至少移除主方块的记录。
-                        removeMagicBlockLocation(finalBlockLocation);
-                        // 尝试移除另一部分，如果它不是 AIR，它可能不会被移除，但位置记录可以尝试移除
-                        finalOtherPart.setType(Material.AIR); // 再次尝试确保它被破坏
-                        removeMagicBlockLocation(finalOtherPartLocation);
-                    }
-                    // 如果 blockAtLocation 不是 AIR，则不执行任何操作，因为主破坏未成功。
-                }, 1L);
-            }
-            return;
-        }
-
-        // 检查是否是双格高方块的上半部分
-        if (!isMagicBlock) {
-            Block blockBelow = eventBlock.getRelative(BlockFace.DOWN);
-            if (isTallBlock(blockBelow.getType()) && isMagicBlockLocation(blockBelow.getLocation())) {
-                isMagicBlock = true;
-                targetBlock = blockBelow; // 使用下半部分的方块
-            }
-        }
-
-        // 检查是否是双格高方块的下半部分
-        if (!isMagicBlock && isTallBlock(eventBlock.getType())) {
-            if (isMagicBlockLocation(blockLocation)) {
-                removeMagicBlockLocation(blockAbove.getLocation());
-            }
-        }
 
         if (isMagicBlock) {
             Player player = event.getPlayer();
@@ -548,17 +428,13 @@ public class BlockListener implements Listener {
             // Schedule a task to remove the magic block location after 1 tick,
             // only if the block is actually air (not replaced by Residence or other plugins)
             final Location finalBlockLocation = blockLocation; // Effectively final for lambda
-            final Block finalTargetBlock = targetBlock; // Make targetBlock effectively final for lambda
+
             plugin.getFoliaLib().getScheduler().runLater(() -> {
                 Block blockAtLocation = finalBlockLocation.getBlock();
                 if (blockAtLocation.getType() == Material.AIR) {
                     removeMagicBlockLocation(finalBlockLocation);
 
-                    // 如果是双格高方块，同时移除另一半的位置记录
-                    if (isTallBlock(finalTargetBlock.getType())) {
-                        Block topBlock = finalTargetBlock.getRelative(BlockFace.UP);
-                        removeMagicBlockLocation(topBlock.getLocation());
-                    }
+
                 }
             }, 1L);
         }
@@ -648,20 +524,7 @@ public class BlockListener implements Listener {
             boolean isMagicBlock = isMagicBlockLocation(clickedLocation);
             Block targetBlock = clickedBlock;
 
-            // 检查是否是双格高方块的上半部分
-            if (!isMagicBlock) {
-                Block blockBelow = clickedBlock.getRelative(BlockFace.DOWN);
-                if (isTallBlock(blockBelow.getType()) && isMagicBlockLocation(blockBelow.getLocation())) {
-                    isMagicBlock = true;
-                    targetBlock = blockBelow; // 使用下半部分的方块
-                }
-            }
 
-            // 检查是否是双格高方块的下半部分
-            if (!isMagicBlock && isTallBlock(clickedBlock.getType()) && isMagicBlockLocation(clickedLocation)) {
-                isMagicBlock = true;
-                targetBlock = clickedBlock;
-            }
 
             // 处理魔法方块的特殊交互
             if (isMagicBlock) {
@@ -725,33 +588,7 @@ public class BlockListener implements Listener {
                     }
                 }
 
-                // 如果是魔法方块且是门，取消原事件并手动处理门的状态
-                if (targetBlock.getType().toString().contains("DOOR")) {
-                    org.bukkit.block.data.Bisected.Half half = ((org.bukkit.block.data.Bisected)targetBlock.getBlockData()).getHalf();
-                    Block otherHalf = half == org.bukkit.block.data.Bisected.Half.BOTTOM ?
-                        targetBlock.getRelative(BlockFace.UP) : targetBlock.getRelative(BlockFace.DOWN);
 
-                    // 获取门的数据
-                    org.bukkit.block.data.type.Door doorData = (org.bukkit.block.data.type.Door)targetBlock.getBlockData();
-                    org.bukkit.block.data.type.Door otherDoorData = (org.bukkit.block.data.type.Door)otherHalf.getBlockData();
-
-                    // 切换门的开关状态
-                    boolean isOpen = !doorData.isOpen();
-                    doorData.setOpen(isOpen);
-                    otherDoorData.setOpen(isOpen);
-
-                    // 应用更改
-                    targetBlock.setBlockData(doorData);
-                    otherHalf.setBlockData(otherDoorData);
-
-                    // 播放门的声音
-                    player.getWorld().playSound(targetBlock.getLocation(),
-                        isOpen ? Sound.BLOCK_WOODEN_DOOR_OPEN : Sound.BLOCK_WOODEN_DOOR_CLOSE,
-                        1.0f, 1.0f);
-
-                    event.setCancelled(true);
-                    return;
-                }
             }
         }
 
@@ -951,32 +788,7 @@ public class BlockListener implements Listener {
             return;
         }
 
-        // 检查是否是附着在魔法方块上的方块
-        if (isAttachable(block.getType())) {
-            Block blockBelow = block.getRelative(BlockFace.DOWN);
-            if (isMagicBlockLocation(blockBelow.getLocation())) {
-                // 取消事件，防止方块变化和掉落物生成
-                event.setCancelled(true);
 
-                // 对于红石组件类方块，立即设置为空气，防止掉落物生成
-                if (isRedstoneComponent(blockType)) {
-                    block.setType(Material.AIR);
-
-                    // 然后移除记录
-                    foliaLib.getScheduler().runLater(() -> {
-                        removeMagicBlockLocation(blockLocation);
-                    }, 1L);
-                } else {
-                    // 对于其他类型的方块，使用原来的处理方式
-                    foliaLib.getScheduler().runLater(() -> {
-                        if (isMagicBlockLocation(blockLocation)) {
-                            block.setType(Material.AIR);
-                            removeMagicBlockLocation(blockLocation);
-                        }
-                    }, 1L);
-                }
-            }
-        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -1004,23 +816,7 @@ public class BlockListener implements Listener {
             return;
         }
 
-        // 检查目标方块下方是否有魔法方块，且目标方块是可附着的
-        Block belowBlock = toBlock.getRelative(BlockFace.DOWN);
-        if (isAttachable(toBlock.getType()) && isMagicBlockLocation(belowBlock.getLocation())) {
-            // 取消事件，防止液体破坏附着在魔法方块上的方块
-            event.setCancelled(true);
 
-            // 对于红石组件类方块，立即设置为空气，防止掉落物生成
-            if (isRedstoneComponent(toBlockType)) {
-                toBlock.setType(Material.AIR);
-
-                // 然后移除记录
-                final Location blockLocation = toBlock.getLocation();
-                foliaLib.getScheduler().runLater(() -> {
-                    removeMagicBlockLocation(blockLocation);
-                }, 1L);
-            }
-        }
     }
 
     @EventHandler
@@ -1247,77 +1043,7 @@ public class BlockListener implements Listener {
         }
     }
 
-    private boolean isAttachable(Material material) {
-        switch (material) {
-            case TORCH:
-            case WALL_TORCH:
-            case LANTERN:
-            case SOUL_LANTERN:
-            case LEVER:
-            case REDSTONE_TORCH:
-            case REDSTONE_WALL_TORCH:
-            case TRIPWIRE_HOOK:
-            case VINE:
-            case WHITE_CARPET:
-            case ORANGE_CARPET:
-            case MAGENTA_CARPET:
-            case LIGHT_BLUE_CARPET:
-            case YELLOW_CARPET:
-            case LIME_CARPET:
-            case PINK_CARPET:
-            case GRAY_CARPET:
-            case LIGHT_GRAY_CARPET:
-            case CYAN_CARPET:
-            case PURPLE_CARPET:
-            case BLUE_CARPET:
-            case BROWN_CARPET:
-            case GREEN_CARPET:
-            case RED_CARPET:
-            case BLACK_CARPET:
-            case SNOW:
-            case RAIL:
-            case POWERED_RAIL:
-            case DETECTOR_RAIL:
-            case ACTIVATOR_RAIL:
-            case REDSTONE_WIRE:
-            case REPEATER:
-            case COMPARATOR:
-            case OAK_SAPLING:
-            case SPRUCE_SAPLING:
-            case BIRCH_SAPLING:
-            case JUNGLE_SAPLING:
-            case ACACIA_SAPLING:
-            case DARK_OAK_SAPLING:
-            case DANDELION:
-            case POPPY:
-            case BLUE_ORCHID:
-            case ALLIUM:
-            case AZURE_BLUET:
-            case RED_TULIP:
-            case ORANGE_TULIP:
-            case WHITE_TULIP:
-            case PINK_TULIP:
-            case OXEYE_DAISY:
-            case CORNFLOWER:
-            case LILY_OF_THE_VALLEY:
-            case WITHER_ROSE:
-            case SUGAR_CANE:
-            case WHEAT:
-            case CARROTS:
-            case POTATOES:
-            case BEETROOTS:
-            case MELON_STEM:
-            case PUMPKIN_STEM:
-            case NETHER_WART:
-            case SWEET_BERRY_BUSH:
-                return true;
-            default:
-                return material.name().endsWith("_PRESSURE_PLATE") ||
-                       material.name().endsWith("_BUTTON") ||
-                       material.name().endsWith("_SIGN") ||
-                       material.name().endsWith("_BANNER");
-        }
-    }
+
 
     // 性能优化：检查是否有相邻的可连接方块
     private boolean hasAdjacentConnectableBlocks(Block block) {
@@ -1390,5 +1116,81 @@ public class BlockListener implements Listener {
         }
 
         return null;
+    }
+
+    /**
+     * 更新相邻方块的连接状态
+     * 当一个连接型方块被破坏时，需要更新其相邻方块的连接状态
+     */
+    private void updateAdjacentBlockConnections(Block block) {
+        if (!isConnectableBlock(block.getType())) {
+            return;
+        }
+
+        org.bukkit.block.data.BlockData blockData = block.getBlockData();
+
+        if (blockData instanceof org.bukkit.block.data.type.Wall) {
+            updateSingleWallConnections(block);
+        } else if (blockData instanceof org.bukkit.block.data.type.Fence) {
+            updateSingleFenceConnections(block);
+        } else if (blockData instanceof org.bukkit.block.data.type.GlassPane) {
+            updateSinglePaneConnections(block);
+        } else {
+            // 对于其他类型的连接型方块，使用通用更新
+            block.getState().update(true, true);
+        }
+    }
+
+    /**
+     * 更新单个墙方块的连接状态
+     */
+    private void updateSingleWallConnections(Block wall) {
+        org.bukkit.block.data.type.Wall wallData = (org.bukkit.block.data.type.Wall) wall.getBlockData();
+
+        // 重新计算所有方向的连接状态
+        for (BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST}) {
+            Block adjacent = wall.getRelative(face);
+            boolean shouldConnect = adjacent.getType() == wall.getType() ||
+                                   (adjacent.getType().isSolid() && !adjacent.getType().isTransparent());
+            wallData.setHeight(face, shouldConnect ? org.bukkit.block.data.type.Wall.Height.LOW : org.bukkit.block.data.type.Wall.Height.NONE);
+        }
+
+        wall.setBlockData(wallData, true);
+    }
+
+    /**
+     * 更新单个栅栏方块的连接状态
+     */
+    private void updateSingleFenceConnections(Block fence) {
+        org.bukkit.block.data.type.Fence fenceData = (org.bukkit.block.data.type.Fence) fence.getBlockData();
+
+        // 重新计算所有方向的连接状态
+        for (BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST}) {
+            Block adjacent = fence.getRelative(face);
+            boolean shouldConnect = adjacent.getType() == fence.getType() ||
+                                   adjacent.getType().toString().contains("FENCE_GATE") ||
+                                   (adjacent.getType().isSolid() && !adjacent.getType().isTransparent());
+            fenceData.setFace(face, shouldConnect);
+        }
+
+        fence.setBlockData(fenceData, true);
+    }
+
+    /**
+     * 更新单个玻璃板方块的连接状态
+     */
+    private void updateSinglePaneConnections(Block pane) {
+        org.bukkit.block.data.type.GlassPane paneData = (org.bukkit.block.data.type.GlassPane) pane.getBlockData();
+
+        // 重新计算所有方向的连接状态
+        for (BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST}) {
+            Block adjacent = pane.getRelative(face);
+            boolean shouldConnect = adjacent.getType() == pane.getType() ||
+                                   adjacent.getType() == Material.GLASS ||
+                                   (adjacent.getType().isSolid() && !adjacent.getType().isTransparent());
+            paneData.setFace(face, shouldConnect);
+        }
+
+        pane.setBlockData(paneData, true);
     }
 }
