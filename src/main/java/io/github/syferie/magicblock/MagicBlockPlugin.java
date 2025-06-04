@@ -466,28 +466,77 @@ public class MagicBlockPlugin extends JavaPlugin {
     }
 
     public void reloadPluginAllowedMaterials() {
-        reloadConfig();
-        languageManager.reloadLanguage();
+        getLogger().info("开始重载插件配置...");
 
-        // 重新加载MC语言管理器（包括自定义翻译）
+        // 1. 重载主配置文件
+        reloadConfig();
+        getLogger().info("✓ 主配置文件已重载");
+
+        // 2. 重载语言管理器
+        languageManager.reloadLanguage();
+        getLogger().info("✓ 语言配置已重载");
+
+        // 3. 重载MC语言管理器（包括自定义翻译）
         if (minecraftLangManager != null) {
             minecraftLangManager.reload();
         } else {
-            // 如果为null，重新初始化
             this.minecraftLangManager = new MinecraftLangManager(this);
         }
+        getLogger().info("✓ 方块翻译配置已重载");
 
+        // 4. 重载食物配置
         reloadFoodConfig();
 
-        // 重新加载食物管理器
+        // 5. 重载食物管理器
         if (magicFood != null) {
-            // 不需要重新注册事件监听器，只需要重新创建实例
             magicFood = new FoodManager(this);
         }
+        getLogger().info("✓ 食物配置已重载");
 
+        // 6. 重载允许的材料列表
         List<Material> newAllowedMaterials = loadMaterialsFromConfig();
-        listener.setAllowedMaterials(newAllowedMaterials);
+        this.allowedMaterials = newAllowedMaterials;
+        if (listener != null) {
+            listener.setAllowedMaterials(newAllowedMaterials);
+        }
+        getLogger().info("✓ 允许材料列表已重载");
+
+        // 7. 重载黑名单世界列表
+        this.blacklistedWorlds = getConfig().getStringList("blacklisted-worlds");
+        getLogger().info("✓ 黑名单世界列表已重载");
+
+        // 8. 重载统计系统（如果启用）
+        reloadStatistics();
+
+        // 9. 重载性能监控配置
+        if (performanceMonitor != null) {
+            // 性能监控器的配置会在下次使用时自动读取最新配置
+            getLogger().info("✓ 性能监控配置已重载");
+        }
+
         getLogger().info(languageManager.getMessage("general.materials-updated"));
+        getLogger().info("插件配置重载完成！");
+    }
+
+    private void reloadStatistics() {
+        boolean enableStats = getConfig().getBoolean("enable-statistics", true);
+
+        if (enableStats && statistics == null) {
+            // 如果配置启用统计但当前没有统计实例，创建新的
+            statistics = new Statistics(this);
+            getLogger().info("✓ 统计系统已启用");
+        } else if (!enableStats && statistics != null) {
+            // 如果配置禁用统计但当前有统计实例，保存并清理
+            statistics.saveStats();
+            statistics = null;
+            getLogger().info("✓ 统计系统已禁用");
+        } else if (enableStats && statistics != null) {
+            // 如果统计系统已启用，只需要保存当前数据
+            statistics.saveStats();
+            getLogger().info("✓ 统计数据已保存");
+        } else {
+            getLogger().info("✓ 统计系统保持禁用状态");
+        }
     }
 
     public void reloadFoodConfig() {

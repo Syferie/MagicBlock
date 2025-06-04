@@ -122,5 +122,6 @@ commands:
   reload:
     no-permission: "&c✖ &7You don't have permission to use this command!"
     success: "&a✔ &7Configuration reloaded successfully!"
+    error: "&c✖ &7An error occurred while reloading configuration! Check console for details."
   performance:
     no-permission: "&c✖ &7You don't have permission to use this command!"

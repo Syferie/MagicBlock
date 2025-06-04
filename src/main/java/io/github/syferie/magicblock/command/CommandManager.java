@@ -311,8 +311,15 @@ public class CommandManager implements CommandExecutor {
             return;
         }
 
-        plugin.reloadConfig();
-        plugin.sendMessage(sender, "commands.reload.success");
+        try {
+            // 执行完整的重载
+            plugin.reloadPluginAllowedMaterials();
+            plugin.sendMessage(sender, "commands.reload.success");
+        } catch (Exception e) {
+            plugin.getLogger().severe("重载配置时发生错误: " + e.getMessage());
+            e.printStackTrace();
+            plugin.sendMessage(sender, "commands.reload.error");
+        }
     }
 
     private void handleSetTimes(Player player, String[] args) {

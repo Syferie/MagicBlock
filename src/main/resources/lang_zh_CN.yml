@@ -122,5 +122,6 @@ commands:
   reload:
     no-permission: "&c✖ &7你没有权限使用此命令！"
     success: "&a✔ &7配置重载成功！"
+    error: "&c✖ &7配置重载时发生错误，请查看控制台获取详细信息！"
   performance:
     no-permission: "&c✖ &7你没有权限使用此命令！"
