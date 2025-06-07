@@ -21,6 +21,7 @@ general:
   current-version: "&e当前版本: &b{0}"
   download-link: "&e下载地址: &bhttps://www.spigotmc.org/resources/{0}"
   up-to-date: "&a插件已是最新版本!"
+  dev-version: "&e检测到开发版本: &b{0} &7(最新稳定版: &b{1}&7)"
   update-check-failed: "&c检查更新失败: {0}"
 
 gui:
@@ -59,6 +60,7 @@ messages:
   no-bound-blocks: "&c✖ &7你没有任何绑定的方块！"
   not-bound-to-you: "&c✖ &7这个方块不属于你！"
   no-permission-use: "&c✖ &7你没有权限使用魔术方块。"
+  no-permission-break: "&c✖ &7你没有权限破坏魔术方块。"
   already-have-block: "&c✖ &7你已经拥有这个绑定的方块了！"
   block-retrieved: "&a✔ &7成功找回方块！"
   cannot-break-others-block: "&c✖ &7你不能破坏其他玩家绑定的方块！"

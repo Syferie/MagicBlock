@@ -170,27 +170,35 @@ foods:
 1. 给予玩家基础使用权限：
 ```yaml
 permissions:
-  - magicblock.use
-  - magicblock.food
-  - magicblock.list
+  - magicblock.use      # 允许放置和交互魔术方块
+  - magicblock.break    # 允许破坏魔术方块
+  - magicblock.list     # 允许查看绑定方块列表
 ```
 
 2. 给予玩家VIP权限：
 ```yaml
 permissions:
   - magicblock.use
-  - magicblock.food
+  - magicblock.break
   - magicblock.list
-  - magicblock.vip
+  - magicblock.group.vip-material  # 访问VIP材料
 ```
 
-3. 给予玩家管理员权限：
+3. 只能使用但不能破坏魔术方块的玩家：
 ```yaml
 permissions:
-  - magicblock.admin
+  - magicblock.use      # 可以放置和交互
+  - magicblock.list     # 可以查看绑定方块
+  # 注意：没有 magicblock.break 权限
 ```
 
-4. 给予玩家性能监控权限：
+4. 给予玩家管理员权限：
+```yaml
+permissions:
+  - magicblock.admin    # 包含所有权限
+```
+
+5. 给予玩家性能监控权限：
 ```yaml
 permissions:
   - magicblock.performance

@@ -21,6 +21,7 @@ general:
   current-version: "&eCurrent version: &b{0}"
   download-link: "&eDownload: &bhttps://www.spigotmc.org/resources/{0}"
   up-to-date: "&aPlugin is up to date!"
+  dev-version: "&eDevelopment version detected: &b{0} &7(Latest stable: &b{1}&7)"
   update-check-failed: "&cUpdate check failed: {0}"
 
 gui:
@@ -59,6 +60,7 @@ messages:
   no-bound-blocks: "&c✖ &7You don't have any bound blocks!"
   not-bound-to-you: "&c✖ &7This block doesn't belong to you!"
   no-permission-use: "&c✖ &7You don't have permission to use magic blocks."
+  no-permission-break: "&c✖ &7You don't have permission to break magic blocks."
   already-have-block: "&c✖ &7You already have this bound block!"
   block-retrieved: "&a✔ &7Block retrieved successfully!"
   cannot-break-others-block: "&c✖ &7You cannot break blocks bound to other players!"

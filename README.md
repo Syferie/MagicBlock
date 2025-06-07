@@ -170,27 +170,35 @@ foods:
 1. Basic player permissions:
 ```yaml
 permissions:
-  - magicblock.use
-  - magicblock.food
-  - magicblock.list
+  - magicblock.use      # Allows placing and interacting with magic blocks
+  - magicblock.break    # Allows breaking magic blocks
+  - magicblock.list     # Allows viewing bound blocks list
 ```
 
 2. VIP player permissions:
 ```yaml
 permissions:
   - magicblock.use
-  - magicblock.food
+  - magicblock.break
   - magicblock.list
-  - magicblock.vip
+  - magicblock.group.vip-material  # Access to VIP materials
 ```
 
-3. Administrator permissions:
+3. Player who can use but not break magic blocks:
 ```yaml
 permissions:
-  - magicblock.admin
+  - magicblock.use      # Can place and interact
+  - magicblock.list     # Can view bound blocks
+  # Note: No magicblock.break permission
 ```
 
-4. Performance monitoring permissions:
+4. Administrator permissions:
+```yaml
+permissions:
+  - magicblock.admin    # Includes all permissions
+```
+
+5. Performance monitoring permissions:
 ```yaml
 permissions:
   - magicblock.performance

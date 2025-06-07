@@ -15,10 +15,11 @@ commands:
 
 permissions:
   magicblock.admin:
-    description: Allows access to all MagicBlock commands
+    description: Allows access to all MagicBlock commands and features
     default: op
     children:
       magicblock.use: true
+      magicblock.break: true
       magicblock.get: true
       magicblock.give: true
       magicblock.reload: true
@@ -28,7 +29,10 @@ permissions:
       magicblock.list: true
       magicblock.performance: true
   magicblock.use:
-    description: Allows basic usage of MagicBlock
+    description: Allows placing and interacting with MagicBlocks (does not include breaking)
+    default: true
+  magicblock.break:
+    description: Allows breaking MagicBlocks
     default: true
   magicblock.get:
     description: Allows getting MagicBlocks

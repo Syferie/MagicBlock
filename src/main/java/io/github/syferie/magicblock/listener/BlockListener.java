@@ -548,11 +548,11 @@ public class BlockListener implements Listener {
 
         if (isMagicBlock) {
             Player player = event.getPlayer();
-            
-            // 检查使用权限
-            if (!player.hasPermission("magicblock.use")) {
+
+            // 检查破坏权限（新的独立权限）
+            if (!player.hasPermission("magicblock.break")) {
                 event.setCancelled(true);
-                plugin.sendMessage(player, "messages.no-permission-use");
+                plugin.sendMessage(player, "messages.no-permission-break");
                 return;
             }
             
