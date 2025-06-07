@@ -13,7 +13,7 @@ jobs:
     outputs:
       version: ${{ steps.read_version.outputs.version }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Prepare Build
       run: |
@@ -23,7 +23,7 @@ jobs:
         chmod +x gradlew
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -41,13 +41,43 @@ jobs:
     - name: Read Version
       id: read_version
       run: |
-        VERSION=$(grep "^version" build.gradle | sed -E "s/^version\s*['\"]([^'\"]+)['\"].*$/\1/" | xargs)
-        if [ -z "$VERSION" ]; then
+        # 更强健的版本提取逻辑，支持四位版本号
+        VERSION=$(grep "^version" build.gradle | sed -E "s/^version\s*['\"]?([^'\"]+)['\"]?.*$/\1/" | xargs)
+
+        # 如果第一种方法失败，尝试其他方法
+        if [ -z "$VERSION" ] || [ "$VERSION" = "version" ]; then
+          VERSION=$(grep "^version" build.gradle | cut -d"'" -f2)
+        fi
+
+        # 再次检查，使用 awk 作为备用方法
+        if [ -z "$VERSION" ] || [ "$VERSION" = "version" ]; then
+          VERSION=$(awk -F"'" '/^version/ {print $2}' build.gradle)
+        fi
+
+        # 最终检查
+        if [ -z "$VERSION" ] || [ "$VERSION" = "version" ]; then
           echo "Version not found in build.gradle. Exiting."
+          echo "Debug: build.gradle content:"
+          cat build.gradle | head -10
           exit 1
         fi
+
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Detected Version: $VERSION"
+        echo "Version validation: Four-part version support enabled"
+
+        # 验证版本格式
+        if [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+          echo "✅ Version format validation passed: $VERSION"
+          if [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "🎯 Four-part version detected: $VERSION"
+          else
+            echo "📝 Three-part version detected: $VERSION"
+          fi
+        else
+          echo "❌ Invalid version format: $VERSION"
+          exit 1
+        fi
 
     - name: Build with Gradle
       run: ./gradlew clean build --info --stacktrace
@@ -66,7 +96,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Download Artifact
       uses: actions/download-artifact@v4
@@ -79,21 +109,30 @@ jobs:
 
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ needs.build.outputs.version }}
-        release_name: Release ${{ needs.build.outputs.version }}
+        name: Release ${{ needs.build.outputs.version }}
         draft: false
         prerelease: false
+        files: MagicBlock-${{ needs.build.outputs.version }}.jar
+        body: |
+          ## MagicBlock v${{ needs.build.outputs.version }}
 
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: MagicBlock-${{ needs.build.outputs.version }}.jar
-        asset_name: MagicBlock-${{ needs.build.outputs.version }}.jar
-        asset_content_type: application/java-archive
+          ### 📦 下载
+          - **插件文件**: MagicBlock-${{ needs.build.outputs.version }}.jar
+
+          ### 🔧 安装说明
+          1. 下载 JAR 文件
+          2. 将文件放入服务器的 `plugins` 文件夹
+          3. 重启服务器或使用 `/reload` 命令
+
+          ### 📋 版本信息
+          - **版本号**: ${{ needs.build.outputs.version }}
+          - **支持版本**: Minecraft 1.18.2+
+          - **Java版本**: 17+
+
+          ### 🆕 更新内容
+          请查看 [更新日志](https://github.com/${{ github.repository }}/commits/main) 了解详细更改。
