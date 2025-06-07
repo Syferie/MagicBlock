@@ -41,6 +41,51 @@ public class BlockListener implements Listener {
     private final Map<UUID, Long> lastGuiOpenTime = new HashMap<>();
     private final FoliaLib foliaLib;
 
+    // 性能优化：位置缓存
+    private final Map<String, Set<String>> chunkLocationCache = new HashMap<>();
+    private final Map<String, Long> chunkCacheTime = new HashMap<>();
+
+    // 性能优化：红石组件缓存
+    private static final Set<Material> REDSTONE_COMPONENTS = new HashSet<>();
+
+    static {
+        // 预填充红石组件集合，避免每次字符串比较
+        REDSTONE_COMPONENTS.add(Material.LEVER);
+        REDSTONE_COMPONENTS.add(Material.REDSTONE_WIRE);
+        REDSTONE_COMPONENTS.add(Material.REPEATER);
+        REDSTONE_COMPONENTS.add(Material.COMPARATOR);
+        REDSTONE_COMPONENTS.add(Material.REDSTONE_TORCH);
+        REDSTONE_COMPONENTS.add(Material.REDSTONE_WALL_TORCH);
+        REDSTONE_COMPONENTS.add(Material.POWERED_RAIL);
+        REDSTONE_COMPONENTS.add(Material.DETECTOR_RAIL);
+        REDSTONE_COMPONENTS.add(Material.ACTIVATOR_RAIL);
+        REDSTONE_COMPONENTS.add(Material.REDSTONE_LAMP);
+        REDSTONE_COMPONENTS.add(Material.DISPENSER);
+        REDSTONE_COMPONENTS.add(Material.DROPPER);
+        REDSTONE_COMPONENTS.add(Material.HOPPER);
+        REDSTONE_COMPONENTS.add(Material.OBSERVER);
+        REDSTONE_COMPONENTS.add(Material.PISTON);
+        REDSTONE_COMPONENTS.add(Material.STICKY_PISTON);
+        REDSTONE_COMPONENTS.add(Material.DAYLIGHT_DETECTOR);
+        REDSTONE_COMPONENTS.add(Material.TARGET);
+        REDSTONE_COMPONENTS.add(Material.TRIPWIRE);
+        REDSTONE_COMPONENTS.add(Material.TRIPWIRE_HOOK);
+        REDSTONE_COMPONENTS.add(Material.NOTE_BLOCK);
+        REDSTONE_COMPONENTS.add(Material.BELL);
+
+        // 添加压力板
+        for (Material material : Material.values()) {
+            String name = material.name();
+            if (name.endsWith("_PRESSURE_PLATE") ||
+                name.endsWith("_BUTTON") ||
+                name.contains("DOOR") ||
+                name.contains("TRAPDOOR") ||
+                name.contains("GATE")) {
+                REDSTONE_COMPONENTS.add(material);
+            }
+        }
+    }
+
     public BlockListener(MagicBlockPlugin plugin, List<Material> allowedMaterials) {
         this.plugin = plugin;
         this.guiManager = new GUIManager(plugin, allowedMaterials);
@@ -48,6 +93,41 @@ public class BlockListener implements Listener {
         this.magicBlockKey = new NamespacedKey(plugin, "magicblock_location");
         this.foliaLib = plugin.getFoliaLib();
         plugin.getServer().getPluginManager().registerEvents(guiManager, plugin);
+
+        // 启动缓存清理任务
+        startCacheCleanupTask();
+    }
+
+    private void startCacheCleanupTask() {
+        // 从配置读取清理间隔
+        long cleanupInterval = plugin.getConfig().getLong("performance.location-cache.cleanup-interval", 30);
+        long cleanupTicks = cleanupInterval * 20L; // 转换为 ticks
+
+        foliaLib.getScheduler().runTimer(() -> {
+            cleanExpiredCache();
+        }, cleanupTicks, cleanupTicks);
+    }
+
+    private void cleanExpiredCache() {
+        // 检查是否启用缓存
+        boolean cacheEnabled = plugin.getConfig().getBoolean("performance.location-cache.enabled", true);
+        if (!cacheEnabled) {
+            // 如果缓存被禁用，清空所有缓存
+            chunkLocationCache.clear();
+            chunkCacheTime.clear();
+            return;
+        }
+
+        long cacheDuration = plugin.getConfig().getLong("performance.location-cache.duration", 5000);
+        long currentTime = System.currentTimeMillis();
+
+        chunkCacheTime.entrySet().removeIf(entry -> {
+            if (currentTime - entry.getValue() > cacheDuration) {
+                chunkLocationCache.remove(entry.getKey());
+                return true;
+            }
+            return false;
+        });
     }
 
     public void setAllowedMaterials(List<Material> materials) {
@@ -288,38 +368,103 @@ public class BlockListener implements Listener {
 
     private void saveMagicBlockLocation(Location loc) {
         String locationString = serializeLocation(loc);
+        String chunkKey = getChunkKey(loc);
         PersistentDataContainer container = loc.getChunk().getPersistentDataContainer();
 
-        // 获取现有的位置列表
-        List<String> locations = getLocationsFromContainer(container);
+        // 获取现有的位置集合
+        Set<String> locations = getLocationsSetFromContainer(container);
         locations.add(locationString);
 
         // 保存更新后的位置列表
         String joinedLocations = String.join(";", locations);
         container.set(magicBlockKey, PersistentDataType.STRING, joinedLocations);
+
+        // 更新缓存
+        chunkLocationCache.put(chunkKey, new HashSet<>(locations));
+        chunkCacheTime.put(chunkKey, System.currentTimeMillis());
     }
 
     private boolean isMagicBlockLocation(Location loc) {
+        long startTime = System.nanoTime();
+
+        String chunkKey = getChunkKey(loc);
+        String targetLoc = serializeLocation(loc);
+
+        // 检查是否启用位置缓存
+        boolean cacheEnabled = plugin.getConfig().getBoolean("performance.location-cache.enabled", true);
+        long cacheDuration = plugin.getConfig().getLong("performance.location-cache.duration", 5000);
+
+        boolean result;
+
+        if (cacheEnabled) {
+            // 检查缓存
+            Long cacheTime = chunkCacheTime.get(chunkKey);
+            if (cacheTime != null && (System.currentTimeMillis() - cacheTime) < cacheDuration) {
+                Set<String> cachedLocations = chunkLocationCache.get(chunkKey);
+                if (cachedLocations != null) {
+                    plugin.getPerformanceMonitor().recordLocationCacheHit();
+                    result = cachedLocations.contains(targetLoc);
+
+                    // 记录性能数据
+                    long duration = (System.nanoTime() - startTime) / 1_000_000; // 转换为毫秒
+                    plugin.getPerformanceMonitor().recordLocationCheck(duration);
+                    return result;
+                }
+            }
+        }
+
+        // 缓存未命中或缓存禁用，从持久化数据读取
+        plugin.getPerformanceMonitor().recordLocationCacheMiss();
+
         PersistentDataContainer container = loc.getChunk().getPersistentDataContainer();
         String locationsData = container.get(magicBlockKey, PersistentDataType.STRING);
-        if (locationsData == null) return false;
+        if (locationsData == null) {
+            if (cacheEnabled) {
+                // 缓存空结果
+                chunkLocationCache.put(chunkKey, new HashSet<>());
+                chunkCacheTime.put(chunkKey, System.currentTimeMillis());
+            }
+            result = false;
+        } else {
+            // 使用 HashSet 提高查找性能
+            Set<String> locations = new HashSet<>(Arrays.asList(locationsData.split(";")));
 
-        String targetLoc = serializeLocation(loc);
-        return Arrays.asList(locationsData.split(";")).contains(targetLoc);
+            if (cacheEnabled) {
+                // 更新缓存
+                chunkLocationCache.put(chunkKey, locations);
+                chunkCacheTime.put(chunkKey, System.currentTimeMillis());
+            }
+
+            result = locations.contains(targetLoc);
+        }
+
+        // 记录性能数据
+        long duration = (System.nanoTime() - startTime) / 1_000_000; // 转换为毫秒
+        plugin.getPerformanceMonitor().recordLocationCheck(duration);
+
+        return result;
     }
 
     private void removeMagicBlockLocation(Location loc) {
+        String chunkKey = getChunkKey(loc);
+        String targetLoc = serializeLocation(loc);
         PersistentDataContainer container = loc.getChunk().getPersistentDataContainer();
         String locationsData = container.get(magicBlockKey, PersistentDataType.STRING);
         if (locationsData == null) return;
 
-        List<String> locations = new ArrayList<>(Arrays.asList(locationsData.split(";")));
-        locations.remove(serializeLocation(loc));
+        Set<String> locations = new HashSet<>(Arrays.asList(locationsData.split(";")));
+        locations.remove(targetLoc);
 
         if (locations.isEmpty()) {
             container.remove(magicBlockKey);
+            // 清除缓存
+            chunkLocationCache.remove(chunkKey);
+            chunkCacheTime.remove(chunkKey);
         } else {
             container.set(magicBlockKey, PersistentDataType.STRING, String.join(";", locations));
+            // 更新缓存
+            chunkLocationCache.put(chunkKey, locations);
+            chunkCacheTime.put(chunkKey, System.currentTimeMillis());
         }
     }
 
@@ -330,13 +475,19 @@ public class BlockListener implements Listener {
                loc.getBlockZ();
     }
 
-    private List<String> getLocationsFromContainer(PersistentDataContainer container) {
+    private String getChunkKey(Location loc) {
+        return loc.getWorld().getName() + "_" + loc.getChunk().getX() + "_" + loc.getChunk().getZ();
+    }
+
+    private Set<String> getLocationsSetFromContainer(PersistentDataContainer container) {
         String locationsData = container.get(magicBlockKey, PersistentDataType.STRING);
         if (locationsData == null || locationsData.isEmpty()) {
-            return new ArrayList<>();
+            return new HashSet<>();
         }
-        return new ArrayList<>(Arrays.asList(locationsData.split(";")));
+        return new HashSet<>(Arrays.asList(locationsData.split(";")));
     }
+
+
 
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent event) {
@@ -442,9 +593,27 @@ public class BlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockPhysics(BlockPhysicsEvent event) {
+        // 记录物理事件
+        plugin.getPerformanceMonitor().recordPhysicsEvent();
+
+        // 检查是否启用物理优化
+        boolean physicsOptimizationEnabled = plugin.getConfig().getBoolean("performance.physics-optimization.enabled", true);
+        boolean skipUnaffectedBlocks = plugin.getConfig().getBoolean("performance.physics-optimization.skip-unaffected-blocks", true);
+
         Block block = event.getBlock();
+        Material type = block.getType();
+
+        // 性能优化：先进行快速检查，避免不必要的位置查找
+        if (physicsOptimizationEnabled && skipUnaffectedBlocks) {
+            // 如果不是可能受物理影响的方块类型，直接跳过
+            if (!isPhysicsAffectedBlock(type)) {
+                plugin.getPerformanceMonitor().recordPhysicsEventSkipped();
+                return;
+            }
+        }
+
+        // 只有在可能受影响的方块上才检查是否为魔法方块位置
         if (isMagicBlockLocation(block.getLocation())) {
-            Material type = block.getType();
             // 允许红石组件的状态改变，但阻止它们被破坏
             if (isRedstoneComponent(type)) {
                 // 如果是由于方块更新引起的状态改变，允许它
@@ -452,23 +621,8 @@ public class BlockListener implements Listener {
                     return;
                 }
 
-                // 特殊处理需要更新红石状态的方块
-                if (type == Material.POWERED_RAIL ||
-                    type == Material.DETECTOR_RAIL ||
-                    type == Material.ACTIVATOR_RAIL ||
-                    type == Material.REDSTONE_LAMP ||
-                    type == Material.DISPENSER ||
-                    type == Material.DROPPER ||
-                    type == Material.HOPPER ||
-                    type == Material.PISTON ||
-                    type == Material.STICKY_PISTON ||
-                    type == Material.OBSERVER ||
-                    type == Material.NOTE_BLOCK ||
-                    type == Material.DAYLIGHT_DETECTOR ||
-                    type.name().contains("DOOR") ||
-                    type.name().contains("TRAPDOOR") ||
-                    type.name().contains("GATE")) {
-                    // 允许这些方块的状态改变
+                // 允许红石组件的状态改变
+                if (isRedstoneStateChangeAllowed(type)) {
                     return;
                 }
             }
@@ -477,36 +631,45 @@ public class BlockListener implements Listener {
         }
     }
 
+    // 性能优化：预检查是否为可能受物理影响的方块
+    private boolean isPhysicsAffectedBlock(Material type) {
+        // 只检查可能受物理影响的方块类型
+        return type.hasGravity() ||
+               isRedstoneComponent(type) ||
+               type == Material.WATER ||
+               type == Material.LAVA ||
+               type.name().contains("DOOR") ||
+               type.name().contains("TRAPDOOR") ||
+               type.name().contains("GATE") ||
+               type.name().contains("FENCE") ||
+               type.name().contains("WALL") ||
+               type.name().contains("PANE");
+    }
+
+    // 性能优化：预定义允许状态改变的红石组件
+    private boolean isRedstoneStateChangeAllowed(Material type) {
+        return type == Material.POWERED_RAIL ||
+               type == Material.DETECTOR_RAIL ||
+               type == Material.ACTIVATOR_RAIL ||
+               type == Material.REDSTONE_LAMP ||
+               type == Material.DISPENSER ||
+               type == Material.DROPPER ||
+               type == Material.HOPPER ||
+               type == Material.PISTON ||
+               type == Material.STICKY_PISTON ||
+               type == Material.OBSERVER ||
+               type == Material.NOTE_BLOCK ||
+               type == Material.DAYLIGHT_DETECTOR ||
+               type.name().contains("DOOR") ||
+               type.name().contains("TRAPDOOR") ||
+               type.name().contains("GATE");
+    }
+
 
 
     private boolean isRedstoneComponent(Material material) {
-        return material.name().endsWith("_PRESSURE_PLATE") ||
-               material.name().endsWith("_BUTTON") ||
-               material == Material.LEVER ||
-               material == Material.REDSTONE_WIRE ||
-               material == Material.REPEATER ||
-               material == Material.COMPARATOR ||
-               material == Material.REDSTONE_TORCH ||
-               material == Material.REDSTONE_WALL_TORCH ||
-               material == Material.POWERED_RAIL ||
-               material == Material.DETECTOR_RAIL ||
-               material == Material.ACTIVATOR_RAIL ||
-               material == Material.REDSTONE_LAMP ||
-               material == Material.DISPENSER ||
-               material == Material.DROPPER ||
-               material == Material.HOPPER ||
-               material == Material.OBSERVER ||
-               material == Material.PISTON ||
-               material == Material.STICKY_PISTON ||
-               material == Material.DAYLIGHT_DETECTOR ||
-               material == Material.TARGET ||
-               material == Material.TRIPWIRE ||
-               material == Material.TRIPWIRE_HOOK ||
-               material == Material.NOTE_BLOCK ||
-               material == Material.BELL ||
-               material.name().contains("DOOR") ||
-               material.name().contains("TRAPDOOR") ||
-               material.name().contains("GATE");
+        // 使用预填充的 HashSet 进行 O(1) 查找，避免字符串比较
+        return REDSTONE_COMPONENTS.contains(material);
     }
 
     @EventHandler
@@ -745,14 +908,7 @@ public class BlockListener implements Listener {
         }
     }
 
-    private boolean isMagicBlock(ItemStack item) {
-        if (item == null || !item.hasItemMeta()) {
-            return false;
-        }
-        ItemMeta meta = item.getItemMeta();
-        // 使用插件的hasMagicLore方法进行检查，该方法已经增强以处理格式代码
-        return plugin.hasMagicLore(meta);
-    }
+
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onEntityChangeBlock(EntityChangeBlockEvent event) {

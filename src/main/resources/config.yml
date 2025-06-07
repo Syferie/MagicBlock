@@ -157,6 +157,24 @@ performance:
     # Maximum cache size before cleanup (default: 1000)
     max-size: 1000
 
+  # Location caching settings for magic block detection
+  location-cache:
+    # Enable location caching to improve magic block detection performance (recommended: true)
+    # ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+    enabled: true
+    # Cache duration in milliseconds (default: 5000 = 5 seconds)
+    duration: 5000
+    # Cache cleanup interval in seconds (default: 30)
+    cleanup-interval: 30
+
+  # Block physics optimization
+  physics-optimization:
+    # Enable smart physics event filtering to reduce unnecessary checks (recommended: true)
+    # ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+    enabled: true
+    # Skip physics checks for blocks that are unlikely to be affected (recommended: true)
+    skip-unaffected-blocks: true
+
   # Statistics saving settings
   statistics:
     # Batch save threshold - save after this many operations (default: 50)
