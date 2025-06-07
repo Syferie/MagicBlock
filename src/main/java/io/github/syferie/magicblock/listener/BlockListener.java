@@ -26,9 +26,9 @@ import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.NamespacedKey;
+
 
 import java.util.*;
 
@@ -36,7 +36,7 @@ public class BlockListener implements Listener {
     private final MagicBlockPlugin plugin;
     private final GUIManager guiManager;
     private final List<Material> buildingMaterials;
-    private final NamespacedKey magicBlockKey;
+
     private static final long GUI_OPEN_COOLDOWN = 300;
     private final Map<UUID, Long> lastGuiOpenTime = new HashMap<>();
     private final FoliaLib foliaLib;
@@ -90,7 +90,7 @@ public class BlockListener implements Listener {
         this.plugin = plugin;
         this.guiManager = new GUIManager(plugin, allowedMaterials);
         this.buildingMaterials = new ArrayList<>(allowedMaterials);
-        this.magicBlockKey = new NamespacedKey(plugin, "magicblock_location");
+
         this.foliaLib = plugin.getFoliaLib();
         plugin.getServer().getPluginManager().registerEvents(guiManager, plugin);
 
@@ -343,8 +343,8 @@ public class BlockListener implements Listener {
             }
         }
 
-        // 保存方块位置
-        saveMagicBlockLocation(block.getLocation());
+        // 🚀 性能优化：使用新的索引系统注册魔法方块
+        plugin.getIndexManager().registerMagicBlock(block.getLocation(), item);
 
 
 
@@ -366,126 +366,11 @@ public class BlockListener implements Listener {
         plugin.logUsage(player, item);
     }
 
-    private void saveMagicBlockLocation(Location loc) {
-        String locationString = serializeLocation(loc);
-        String chunkKey = getChunkKey(loc);
-        PersistentDataContainer container = loc.getChunk().getPersistentDataContainer();
 
-        // 获取现有的位置集合
-        Set<String> locations = getLocationsSetFromContainer(container);
-        locations.add(locationString);
 
-        // 保存更新后的位置列表
-        String joinedLocations = String.join(";", locations);
-        container.set(magicBlockKey, PersistentDataType.STRING, joinedLocations);
 
-        // 更新缓存
-        chunkLocationCache.put(chunkKey, new HashSet<>(locations));
-        chunkCacheTime.put(chunkKey, System.currentTimeMillis());
-    }
 
-    private boolean isMagicBlockLocation(Location loc) {
-        long startTime = System.nanoTime();
 
-        String chunkKey = getChunkKey(loc);
-        String targetLoc = serializeLocation(loc);
-
-        // 检查是否启用位置缓存
-        boolean cacheEnabled = plugin.getConfig().getBoolean("performance.location-cache.enabled", true);
-        long cacheDuration = plugin.getConfig().getLong("performance.location-cache.duration", 5000);
-
-        boolean result;
-
-        if (cacheEnabled) {
-            // 检查缓存
-            Long cacheTime = chunkCacheTime.get(chunkKey);
-            if (cacheTime != null && (System.currentTimeMillis() - cacheTime) < cacheDuration) {
-                Set<String> cachedLocations = chunkLocationCache.get(chunkKey);
-                if (cachedLocations != null) {
-                    plugin.getPerformanceMonitor().recordLocationCacheHit();
-                    result = cachedLocations.contains(targetLoc);
-
-                    // 记录性能数据
-                    long duration = (System.nanoTime() - startTime) / 1_000_000; // 转换为毫秒
-                    plugin.getPerformanceMonitor().recordLocationCheck(duration);
-                    return result;
-                }
-            }
-        }
-
-        // 缓存未命中或缓存禁用，从持久化数据读取
-        plugin.getPerformanceMonitor().recordLocationCacheMiss();
-
-        PersistentDataContainer container = loc.getChunk().getPersistentDataContainer();
-        String locationsData = container.get(magicBlockKey, PersistentDataType.STRING);
-        if (locationsData == null) {
-            if (cacheEnabled) {
-                // 缓存空结果
-                chunkLocationCache.put(chunkKey, new HashSet<>());
-                chunkCacheTime.put(chunkKey, System.currentTimeMillis());
-            }
-            result = false;
-        } else {
-            // 使用 HashSet 提高查找性能
-            Set<String> locations = new HashSet<>(Arrays.asList(locationsData.split(";")));
-
-            if (cacheEnabled) {
-                // 更新缓存
-                chunkLocationCache.put(chunkKey, locations);
-                chunkCacheTime.put(chunkKey, System.currentTimeMillis());
-            }
-
-            result = locations.contains(targetLoc);
-        }
-
-        // 记录性能数据
-        long duration = (System.nanoTime() - startTime) / 1_000_000; // 转换为毫秒
-        plugin.getPerformanceMonitor().recordLocationCheck(duration);
-
-        return result;
-    }
-
-    private void removeMagicBlockLocation(Location loc) {
-        String chunkKey = getChunkKey(loc);
-        String targetLoc = serializeLocation(loc);
-        PersistentDataContainer container = loc.getChunk().getPersistentDataContainer();
-        String locationsData = container.get(magicBlockKey, PersistentDataType.STRING);
-        if (locationsData == null) return;
-
-        Set<String> locations = new HashSet<>(Arrays.asList(locationsData.split(";")));
-        locations.remove(targetLoc);
-
-        if (locations.isEmpty()) {
-            container.remove(magicBlockKey);
-            // 清除缓存
-            chunkLocationCache.remove(chunkKey);
-            chunkCacheTime.remove(chunkKey);
-        } else {
-            container.set(magicBlockKey, PersistentDataType.STRING, String.join(";", locations));
-            // 更新缓存
-            chunkLocationCache.put(chunkKey, locations);
-            chunkCacheTime.put(chunkKey, System.currentTimeMillis());
-        }
-    }
-
-    private String serializeLocation(Location loc) {
-        return loc.getWorld().getName() + "," +
-               loc.getBlockX() + "," +
-               loc.getBlockY() + "," +
-               loc.getBlockZ();
-    }
-
-    private String getChunkKey(Location loc) {
-        return loc.getWorld().getName() + "_" + loc.getChunk().getX() + "_" + loc.getChunk().getZ();
-    }
-
-    private Set<String> getLocationsSetFromContainer(PersistentDataContainer container) {
-        String locationsData = container.get(magicBlockKey, PersistentDataType.STRING);
-        if (locationsData == null || locationsData.isEmpty()) {
-            return new HashSet<>();
-        }
-        return new HashSet<>(Arrays.asList(locationsData.split(";")));
-    }
 
 
 
@@ -515,7 +400,9 @@ public class BlockListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Block eventBlock = event.getBlock();
         Location blockLocation = eventBlock.getLocation();
-        boolean isMagicBlock = isMagicBlockLocation(blockLocation);
+
+        // 🚀 性能优化：使用新的索引系统进行 O(1) 查找
+        boolean isMagicBlock = plugin.getIndexManager().isMagicBlock(blockLocation);
         Block targetBlock = eventBlock;
 
         // 检查是否是连接型方块
@@ -583,9 +470,8 @@ public class BlockListener implements Listener {
             plugin.getFoliaLib().getScheduler().runLater(() -> {
                 Block blockAtLocation = finalBlockLocation.getBlock();
                 if (blockAtLocation.getType() == Material.AIR) {
-                    removeMagicBlockLocation(finalBlockLocation);
-
-
+                    // 🚀 性能优化：使用新的索引系统移除魔法方块
+                    plugin.getIndexManager().unregisterMagicBlock(finalBlockLocation);
                 }
             }, 1L);
         }
@@ -596,24 +482,37 @@ public class BlockListener implements Listener {
         // 记录物理事件
         plugin.getPerformanceMonitor().recordPhysicsEvent();
 
-        // 检查是否启用物理优化
+        Block block = event.getBlock();
+        Location location = block.getLocation();
+        Material type = block.getType();
+
+        // 🚀 性能优化：多层过滤机制
+
+        // 第一层：世界级别过滤
+        if (!plugin.getIndexManager().worldHasMagicBlocks(location.getWorld().getName())) {
+            plugin.getPerformanceMonitor().recordPhysicsEventSkipped();
+            return; // 这个世界没有魔法方块，直接跳过
+        }
+
+        // 第二层：区块级别过滤
+        if (!plugin.getIndexManager().chunkHasMagicBlocks(location)) {
+            plugin.getPerformanceMonitor().recordPhysicsEventSkipped();
+            return; // 这个区块没有魔法方块，直接跳过
+        }
+
+        // 第三层：方块类型过滤
         boolean physicsOptimizationEnabled = plugin.getConfig().getBoolean("performance.physics-optimization.enabled", true);
         boolean skipUnaffectedBlocks = plugin.getConfig().getBoolean("performance.physics-optimization.skip-unaffected-blocks", true);
 
-        Block block = event.getBlock();
-        Material type = block.getType();
-
-        // 性能优化：先进行快速检查，避免不必要的位置查找
         if (physicsOptimizationEnabled && skipUnaffectedBlocks) {
-            // 如果不是可能受物理影响的方块类型，直接跳过
             if (!isPhysicsAffectedBlock(type)) {
                 plugin.getPerformanceMonitor().recordPhysicsEventSkipped();
-                return;
+                return; // 不是受物理影响的方块类型，跳过
             }
         }
 
-        // 只有在可能受影响的方块上才检查是否为魔法方块位置
-        if (isMagicBlockLocation(block.getLocation())) {
+        // 第四层：精确位置检查（O(1) 查找）
+        if (plugin.getIndexManager().isMagicBlock(location)) {
             // 允许红石组件的状态改变，但阻止它们被破坏
             if (isRedstoneComponent(type)) {
                 // 如果是由于方块更新引起的状态改变，允许它
@@ -684,7 +583,9 @@ public class BlockListener implements Listener {
         // 只处理右键交互
         if (clickedBlock != null && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             Location clickedLocation = clickedBlock.getLocation();
-            boolean isMagicBlock = isMagicBlockLocation(clickedLocation);
+
+            // 🚀 性能优化：使用新的索引系统进行 O(1) 查找
+            boolean isMagicBlock = plugin.getIndexManager().isMagicBlock(clickedLocation);
             Block targetBlock = clickedBlock;
 
 
@@ -917,7 +818,7 @@ public class BlockListener implements Listener {
         Material blockType = block.getType();
 
         // 检查是否是魔法方块
-        if (isMagicBlockLocation(blockLocation)) {
+        if (plugin.getIndexManager().isMagicBlock(blockLocation)) {
             // 取消事件，防止方块变化和掉落物生成
             event.setCancelled(true);
 
@@ -929,14 +830,14 @@ public class BlockListener implements Listener {
 
                     // 然后移除记录
                     foliaLib.getScheduler().runLater(() -> {
-                        removeMagicBlockLocation(blockLocation);
+                        plugin.getIndexManager().unregisterMagicBlock(blockLocation);
                     }, 1L);
                 } else {
                     // 对于其他类型的方块，使用原来的处理方式
                     foliaLib.getScheduler().runLater(() -> {
-                        if (isMagicBlockLocation(blockLocation)) {
+                        if (plugin.getIndexManager().isMagicBlock(blockLocation)) {
                             block.setType(Material.AIR);
-                            removeMagicBlockLocation(blockLocation);
+                            plugin.getIndexManager().unregisterMagicBlock(blockLocation);
                         }
                     }, 1L);
                 }
@@ -954,7 +855,7 @@ public class BlockListener implements Listener {
         Material toBlockType = toBlock.getType();
 
         // 检查目标方块是否是魔法方块
-        if (isMagicBlockLocation(toBlock.getLocation())) {
+        if (plugin.getIndexManager().isMagicBlock(toBlock.getLocation())) {
             // 取消事件，防止液体破坏魔法方块
             event.setCancelled(true);
 
@@ -965,7 +866,7 @@ public class BlockListener implements Listener {
                 // 然后移除记录
                 final Location blockLocation = toBlock.getLocation();
                 foliaLib.getScheduler().runLater(() -> {
-                    removeMagicBlockLocation(blockLocation);
+                    plugin.getIndexManager().unregisterMagicBlock(blockLocation);
                 }, 1L);
             }
 
@@ -979,7 +880,7 @@ public class BlockListener implements Listener {
     public void onBlockPistonExtend(BlockPistonExtendEvent event) {
         for (Block block : event.getBlocks()) {
             Location blockLocation = block.getLocation();
-            if (isMagicBlockLocation(blockLocation)) {
+            if (plugin.getIndexManager().isMagicBlock(blockLocation)) {
                 event.setCancelled(true);
                 return;
             }
@@ -990,7 +891,7 @@ public class BlockListener implements Listener {
     public void onBlockPistonRetract(BlockPistonRetractEvent event) {
         for (Block block : event.getBlocks()) {
             Location blockLocation = block.getLocation();
-            if (isMagicBlockLocation(blockLocation)) {
+            if (plugin.getIndexManager().isMagicBlock(blockLocation)) {
                 event.setCancelled(true);
                 return;
             }
@@ -1002,7 +903,7 @@ public class BlockListener implements Listener {
         List<Block> blocksToKeep = new ArrayList<>();
 
         for (Block block : event.blockList()) {
-            if (isMagicBlockLocation(block.getLocation())) {
+            if (plugin.getIndexManager().isMagicBlock(block.getLocation())) {
                 blocksToKeep.add(block);
 
                 // 获取方块类型，用于后续处理
@@ -1018,14 +919,14 @@ public class BlockListener implements Listener {
 
                     // 然后移除记录
                     foliaLib.getScheduler().runLater(() -> {
-                        removeMagicBlockLocation(blockLocation);
+                        plugin.getIndexManager().unregisterMagicBlock(blockLocation);
                     }, 1L);
                 } else {
                     // 对于其他类型的方块，使用原来的处理方式
                     foliaLib.getScheduler().runLater(() -> {
-                        if (isMagicBlockLocation(blockLocation)) {
+                        if (plugin.getIndexManager().isMagicBlock(blockLocation)) {
                             block.setType(Material.AIR);
-                            removeMagicBlockLocation(blockLocation);
+                            plugin.getIndexManager().unregisterMagicBlock(blockLocation);
                         }
                     }, 1L);
                 }
@@ -1065,7 +966,7 @@ public class BlockListener implements Listener {
     public void onBlockExplode(BlockExplodeEvent event) {
         List<Block> blocksToKeep = new ArrayList<>();
         for (Block block : event.blockList()) {
-            if (isMagicBlockLocation(block.getLocation())) {
+            if (plugin.getIndexManager().isMagicBlock(block.getLocation())) {
                 blocksToKeep.add(block);
 
                 // 获取方块类型，用于后续处理
@@ -1081,14 +982,14 @@ public class BlockListener implements Listener {
 
                     // 然后移除记录
                     foliaLib.getScheduler().runLater(() -> {
-                        removeMagicBlockLocation(blockLocation);
+                        plugin.getIndexManager().unregisterMagicBlock(blockLocation);
                     }, 1L);
                 } else {
                     // 对于其他类型的方块，使用原来的处理方式
                     foliaLib.getScheduler().runLater(() -> {
-                        if (isMagicBlockLocation(blockLocation)) {
+                        if (plugin.getIndexManager().isMagicBlock(blockLocation)) {
                             block.setType(Material.AIR);
-                            removeMagicBlockLocation(blockLocation);
+                            plugin.getIndexManager().unregisterMagicBlock(blockLocation);
                         }
                     }, 1L);
                 }
@@ -1109,7 +1010,7 @@ public class BlockListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockDamage(BlockDamageEvent event) {
         Block block = event.getBlock();
-        if (isMagicBlockLocation(block.getLocation())) {
+        if (plugin.getIndexManager().isMagicBlock(block.getLocation())) {
             // 对于魔法方块，我们不希望它们被损坏
             // 但允许正常的破坏事件处理
             return;
@@ -1119,7 +1020,7 @@ public class BlockListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockForm(BlockFormEvent event) {
         Block block = event.getBlock();
-        if (isMagicBlockLocation(block.getLocation())) {
+        if (plugin.getIndexManager().isMagicBlock(block.getLocation())) {
             // 阻止魔法方块形成其他方块（如冰形成等）
             event.setCancelled(true);
         }
@@ -1128,7 +1029,7 @@ public class BlockListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockGrow(BlockGrowEvent event) {
         Block block = event.getBlock();
-        if (isMagicBlockLocation(block.getLocation())) {
+        if (plugin.getIndexManager().isMagicBlock(block.getLocation())) {
             // 阻止魔法方块生长（如作物生长等）
             event.setCancelled(true);
         }
@@ -1137,7 +1038,7 @@ public class BlockListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockSpread(BlockSpreadEvent event) {
         Block block = event.getBlock();
-        if (isMagicBlockLocation(block.getLocation())) {
+        if (plugin.getIndexManager().isMagicBlock(block.getLocation())) {
             // 阻止魔法方块传播（如火焰传播等）
             event.setCancelled(true);
         }
@@ -1168,7 +1069,7 @@ public class BlockListener implements Listener {
             Material type = adjacent.getType();
 
             // 如果是魔法方块位置上的红石组件，确保它们可以接收红石信号
-            if (isMagicBlockLocation(adjacent.getLocation()) && isRedstoneComponent(type)) {
+            if (plugin.getIndexManager().isMagicBlock(adjacent.getLocation()) && isRedstoneComponent(type)) {
                 // 不取消事件，允许红石信号传递
 
                 // 对于特定的方块，可能需要手动更新状态
@@ -1194,7 +1095,7 @@ public class BlockListener implements Listener {
         }
 
         // 如果当前方块本身是魔法方块位置上的红石组件，确保它可以正常工作
-        if (isMagicBlockLocation(block.getLocation()) && isRedstoneComponent(block.getType())) {
+        if (plugin.getIndexManager().isMagicBlock(block.getLocation()) && isRedstoneComponent(block.getType())) {
             // 不取消事件，允许红石信号传递
         }
     }

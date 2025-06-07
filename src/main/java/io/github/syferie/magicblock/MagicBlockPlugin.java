@@ -16,6 +16,7 @@ import io.github.syferie.magicblock.util.LanguageManager;
 import io.github.syferie.magicblock.util.PerformanceMonitor;
 import io.github.syferie.magicblock.block.BlockBindManager;
 import io.github.syferie.magicblock.util.UpdateChecker;
+import io.github.syferie.magicblock.manager.MagicBlockIndexManager;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -56,6 +57,7 @@ public class MagicBlockPlugin extends JavaPlugin {
     private FoliaLib foliaLib;
     private DatabaseManager databaseManager;
     private PerformanceMonitor performanceMonitor;
+    private MagicBlockIndexManager indexManager;
 
     @Override
     public void onEnable() {
@@ -514,6 +516,12 @@ public class MagicBlockPlugin extends JavaPlugin {
             getLogger().info("✓ 性能监控配置已重载");
         }
 
+        // 10. 重载魔法方块索引管理器
+        if (indexManager != null) {
+            indexManager.reload();
+            getLogger().info("✓ 魔法方块索引已重载");
+        }
+
         getLogger().info(languageManager.getMessage("general.materials-updated"));
         getLogger().info("插件配置重载完成！");
     }
@@ -592,6 +600,10 @@ public class MagicBlockPlugin extends JavaPlugin {
     private void initializeMembers() {
         this.blockManager = new BlockManager(this);
         this.blockBindManager = new BlockBindManager(this);
+
+        // 初始化魔法方块索引管理器（必须在 BlockListener 之前初始化）
+        this.indexManager = new MagicBlockIndexManager(this);
+
         this.listener = new BlockListener(this, allowedMaterials);
         this.magicFood = new FoodManager(this);
         this.blacklistedWorlds = getConfig().getStringList("blacklisted-worlds");
@@ -659,5 +671,9 @@ public class MagicBlockPlugin extends JavaPlugin {
 
     public PerformanceMonitor getPerformanceMonitor() {
         return performanceMonitor;
+    }
+
+    public MagicBlockIndexManager getIndexManager() {
+        return indexManager;
     }
 }

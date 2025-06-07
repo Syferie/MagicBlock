@@ -4,6 +4,7 @@ import io.github.syferie.magicblock.MagicBlockPlugin;
 import org.bukkit.command.CommandSender;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -123,18 +124,34 @@ public class PerformanceMonitor {
         sender.sendMessage("§7  平均更新时间: §a" + String.format("%.2fms", avgLoreTime));
         sender.sendMessage("");
         
-        // 位置检查性能统计
-        long totalLocationOps = locationChecks.get();
-        long locCacheHits = locationCacheHits.get();
-        long locCacheMisses = locationCacheMisses.get();
-        double locCacheHitRate = totalLocationOps > 0 ? (double) locCacheHits / (locCacheHits + locCacheMisses) * 100 : 0;
-        double avgLocationTime = totalLocationOps > 0 ? (double) totalLocationCheckTime.get() / totalLocationOps : 0;
+        // 🚀 魔法方块索引系统性能统计
+        Map<String, Object> indexStats = plugin.getIndexManager().getPerformanceStats();
 
-        sender.sendMessage("§6位置检查系统:");
-        sender.sendMessage("§7  总检查次数: §a" + totalLocationOps);
-        sender.sendMessage("§7  缓存命中率: §a" + String.format("%.1f%%", locCacheHitRate));
-        sender.sendMessage("§7  平均检查时间: §a" + String.format("%.2fms", avgLocationTime));
+        sender.sendMessage("§6🚀 魔法方块索引系统:");
+        sender.sendMessage("§7  总魔法方块数: §a" + indexStats.get("totalMagicBlocks"));
+        sender.sendMessage("§7  活跃区块数: §a" + indexStats.get("totalChunks"));
+        sender.sendMessage("§7  活跃世界数: §a" + indexStats.get("totalWorlds"));
+        sender.sendMessage("§7  总查找次数: §a" + indexStats.get("totalLookups"));
+        sender.sendMessage("§7  索引命中率: §a" + String.format("%.1f%%", (Double) indexStats.get("cacheHitRate")));
         sender.sendMessage("");
+
+        // 位置检查性能统计（旧系统，已弃用）
+        long totalLocationOps = locationChecks.get();
+        double locCacheHitRate = 0;
+        double avgLocationTime = 0;
+
+        if (totalLocationOps > 0) {
+            long locCacheHits = locationCacheHits.get();
+            long locCacheMisses = locationCacheMisses.get();
+            locCacheHitRate = totalLocationOps > 0 ? (double) locCacheHits / (locCacheHits + locCacheMisses) * 100 : 0;
+            avgLocationTime = totalLocationOps > 0 ? (double) totalLocationCheckTime.get() / totalLocationOps : 0;
+
+            sender.sendMessage("§6位置检查系统 (旧):");
+            sender.sendMessage("§7  总检查次数: §a" + totalLocationOps);
+            sender.sendMessage("§7  缓存命中率: §a" + String.format("%.1f%%", locCacheHitRate));
+            sender.sendMessage("§7  平均检查时间: §a" + String.format("%.2fms", avgLocationTime));
+            sender.sendMessage("");
+        }
 
         // 物理事件统计
         long totalPhysicsEvents = physicsEvents.get();
@@ -244,4 +261,5 @@ public class PerformanceMonitor {
         long ops = databaseOperations.get();
         return ops > 0 ? (double) totalDatabaseTime.get() / ops : 0;
     }
+
 }
