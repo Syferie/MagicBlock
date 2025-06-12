@@ -17,9 +17,11 @@ import io.github.syferie.magicblock.util.PerformanceMonitor;
 import io.github.syferie.magicblock.block.BlockBindManager;
 import io.github.syferie.magicblock.util.UpdateChecker;
 import io.github.syferie.magicblock.manager.MagicBlockIndexManager;
+import io.github.syferie.magicblock.util.DuplicateBlockDetector;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -28,6 +30,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
 
@@ -58,6 +61,7 @@ public class MagicBlockPlugin extends JavaPlugin {
     private DatabaseManager databaseManager;
     private PerformanceMonitor performanceMonitor;
     private MagicBlockIndexManager indexManager;
+    private DuplicateBlockDetector duplicateDetector;
 
     @Override
     public void onEnable() {
@@ -428,9 +432,54 @@ public class MagicBlockPlugin extends JavaPlugin {
             meta.setLore(lore);
             meta.addEnchant(Enchantment.DURABILITY, 1, true);
             meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+
+            // 🆕 为新创建的魔法方块添加唯一ID
+            ensureBlockHasId(meta);
+
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    /**
+     * 确保魔法方块有唯一ID，如果没有则生成一个
+     * 用于兼容旧版本数据
+     */
+    public void ensureBlockHasId(ItemMeta meta) {
+        if (meta == null) return;
+
+        NamespacedKey blockIdKey = new NamespacedKey(this, "block_id");
+        String existingId = meta.getPersistentDataContainer().get(blockIdKey, PersistentDataType.STRING);
+
+        if (existingId == null) {
+            // 生成新的唯一ID
+            String newId = java.util.UUID.randomUUID().toString();
+            meta.getPersistentDataContainer().set(blockIdKey, PersistentDataType.STRING, newId);
+            debug("为魔法方块生成新ID: " + newId);
+        }
+    }
+
+    /**
+     * 获取魔法方块的ID，如果没有则生成一个
+     */
+    public String getOrCreateBlockId(ItemStack item) {
+        if (!getBlockManager().isMagicBlock(item)) return null;
+
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return null;
+
+        NamespacedKey blockIdKey = new NamespacedKey(this, "block_id");
+        String blockId = meta.getPersistentDataContainer().get(blockIdKey, PersistentDataType.STRING);
+
+        if (blockId == null) {
+            // 为旧版本方块生成ID
+            blockId = java.util.UUID.randomUUID().toString();
+            meta.getPersistentDataContainer().set(blockIdKey, PersistentDataType.STRING, blockId);
+            item.setItemMeta(meta);
+            debug("为旧版本魔法方块生成ID: " + blockId);
+        }
+
+        return blockId;
     }
 
     public boolean hasMagicLore(ItemMeta meta) {
@@ -608,6 +657,14 @@ public class MagicBlockPlugin extends JavaPlugin {
         this.magicFood = new FoodManager(this);
         this.blacklistedWorlds = getConfig().getStringList("blacklisted-worlds");
 
+        // 🆕 初始化防刷检测器（如果启用）
+        if (getConfig().getBoolean("anti-duplication.enabled", true)) {
+            this.duplicateDetector = new DuplicateBlockDetector(this);
+            debug("防刷检测器已启用");
+        } else {
+            debug("防刷检测器已禁用");
+        }
+
         // 初始化数据库管理器
         if (getConfig().getBoolean("database.enabled", false)) {
             this.databaseManager = new DatabaseManager(this);
@@ -620,6 +677,13 @@ public class MagicBlockPlugin extends JavaPlugin {
     private void registerEventsAndCommands() {
         getServer().getPluginManager().registerEvents(listener, this);
         getServer().getPluginManager().registerEvents(magicFood, this);
+
+        // 🆕 注册防刷检测器事件（如果已初始化）
+        if (duplicateDetector != null) {
+            getServer().getPluginManager().registerEvents(duplicateDetector, this);
+            debug("防刷检测器事件已注册");
+        }
+
         CommandManager commandManager = new CommandManager(this);
         getCommand("magicblock").setExecutor(commandManager);
         getCommand("magicblock").setTabCompleter(new TabCompleter(this));
@@ -675,5 +739,9 @@ public class MagicBlockPlugin extends JavaPlugin {
 
     public MagicBlockIndexManager getIndexManager() {
         return indexManager;
+    }
+
+    public DuplicateBlockDetector getDuplicateDetector() {
+        return duplicateDetector;
     }
 }

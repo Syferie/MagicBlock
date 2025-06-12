@@ -29,10 +29,16 @@ public class PerformanceMonitor {
     private final AtomicLong physicsEvents = new AtomicLong(0);
     private final AtomicLong physicsEventsSkipped = new AtomicLong(0);
 
+    // 🆕 重复检测性能计数器
+    private final AtomicLong duplicateChecks = new AtomicLong(0);
+    private final AtomicLong duplicatesFound = new AtomicLong(0);
+    private final AtomicLong duplicatesRemoved = new AtomicLong(0);
+
     // 时间统计
     private final AtomicLong totalLoreUpdateTime = new AtomicLong(0);
     private final AtomicLong totalDatabaseTime = new AtomicLong(0);
     private final AtomicLong totalLocationCheckTime = new AtomicLong(0);
+    private final AtomicLong totalDuplicateCheckTime = new AtomicLong(0);
 
     private final long startTime;
     
@@ -99,6 +105,20 @@ public class PerformanceMonitor {
     public void recordPhysicsEventSkipped() {
         physicsEventsSkipped.incrementAndGet();
     }
+
+    // 🆕 重复检测性能监控方法
+    public void recordDuplicateCheck(long duration) {
+        duplicateChecks.incrementAndGet();
+        totalDuplicateCheckTime.addAndGet(duration);
+    }
+
+    public void recordDuplicateFound() {
+        duplicatesFound.incrementAndGet();
+    }
+
+    public void recordDuplicateRemoved() {
+        duplicatesRemoved.incrementAndGet();
+    }
     
     // 获取性能报告
     public void sendPerformanceReport(CommandSender sender) {
@@ -162,6 +182,19 @@ public class PerformanceMonitor {
         sender.sendMessage("§7  总物理事件: §a" + totalPhysicsEvents);
         sender.sendMessage("§7  跳过事件数: §a" + skippedPhysicsEvents);
         sender.sendMessage("§7  优化跳过率: §a" + String.format("%.1f%%", physicsSkipRate));
+        sender.sendMessage("");
+
+        // 🆕 重复检测统计
+        long totalDuplicateChecks = duplicateChecks.get();
+        long totalDuplicatesFound = duplicatesFound.get();
+        long totalDuplicatesRemoved = duplicatesRemoved.get();
+        double avgDuplicateCheckTime = totalDuplicateChecks > 0 ? (double) totalDuplicateCheckTime.get() / totalDuplicateChecks : 0;
+
+        sender.sendMessage("§6🛡️ 防刷系统:");
+        sender.sendMessage("§7  总检测次数: §a" + totalDuplicateChecks);
+        sender.sendMessage("§7  发现重复方块: §a" + totalDuplicatesFound);
+        sender.sendMessage("§7  移除重复方块: §a" + totalDuplicatesRemoved);
+        sender.sendMessage("§7  平均检测时间: §a" + String.format("%.2fms", avgDuplicateCheckTime));
         sender.sendMessage("");
 
         // 数据库性能统计
@@ -240,6 +273,12 @@ public class PerformanceMonitor {
         physicsEvents.set(0);
         physicsEventsSkipped.set(0);
         totalLocationCheckTime.set(0);
+
+        // 重置重复检测统计数据
+        duplicateChecks.set(0);
+        duplicatesFound.set(0);
+        duplicatesRemoved.set(0);
+        totalDuplicateCheckTime.set(0);
     }
     
     // 获取缓存命中率

@@ -142,6 +142,20 @@ allow-use-bound-blocks: false
 # ✅ Hot-reloadable: Changes take effect immediately with /mb reload
 remove-depleted-blocks: false
 
+# Anti-Duplication System
+# -------------------------------------------------------------
+# Prevents players from duplicating magic blocks through various methods
+# Checks both the user's own inventory and other players' inventories
+# Only checks player inventories (not ender chests) for optimal performance
+# ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+anti-duplication:
+  # Enable the anti-duplication system
+  enabled: true
+  # Notify admins when duplicates are found and removed
+  notify-admins: true
+  # Check frequency: when players switch to magic blocks in main/off hand
+  # This provides good protection while maintaining performance
+
 # Performance Settings
 # -------------------------------------------------------------
 # These settings help optimize plugin performance for high-traffic servers

@@ -73,6 +73,10 @@ messages:
   food-invalid: "&c✖ &7Invalid magic food!"
   food-not-edible: "&c✖ &7This item cannot be eaten!"
 
+# Anti-Duplication Messages
+anti-duplication:
+  duplicates-removed: "&c⚠ &7Detected and removed &c%amount% &7duplicate magic blocks (triggered by &b%player%&7)"
+
 commands:
   help:
     title: "&e⚡ &7MagicBlock Help"

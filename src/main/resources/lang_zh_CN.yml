@@ -73,6 +73,10 @@ messages:
   food-invalid: "&c✖ &7无效的魔法食物！"
   food-not-edible: "&c✖ &7这个物品不能食用！"
 
+# 防刷系统消息
+anti-duplication:
+  duplicates-removed: "&c⚠ &7检测到并移除了 &c%amount% &7个重复的魔法方块（触发玩家：&b%player%&7）"
+
 commands:
   help:
     title: "&e⚡ &7MagicBlock 帮助"
