@@ -179,6 +179,23 @@ gui:
         - "&7Click to close GUI"
       slot: 51
 
+    # Favorites button
+    favorites:
+      enabled: true  # Set to false to disable favorites feature
+      material: "NETHER_STAR"
+      name: "&e⭐ My Favorites"
+      lore:
+        - "&7View favorited blocks"
+        - "&7Click to open favorites list"
+      slot: 49
+
+    # Back button (used in favorites GUI)
+    back:
+      material: "ARROW"
+      name: "&aBack to Block Selection"
+      lore:
+        - "&7Click to return to block selection"
+
     # Custom decorative materials - for filling empty slots or decorating GUI
     # Users can freely add more custom materials (custom5, custom6, etc.)
     # Set enabled: false to disable specific custom materials
@@ -199,16 +216,9 @@ gui:
       material: "AIR"
       name: ""
       lore: []
-      slot: 48
-
-    custom3:
-      enabled: true
-      material: "AIR"
-      name: ""
-      lore: []
       slot: 50
 
-    custom4:
+    custom3:
       enabled: true
       material: "AIR"
       name: ""
@@ -234,7 +244,17 @@ gui:
   # GUI text configuration
   text:
     # Block selection related
-    select-block: "&7» Click to select this block"
+    select-block-left: "&7» Left-click to select this block"
+    select-block-right: "&7» Right-click to favorite/unfavorite"
+    favorited: "&e⭐ Favorited"
+    not-favorited: "&8☆ Not favorited"
+
+    # Favorites GUI related
+    favorites-title: "&8⚡ &bMy Favorites"
+    no-favorites: "&cNo favorites yet"
+    no-favorites-tip: "&7Right-click blocks to favorite them"
+    favorite-select: "&7» Click to select this favorite block"
+    favorite-remove: "&c» Right-click to remove from favorites"
 
     # Bound blocks GUI related
     bound-blocks-title: "&8⚡ &bBound Blocks"

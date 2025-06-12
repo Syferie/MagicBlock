@@ -176,6 +176,23 @@ gui:
         - "&7点击关闭GUI"
       slot: 51
 
+    # 收藏按钮
+    favorites:
+      enabled: true  # 设置为 false 可禁用收藏功能
+      material: "NETHER_STAR"
+      name: "&e⭐ 我的收藏"
+      lore:
+        - "&7查看收藏的方块"
+        - "&7点击打开收藏列表"
+      slot: 48
+
+    # 返回按钮（收藏GUI中使用）
+    back:
+      material: "ARROW"
+      name: "&a返回方块选择"
+      lore:
+        - "&7点击返回方块选择界面"
+
     # 自定义装饰材质 - 用于填充空槽位或装饰GUI
     # 用户可以自由添加更多自定义材质 (custom5, custom6, etc.)
     # 设置 enabled: false 可以禁用特定的自定义材质
@@ -196,16 +213,9 @@ gui:
       material: "AIR"
       name: ""
       lore: []
-      slot: 48
-
-    custom3:
-      enabled: true
-      material: "AIR"
-      name: ""
-      lore: []
       slot: 50
 
-    custom4:
+    custom3:
       enabled: true
       material: "AIR"
       name: ""
@@ -231,7 +241,17 @@ gui:
   # GUI 文本配置
   text:
     # 方块选择相关
-    select-block: "&7» 点击选择此方块"
+    select-block-left: "&7» 左键选择此方块"
+    select-block-right: "&7» 右键收藏/取消收藏"
+    favorited: "&e⭐ 已收藏"
+    not-favorited: "&8☆ 未收藏"
+
+    # 收藏GUI相关
+    favorites-title: "&8⚡ &b我的收藏"
+    no-favorites: "&c暂无收藏"
+    no-favorites-tip: "&7右键点击方块即可收藏"
+    favorite-select: "&7» 点击选择此收藏方块"
+    favorite-remove: "&c» 右键点击取消收藏"
 
     # 绑定方块GUI相关
     bound-blocks-title: "&8⚡ &b已绑定方块"

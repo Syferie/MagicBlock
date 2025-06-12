@@ -60,6 +60,9 @@ messages:
   food-effect-applied: "&a✔ &7成功使用魔法食物！"
   food-invalid: "&c✖ &7无效的魔法食物！"
   food-not-edible: "&c✖ &7这个物品不能食用！"
+  favorite-added: "&a⭐ &7已将 &e{0} &7添加到收藏！"
+  favorite-removed: "&c⭐ &7已将 &e{0} &7从收藏中移除！"
+  favorites-disabled: "&c✖ &7收藏功能已被禁用！"
 
 # 防刷系统消息
 anti-duplication:

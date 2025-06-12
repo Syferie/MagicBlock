@@ -94,7 +94,7 @@ public class BlockListener implements Listener {
         this.buildingMaterials = new ArrayList<>(allowedMaterials);
 
         this.foliaLib = plugin.getFoliaLib();
-        plugin.getServer().getPluginManager().registerEvents(guiManager, plugin);
+        // 移除重复的GUIManager注册，将在MagicBlockPlugin中统一注册
 
         // 启动缓存清理任务
         startCacheCleanupTask();
@@ -135,6 +135,10 @@ public class BlockListener implements Listener {
     public void setAllowedMaterials(List<Material> materials) {
         this.buildingMaterials.clear();
         this.buildingMaterials.addAll(materials);
+    }
+
+    public GUIManager getGuiManager() {
+        return guiManager;
     }
 
     /**
@@ -772,45 +776,11 @@ public class BlockListener implements Listener {
         }
 
         String title = ChatColor.stripColor(event.getView().getTitle());
-        String expectedTitle = ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&',
-            plugin.getConfig().getString("gui.title", "&8⚡ &bMagicBlock选择")));
         String boundBlocksTitle = ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&',
             plugin.getConfig().getString("gui.text.bound-blocks-title", "&8⚡ &b已绑定方块")));
 
-        if (title.equals(expectedTitle)) {
-            event.setCancelled(true);
-            ItemStack clickedItem = event.getCurrentItem();
-            if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
-
-            // 检查GUI打开后的冷却时间
-            long currentTime = System.currentTimeMillis();
-            Long openTime = lastGuiOpenTime.get(player.getUniqueId());
-            if (openTime != null && currentTime - openTime < GUI_OPEN_COOLDOWN) {
-                return;
-            }
-
-            // 处理翻页按钮
-            if (clickedItem.getType() == Material.ARROW) {
-                guiManager.getBlockSelectionGUI().handleInventoryClick(event, player);
-                return;
-            }
-
-            // 处理搜索按钮
-            if (clickedItem.getType() == Material.COMPASS) {
-                // 检查搜索冷却时间
-                Long lastClick = lastGuiOpenTime.get(player.getUniqueId());
-                if (lastClick != null && currentTime - lastClick < GUI_OPEN_COOLDOWN) {
-                    return;
-                }
-
-                // 将搜索相关的处理委托给GUIManager
-                guiManager.getBlockSelectionGUI().handleInventoryClick(event, player);
-                return;
-            }
-
-            // 其他点击处理委托给GUIManager
-            guiManager.getBlockSelectionGUI().handleInventoryClick(event, player);
-        } else if (title.equals(boundBlocksTitle)) {
+        // 只处理绑定方块GUI，其他GUI由GUIManager统一处理
+        if (title.equals(boundBlocksTitle)) {
             event.setCancelled(true);
             ItemStack clickedItem = event.getCurrentItem();
             if (clickedItem != null && clickedItem.getType() != Material.AIR) {

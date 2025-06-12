@@ -107,12 +107,17 @@ public class GUIManager implements Listener {
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
         
-        // 检查是否是魔法方块选择GUI（使用配置中的标题）
+        // 检查是否是我们的GUI
         String guiTitle = ChatColor.stripColor(event.getView().getTitle());
-        String configTitle = ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&',
+        String blockSelectionTitle = ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&',
             plugin.getConfig().getString("gui.title", "&8⚡ &bMagicBlock选择")));
+        String favoritesTitle = ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&',
+            plugin.getConfig().getString("gui.text.favorites-title", "&8⚡ &b我的收藏")));
 
-        if (!guiTitle.equals(configTitle)) {
+        boolean isBlockSelectionGUI = guiTitle.equals(blockSelectionTitle);
+        boolean isFavoritesGUI = guiTitle.equals(favoritesTitle);
+
+        if (!isBlockSelectionGUI && !isFavoritesGUI) {
             return;
         }
 
@@ -146,7 +151,14 @@ public class GUIManager implements Listener {
         // 使用FoliaLib确保在主线程执行GUI操作
         foliaLib.getScheduler().runAtEntity(
             player,
-            task -> blockSelectionGUI.handleInventoryClick(event, player)
+            task -> {
+                if (isBlockSelectionGUI) {
+                    blockSelectionGUI.handleInventoryClick(event, player);
+                } else if (isFavoritesGUI) {
+                    plugin.getFavoriteGUI().handleInventoryClick(player, event.getSlot(),
+                        event.getCurrentItem(), event.isRightClick());
+                }
+            }
         );
     }
 
@@ -155,14 +167,19 @@ public class GUIManager implements Listener {
         if (!(event.getPlayer() instanceof Player)) return;
         Player player = (Player) event.getPlayer();
         
-        // 检查是否是魔法方块选择GUI（使用配置中的标题）
+        // 检查是否是我们的GUI
         String guiTitle = ChatColor.stripColor(event.getView().getTitle());
-        String configTitle = ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&',
+        String blockSelectionTitle = ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&',
             plugin.getConfig().getString("gui.title", "&8⚡ &bMagicBlock选择")));
+        String favoritesTitle = ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&',
+            plugin.getConfig().getString("gui.text.favorites-title", "&8⚡ &b我的收藏")));
 
-        if (guiTitle.equals(configTitle) && !isPlayerSearching(player) && !isPlayerUpdatingGUI(player)) {
+        if (guiTitle.equals(blockSelectionTitle) && !isPlayerSearching(player) && !isPlayerUpdatingGUI(player)) {
             // 只有在不是因为搜索或GUI更新而关闭GUI时才清理数据
             blockSelectionGUI.clearPlayerData(player.getUniqueId());
+        } else if (guiTitle.equals(favoritesTitle) && !isPlayerUpdatingGUI(player)) {
+            // 清理收藏GUI数据
+            plugin.getFavoriteGUI().clearPlayerData(player.getUniqueId());
         }
     }
 } 

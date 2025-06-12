@@ -12,6 +12,7 @@ import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -81,7 +82,7 @@ public class BlockSelectionGUI {
 
             if (currentSlot < guiConfig.getSize()) {
                 Material material = materials.get(i);
-                gui.setItem(currentSlot, createMagicBlock(material));
+                gui.setItem(currentSlot, createMagicBlock(material, player));
                 currentSlot++;
             } else {
                 // 如果没有更多可用槽位，停止添加物品
@@ -98,6 +99,11 @@ public class BlockSelectionGUI {
 
         // 添加搜索按钮
         gui.setItem(guiConfig.getSearchSlot(), guiConfig.createSearchButton());
+
+        // 添加收藏按钮（如果启用）
+        if (guiConfig.isFavoritesEnabled()) {
+            gui.setItem(guiConfig.getFavoritesSlot(), guiConfig.createFavoritesButton());
+        }
 
         // 添加关闭按钮
         gui.setItem(guiConfig.getCloseSlot(), guiConfig.createCloseButton());
@@ -149,6 +155,10 @@ public class BlockSelectionGUI {
     }
 
     public void handleInventoryClick(InventoryClickEvent event, Player player) {
+        handleInventoryClick(event, player, event.isRightClick());
+    }
+
+    public void handleInventoryClick(InventoryClickEvent event, Player player, boolean isRightClick) {
         // 检查使用权限
         if (!player.hasPermission("magicblock.use")) {
             plugin.sendMessage(player, "messages.no-permission-use");
@@ -223,12 +233,38 @@ public class BlockSelectionGUI {
                 return;
             }
 
+            // 处理收藏按钮点击
+            if (guiConfig.isFavoritesEnabled() && slot == guiConfig.getFavoritesSlot() &&
+                guiConfig.matchesFavoritesButton(clickedItem)) {
+                // 打开收藏GUI
+                if (plugin.getFavoriteManager() != null) {
+                    plugin.getFavoriteGUI().openInventory(player);
+                } else {
+                    plugin.sendMessage(player, "messages.favorites-disabled");
+                }
+                return;
+            }
+
             // 检查点击的物品是否在允许的材料列表中
             if (!plugin.getAllowedMaterials().contains(clickedItem.getType())) {
                 return;
             }
 
-            // 替换方块
+            // 处理右键收藏功能
+            if (isRightClick && guiConfig.isFavoritesEnabled()) {
+                if (plugin.getFavoriteManager() != null) {
+                    boolean isFavorited = plugin.getFavoriteManager().toggleFavorite(player, clickedItem.getType());
+                    String messageKey = isFavorited ? "messages.favorite-added" : "messages.favorite-removed";
+                    plugin.sendMessage(player, messageKey,
+                        plugin.getMinecraftLangManager().getItemStackName(clickedItem));
+                    updateInventory(player); // 刷新GUI显示收藏状态
+                } else {
+                    plugin.sendMessage(player, "messages.favorites-disabled");
+                }
+                return;
+            }
+
+            // 替换方块（左键）
             ItemStack originalItem = originalItems.get(playerId);
             if (originalItem != null && plugin.hasMagicLore(originalItem.getItemMeta())) {
                 ItemStack newItem = originalItem.clone();
@@ -287,6 +323,10 @@ public class BlockSelectionGUI {
     }
 
     private ItemStack createMagicBlock(Material material) {
+        return createMagicBlock(material, null);
+    }
+
+    private ItemStack createMagicBlock(Material material, Player player) {
         ItemStack block = new ItemStack(material);
         ItemMeta meta = block.getItemMeta();
         if (meta != null) {
@@ -295,7 +335,31 @@ public class BlockSelectionGUI {
             String nameFormat = plugin.getConfig().getString("display.block-name-format", "&b✦ %s &b✦");
             meta.setDisplayName(ChatColor.translateAlternateColorCodes('&',
                 String.format(nameFormat, blockName)));
-            meta.setLore(List.of(guiConfig.getSelectBlockText()));
+
+            // 创建lore列表
+            List<String> lore = new ArrayList<>();
+            lore.add(ChatColor.translateAlternateColorCodes('&',
+                plugin.getConfig().getString("gui.text.select-block-left", "&7» 左键选择此方块")));
+
+            if (guiConfig.isFavoritesEnabled()) {
+                lore.add(ChatColor.translateAlternateColorCodes('&',
+                    plugin.getConfig().getString("gui.text.select-block-right", "&7» 右键收藏/取消收藏")));
+                lore.add(""); // 空行
+
+                // 显示收藏状态（如果有玩家信息）
+                if (player != null && plugin.getFavoriteManager() != null) {
+                    boolean isFavorited = plugin.getFavoriteManager().isFavorited(player, material);
+                    String favoriteStatus = isFavorited ?
+                        plugin.getConfig().getString("gui.text.favorited", "&e⭐ 已收藏") :
+                        plugin.getConfig().getString("gui.text.not-favorited", "&8☆ 未收藏");
+                    lore.add(ChatColor.translateAlternateColorCodes('&', favoriteStatus));
+                }
+            } else {
+                lore.add(ChatColor.translateAlternateColorCodes('&',
+                    plugin.getConfig().getString("gui.text.select-block", "&7» 点击选择此方块")));
+            }
+
+            meta.setLore(lore);
             block.setItemMeta(meta);
         }
         return block;

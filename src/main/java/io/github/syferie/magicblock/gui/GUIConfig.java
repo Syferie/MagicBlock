@@ -29,6 +29,7 @@ public class GUIConfig {
     private ButtonConfig pageInfoButton;
     private ButtonConfig searchButton;
     private ButtonConfig closeButton;
+    private ButtonConfig favoritesButton;
 
     // 自定义材质配置
     private Map<String, ButtonConfig> customMaterials;
@@ -72,6 +73,7 @@ public class GUIConfig {
             this.pageInfoButton = loadButtonConfig(buttonsSection, "page-info", getDefaultPageInfoButton());
             this.searchButton = loadButtonConfig(buttonsSection, "search", getDefaultSearchButton());
             this.closeButton = loadButtonConfig(buttonsSection, "close", getDefaultCloseButton());
+            this.favoritesButton = loadButtonConfig(buttonsSection, "favorites", getDefaultFavoritesButton());
 
             // 加载自定义材质配置
             loadCustomMaterials(buttonsSection);
@@ -160,6 +162,7 @@ public class GUIConfig {
         this.pageInfoButton = getDefaultPageInfoButton();
         this.searchButton = getDefaultSearchButton();
         this.closeButton = getDefaultCloseButton();
+        this.favoritesButton = getDefaultFavoritesButton();
     }
 
     /**
@@ -236,6 +239,11 @@ public class GUIConfig {
     private ButtonConfig getDefaultCloseButton() {
         return new ButtonConfig("BARRIER", "&c关闭", List.of("&7点击关闭GUI"), 51);
     }
+
+    private ButtonConfig getDefaultFavoritesButton() {
+        return new ButtonConfig("NETHER_STAR", "&e⭐ 我的收藏",
+            List.of("&7查看收藏的方块", "&7点击打开收藏列表"), 49);
+    }
     
     // Getter方法
     public String getTitle() {
@@ -311,6 +319,10 @@ public class GUIConfig {
     public ItemStack createCloseButton() {
         return itemCreator.createItem(closeButton.material, closeButton.name, closeButton.lore);
     }
+
+    public ItemStack createFavoritesButton() {
+        return itemCreator.createItem(favoritesButton.material, favoritesButton.name, favoritesButton.lore);
+    }
     
     // 获取按钮槽位
     public int getPreviousPageSlot() {
@@ -331,6 +343,10 @@ public class GUIConfig {
     
     public int getCloseSlot() {
         return closeButton.slot;
+    }
+
+    public int getFavoritesSlot() {
+        return favoritesButton.slot;
     }
     
     // 检查物品是否匹配按钮（包括禁用状态）
@@ -364,6 +380,17 @@ public class GUIConfig {
     
     public boolean matchesCloseButton(ItemStack item) {
         return itemCreator.matchesMaterial(item, closeButton.material);
+    }
+
+    public boolean matchesFavoritesButton(ItemStack item) {
+        return itemCreator.matchesMaterial(item, favoritesButton.material);
+    }
+
+    /**
+     * 检查收藏功能是否启用
+     */
+    public boolean isFavoritesEnabled() {
+        return plugin.getConfig().getBoolean("gui.buttons.favorites.enabled", true);
     }
 
     // GUI文本配置的getter方法
@@ -403,6 +430,11 @@ public class GUIConfig {
         // 检查标准按钮
         if (slot == getPreviousPageSlot() || slot == getNextPageSlot() ||
             slot == getPageInfoSlot() || slot == getSearchSlot() || slot == getCloseSlot()) {
+            return true;
+        }
+
+        // 检查收藏按钮（如果启用）
+        if (isFavoritesEnabled() && slot == getFavoritesSlot()) {
             return true;
         }
 
