@@ -18,6 +18,8 @@ import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
@@ -725,10 +727,40 @@ public class BlockListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
+
+        // 首先检查是否是功能性容器限制
+        if (isFunctionalContainer(event.getInventory().getType())) {
+            ItemStack currentItem = event.getCurrentItem();
+            ItemStack cursorItem = event.getCursor();
+
+            // 检查当前点击的物品是否是魔法方块
+            if (currentItem != null && plugin.getBlockManager().isMagicBlock(currentItem)) {
+                event.setCancelled(true);
+                plugin.sendMessage(player, "messages.cannot-place-in-functional-container");
+                return;
+            }
+
+            // 检查鼠标上的物品是否是魔法方块
+            if (cursorItem != null && plugin.getBlockManager().isMagicBlock(cursorItem)) {
+                event.setCancelled(true);
+                plugin.sendMessage(player, "messages.cannot-place-in-functional-container");
+                return;
+            }
+
+            // 检查Shift+点击操作
+            if (event.isShiftClick() && event.getCurrentItem() != null) {
+                ItemStack clickedItem = event.getCurrentItem();
+                if (plugin.getBlockManager().isMagicBlock(clickedItem)) {
+                    event.setCancelled(true);
+                    plugin.sendMessage(player, "messages.cannot-place-in-functional-container");
+                    return;
+                }
+            }
+        }
 
         String title = ChatColor.stripColor(event.getView().getTitle());
         String expectedTitle = ChatColor.stripColor(plugin.getMessage("gui.title"));
@@ -809,7 +841,29 @@ public class BlockListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+        Player player = (Player) event.getWhoClicked();
 
+        // 检查是否是功能性容器
+        if (isFunctionalContainer(event.getInventory().getType())) {
+            ItemStack draggedItem = event.getOldCursor();
+
+            // 检查拖拽的物品是否是魔法方块
+            if (draggedItem != null && plugin.getBlockManager().isMagicBlock(draggedItem)) {
+                // 检查拖拽的目标槽位是否在功能性容器中
+                for (int slot : event.getRawSlots()) {
+                    if (slot < event.getInventory().getSize()) {
+                        // 拖拽到了功能性容器中，取消事件
+                        event.setCancelled(true);
+                        plugin.sendMessage(player, "messages.cannot-place-in-functional-container");
+                        return;
+                    }
+                }
+            }
+        }
+    }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onEntityChangeBlock(EntityChangeBlockEvent event) {
@@ -1249,5 +1303,46 @@ public class BlockListener implements Listener {
         }
 
         pane.setBlockData(paneData, true);
+    }
+
+    /**
+     * 检查是否是功能性容器（禁止放入魔法方块的容器）
+     * 允许储物类容器（箱子、末影箱），禁止功能性容器
+     */
+    private boolean isFunctionalContainer(InventoryType type) {
+        switch (type) {
+            // 允许的储物类容器
+            case CHEST:
+            case ENDER_CHEST:
+            case SHULKER_BOX:
+            case BARREL:
+                return false;
+
+            // 禁止的功能性容器
+            case WORKBENCH:           // 工作台
+            case FURNACE:             // 熔炉
+            case BLAST_FURNACE:       // 高炉
+            case SMOKER:              // 烟熏炉
+            case STONECUTTER:         // 切石机
+            case ANVIL:               // 铁砧
+            case ENCHANTING:          // 附魔台
+            case BREWING:             // 酿造台
+            case BEACON:              // 信标
+            case HOPPER:              // 漏斗
+            case DROPPER:             // 投掷器
+            case DISPENSER:           // 发射器
+            case LOOM:                // 织布机
+            case CARTOGRAPHY:         // 制图台
+            case GRINDSTONE:          // 砂轮
+            case SMITHING:            // 锻造台
+            case MERCHANT:            // 村民交易
+            case LECTERN:             // 讲台
+            case COMPOSTER:           // 堆肥桶
+                return true;
+
+            default:
+                // 默认允许其他类型
+                return false;
+        }
     }
 }

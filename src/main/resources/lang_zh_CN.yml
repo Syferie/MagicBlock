@@ -68,6 +68,7 @@ messages:
   bound-to: "绑定玩家:"
   click-again-to-remove: "&e⚡ &7再次点击以从列表中隐藏此方块"
   cannot-craft-with-magic-block: "&c✖ &7魔法方块不能用于合成！"
+  cannot-place-in-functional-container: "&c✖ &7不能将魔法方块放入功能性容器中！只能放入箱子、末影箱等储物容器"
   food-full: "&c✖ &7你的饥饿值已满，无法使用魔法食物！"
   food-effect-applied: "&a✔ &7成功使用魔法食物！"
   food-invalid: "&c✖ &7无效的魔法食物！"

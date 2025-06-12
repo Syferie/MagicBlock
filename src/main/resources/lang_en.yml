@@ -68,6 +68,7 @@ messages:
   bound-to: "Bound to:"
   click-again-to-remove: "&e⚡ &7Click again to hide this block from list"
   cannot-craft-with-magic-block: "&c✖ &7Magic blocks cannot be used in crafting!"
+  cannot-place-in-functional-container: "&c✖ &7Cannot place magic blocks in functional containers! Only storage containers like chests and ender chests are allowed"
   food-full: "&c✖ &7Your hunger is full, cannot use magic food!"
   food-effect-applied: "&a✔ &7Successfully used magic food!"
   food-invalid: "&c✖ &7Invalid magic food!"
