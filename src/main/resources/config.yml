@@ -1,252 +1,252 @@
 # ==============================================================
-#                  MagicBlock Plugin Configuration
+#                  MagicBlock 插件配置文件
 # ==============================================================
-# Plugin Author: Syferie
-# QQ Group: 134484522
-# Telegram Group: t.me/+ctO2LArww4NkNmI9
+# 插件作者: Syferie
+# QQ群: 134484522
+# Telegram群: t.me/+ctO2LArww4NkNmI9
 # ==============================================================
 
-# General Settings
+# 基础设置
 # -------------------------------------------------------------
 
-# Debug mode: Enables verbose logging for troubleshooting.
+# 调试模式：启用详细日志记录以便故障排除
 debug-mode: false
 
-# Language setting for plugin messages and block names.
-# Available languages:
-# - en (English, will use en_gb for block names)
-# - zh_CN (Simplified Chinese, will use zh_cn for block names)
-# ✅ Hot-reloadable: Changes take effect immediately with /mb reload
-language: "en"
+# 插件消息和方块名称的语言设置
+# 可用语言:
+# - en (英语，方块名称使用 en_gb)
+# - zh_CN (简体中文，方块名称使用 zh_cn)
+# ✅ 热重载：使用 /mb reload 立即生效
+language: "zh_CN"
 
-# Custom Block Translations
+# 自定义方块翻译
 # -------------------------------------------------------------
-# Override or add custom translations for specific blocks.
-# These translations will be used regardless of the language setting.
-# Format: MATERIAL_NAME: "Custom Display Name"
+# 覆盖或添加特定方块的自定义翻译
+# 这些翻译将不受语言设置影响，始终生效
+# 格式: 材料名称: "自定义显示名称"
 #
-# Examples:
-# - Override existing translations: GRASS_BLOCK: "草草方块"
-# - Add missing translations: HEAVY_CORE: "重型核心"
-# - Support new version blocks: CHERRY_BLOSSOM_BLOCK: "樱花方块"
+# 示例:
+# - 覆盖现有翻译: GRASS_BLOCK: "草草方块"
+# - 添加缺失翻译: HEAVY_CORE: "重型核心"
+# - 支持新版本方块: CHERRY_BLOSSOM_BLOCK: "樱花方块"
 #
-# Note: Use the exact Material name from Minecraft (case-sensitive)
-# ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+# 注意: 使用 Minecraft 的确切材料名称（区分大小写）
+# ✅ 热重载：使用 /mb reload 立即生效
 custom-block-translations:
-  # Example entries (remove # to enable):
+  # 示例条目（删除 # 启用）:
   # HEAVY_CORE: "重型核心"
   # TRIAL_SPAWNER: "试炼刷怪笼"
   # COPPER_GRATE: "铜格栅"
   # GRASS_BLOCK: "草草方块"
 
-# Message prefix displayed before plugin messages.
-# ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+# 插件消息前显示的前缀
+# ✅ 热重载：使用 /mb reload 立即生效
 prefix: "§7[MagicBlock] "
 
-# Enable plugin usage statistics.
-# ✅ Hot-reloadable: Can be enabled/disabled with /mb reload
+# 启用插件使用统计
+# ✅ 热重载：可以使用 /mb reload 启用/禁用
 enable-statistics: true
 
-# Automatically check for plugin updates on server start.
-# ⚠️ Requires restart: Only checked during plugin startup
+# 服务器启动时自动检查插件更新
+# ⚠️ 需要重启：仅在插件启动时检查
 check-updates: true
 
-# Blacklisted worlds where Magic Blocks cannot be placed or used.
-# ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+# 禁止放置或使用魔法方块的世界黑名单
+# ✅ 热重载：使用 /mb reload 立即生效
 blacklisted-worlds:
   - world_nether
   - world_the_end
 
-# Display Settings
+# 显示设置
 # -------------------------------------------------------------
 
-# Format for displaying the name of a Magic Block in item form.
-# %s will be replaced with the block's material name.
-# ✅ Hot-reloadable: Changes take effect for newly created blocks with /mb reload
+# 魔法方块物品形式的名称显示格式
+# %s 将被替换为方块的材料名称
+# ✅ 热重载：使用 /mb reload 对新创建的方块生效
 display:
   block-name-format: "&b✦ %s &b✦"
-  # Control which information lines are shown in the lore
+  # 控制在描述中显示哪些信息行
   show-info:
-    bound-player: true     # Show "Bound to: PlayerName"
-    usage-count: true      # Show "Uses: X/Y"
-    progress-bar: true     # Show usage progress bar
+    bound-player: true     # 显示 "绑定到: 玩家名"
+    usage-count: true      # 显示 "使用次数: X/Y"
+    progress-bar: true     # 显示使用进度条
   decorative-lore:
-    # Enable decorative lore lines below the Magic Block's identifier.
+    # 在魔法方块标识符下方启用装饰性描述行
     enabled: true
-    # Decorative lore lines will be displayed between magic-lore and usage information
-    # Supports color codes (&) and PlaceholderAPI variables if installed.
+    # 装饰性描述行将显示在 magic-lore 和使用信息之间
+    # 支持颜色代码 (&) 和 PlaceholderAPI 变量（如果已安装）
     #
-    # Available MagicBlock Variables:
-    # %magicblock_block_uses%     - Total block uses by player
-    # %magicblock_remaining_uses% - Current block's remaining uses
-    # %magicblock_max_uses%       - Current block's maximum uses
-    # %magicblock_uses_progress%  - Usage progress (percentage)
-    # %magicblock_progress_bar%   - Progress bar with default length (20 chars)
-    # %magicblock_progressbar_10% - Progress bar with custom length (10 chars)
-    # %magicblock_progressbar_15% - Progress bar with custom length (15 chars)
+    # 可用的 MagicBlock 变量:
+    # %magicblock_block_uses%     - 玩家使用方块的总次数
+    # %magicblock_remaining_uses% - 当前方块的剩余使用次数
+    # %magicblock_max_uses%       - 当前方块的最大使用次数
+    # %magicblock_uses_progress%  - 使用进度（百分比）
+    # %magicblock_progress_bar%   - 默认长度的进度条（20字符）
+    # %magicblock_progressbar_10% - 自定义长度的进度条（10字符）
+    # %magicblock_progressbar_15% - 自定义长度的进度条（15字符）
     #
-    # Common Variables:
-    # %player_name%     - Bound player's name
-    # %server_online%   - Online players count
+    # 常用变量:
+    # %player_name%     - 绑定玩家的名称
+    # %server_online%   - 在线玩家数量
     #
-    # Example with variables (remove # to use):
-    # - "&7Bound to: %player_name%"
-    # - "&7Total Uses: %magicblock_block_uses%"
-    # - "&7Progress: %magicblock_uses_progress%%"
-    # - "&7Progress Bar: %magicblock_progress_bar%"
-    # - "&7Custom Bar: %magicblock_progressbar_15%"
+    # 使用变量的示例（删除 # 使用）:
+    # - "&7绑定到: %player_name%"
+    # - "&7总使用次数: %magicblock_block_uses%"
+    # - "&7进度: %magicblock_uses_progress%%"
+    # - "&7进度条: %magicblock_progress_bar%"
+    # - "&7自定义条: %magicblock_progressbar_15%"
     lines:
-      - "&7This is a magical block."
-      - "&7It is imbued with the power of magic."
-      - "&7Use it to change the world."
+      - "&7这是一个魔法方块。"
+      - "&7它蕴含着魔法的力量。"
+      - "&7使用它来改变世界。"
 
-# GUI Settings
+# GUI 设置
 # -------------------------------------------------------------
 
-# Number of rows for the Magic Block selection GUI.
-# ✅ Hot-reloadable: Changes take effect for newly opened GUIs with /mb reload
+# 魔法方块选择 GUI 的行数
+# ✅ 热重载：使用 /mb reload 对新打开的 GUI 生效
 gui:
   rows: 6
 
-# Magic Block Properties
+# 魔法方块属性
 # -------------------------------------------------------------
 
-# Custom lore to identify Magic Blocks. Use § for color codes, not &.
-# Important: This lore must be unique and not commonly found on other items.
-# ⚠️ Requires restart: Changing this affects existing blocks recognition
+# 用于识别魔法方块的自定义描述。使用 § 而不是 & 作为颜色代码
+# 重要：此描述必须是唯一的，不能在其他物品上常见
+# ⚠️ 需要重启：更改此项会影响现有方块的识别
 magic-lore: "§7MagicBlock"
 
-# Prefix text for displaying the remaining usage times of a Magic Block.
-# ✅ Hot-reloadable: Changes take effect for newly created blocks with /mb reload
-usage-lore-prefix: "§7Uses:"
+# 显示魔法方块剩余使用次数的前缀文本
+# ✅ 热重载：使用 /mb reload 对新创建的方块生效
+usage-lore-prefix: "§7使用次数:"
 
-# Default usage times for Magic Blocks obtained through the /mb get command.
-# ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+# 通过 /mb get 命令获得的魔法方块的默认使用次数
+# ✅ 热重载：使用 /mb reload 立即生效
 default-block-times: 1000000000
 
-# Whether to enable the block binding system
-# If set to true, players can bind blocks to themselves and retrieve them later
-# If set to false, the binding system will be disabled and blocks won't be bound to players
-# ⚠️ Requires restart: Core system feature that affects plugin initialization
+# 是否启用方块绑定系统
+# 如果设置为 true，玩家可以将方块绑定到自己并稍后找回
+# 如果设置为 false，绑定系统将被禁用，方块不会绑定到玩家
+# ⚠️ 需要重启：影响插件初始化的核心系统功能
 enable-binding-system: true
 
-# Whether to allow other players to use blocks that are bound to another player
-# If set to true, players can use blocks even if they are bound to someone else
-# This only affects block usage, not the binding system or UI
-# ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+# 是否允许其他玩家使用绑定到另一个玩家的方块
+# 如果设置为 true，玩家可以使用即使绑定到其他人的方块
+# 这只影响方块使用，不影响绑定系统或 UI
+# ✅ 热重载：使用 /mb reload 立即生效
 allow-use-bound-blocks: false
 
-# Whether to remove the magic block when its uses are depleted
-# If set to true, the block will be removed from the player's inventory and bound list when uses reach 0
-# If set to false, the block will remain but cannot be used (default behavior)
-# ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+# 当魔法方块使用次数耗尽时是否移除它
+# 如果设置为 true，当使用次数达到 0 时，方块将从玩家背包和绑定列表中移除
+# 如果设置为 false，方块将保留但无法使用（默认行为）
+# ✅ 热重载：使用 /mb reload 立即生效
 remove-depleted-blocks: false
 
-# Anti-Duplication System
+# 防刷系统
 # -------------------------------------------------------------
-# Prevents players from duplicating magic blocks through various methods
-# Checks both the user's own inventory and other players' inventories
-# Only checks player inventories (not ender chests) for optimal performance
-# ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+# 通过各种方法防止玩家刷魔法方块
+# 检查使用者自己的背包和其他玩家的背包
+# 仅检查玩家背包（不检查末影箱）以获得最佳性能
+# ✅ 热重载：使用 /mb reload 立即生效
 anti-duplication:
-  # Enable the anti-duplication system
+  # 启用防刷系统
   enabled: true
-  # Notify admins when duplicates are found and removed
+  # 发现并移除重复方块时通知管理员
   notify-admins: true
-  # Check frequency: when players switch to magic blocks in main/off hand
-  # This provides good protection while maintaining performance
+  # 检查频率：当玩家切换到主手/副手的魔法方块时
+  # 这在保持性能的同时提供良好的保护
 
-# Performance Settings
+# 性能设置
 # -------------------------------------------------------------
-# These settings help optimize plugin performance for high-traffic servers
-# ✅ Hot-reloadable: Most performance settings take effect immediately with /mb reload
+# 这些设置有助于为高流量服务器优化插件性能
+# ✅ 热重载：大多数性能设置使用 /mb reload 立即生效
 
 performance:
-  # Lore caching settings
+  # 描述缓存设置
   lore-cache:
-    # Enable lore caching to reduce string operations (recommended: true)
+    # 启用描述缓存以减少字符串操作（推荐：true）
     enabled: true
-    # Cache duration in milliseconds (default: 5000 = 5 seconds)
+    # 缓存持续时间（毫秒）（默认：5000 = 5秒）
     duration: 5000
-    # Maximum cache size before cleanup (default: 1000)
+    # 清理前的最大缓存大小（默认：1000）
     max-size: 1000
 
-  # Location caching settings for magic block detection
+  # 魔法方块检测的位置缓存设置
   location-cache:
-    # Enable location caching to improve magic block detection performance (recommended: true)
-    # ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+    # 启用位置缓存以提高魔法方块检测性能（推荐：true）
+    # ✅ 热重载：使用 /mb reload 立即生效
     enabled: true
-    # Cache duration in milliseconds (default: 5000 = 5 seconds)
+    # 缓存持续时间（毫秒）（默认：5000 = 5秒）
     duration: 5000
-    # Cache cleanup interval in seconds (default: 30)
+    # 缓存清理间隔（秒）（默认：30）
     cleanup-interval: 30
 
-  # Block physics optimization
+  # 方块物理优化
   physics-optimization:
-    # Enable smart physics event filtering to reduce unnecessary checks (recommended: true)
-    # ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+    # 启用智能物理事件过滤以减少不必要的检查（推荐：true）
+    # ✅ 热重载：使用 /mb reload 立即生效
     enabled: true
-    # Skip physics checks for blocks that are unlikely to be affected (recommended: true)
+    # 跳过不太可能受影响的方块的物理检查（推荐：true）
     skip-unaffected-blocks: true
 
-  # Statistics saving settings
+  # 统计保存设置
   statistics:
-    # Batch save threshold - save after this many operations (default: 50)
-    # ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+    # 批量保存阈值 - 在这么多操作后保存（默认：50）
+    # ✅ 热重载：使用 /mb reload 立即生效
     batch-threshold: 50
-    # Auto-save interval in milliseconds (default: 30000 = 30 seconds)
+    # 自动保存间隔（毫秒）（默认：30000 = 30秒）
     save-interval: 30000
 
-  # Database optimization
+  # 数据库优化
   database-optimization:
-    # Use async database operations to prevent main thread blocking (recommended: true)
-    # ✅ Hot-reloadable: Changes take effect for new operations with /mb reload
+    # 使用异步数据库操作以防止主线程阻塞（推荐：true）
+    # ✅ 热重载：使用 /mb reload 对新操作生效
     async-operations: true
-    # Batch database updates to reduce I/O operations (recommended: true)
+    # 批量数据库更新以减少 I/O 操作（推荐：true）
     batch-updates: true
 
-# Database Settings
+# 数据库设置
 # -------------------------------------------------------------
-# Settings for MySQL database connection for cross-server data storage
-# ⚠️ Requires restart: Database connections are established during plugin startup
+# 跨服务器数据存储的 MySQL 数据库连接设置
+# ⚠️ 需要重启：数据库连接在插件启动时建立
 database:
-  # Whether to use MySQL for data storage (if false, will use file-based storage)
+  # 是否使用 MySQL 进行数据存储（如果为 false，将使用基于文件的存储）
   enabled: false
-  # MySQL connection settings
+  # MySQL 连接设置
   host: localhost
   port: 3306
   database: magicblock
   username: root
   password: password
-  # Table prefix for all plugin tables
+  # 所有插件表的表前缀
   table-prefix: mb_
 
-# Allowed Materials
+# 允许的材料
 # -------------------------------------------------------------
-# ✅ Hot-reloadable: Changes take effect immediately with /mb reload
-# CAUTION: Please be cautious when adding the following types of blocks to the ALLOWED blocks list!
+# ✅ 热重载：使用 /mb reload 立即生效
+# 注意：在将以下类型的方块添加到允许方块列表时请谨慎！
 #
-# Due to Minecraft's game mechanics, some blocks may unexpectedly drop items under certain circumstances (e.g., water flow, destruction of the block they are attached to), even if they are on the allowed list.
+# 由于 Minecraft 的游戏机制，某些方块在特定情况下可能会意外掉落物品（例如水流、它们所附着的方块被破坏），即使它们在允许列表中。
 #
-# Therefore, it is strongly recommended that you EXERCISE CAUTION when adding the following types of blocks:
-#   - Attached Blocks: Blocks that require attachment to another block to exist.
-#   - Environmentally Sensitive Blocks: Blocks that are easily dropped due to environmental factors such as water flow, etc.
+# 因此，强烈建议您在添加以下类型的方块时要格外小心：
+#   - 附着方块：需要附着到另一个方块才能存在的方块
+#   - 环境敏感方块：容易因水流等环境因素而掉落的方块
 #
-# Typical examples include, but are not limited to:
-#   - Redstone Dust (redstone_wire)
-#   - Redstone Torch (redstone_torch)
-#   - Torch (torch)
-#   - Various Flowers (e.g., poppy, dandelion, blue_orchid, etc.)
-#   - Various Saplings (e.g., oak_sapling, spruce_sapling, birch_sapling, etc.)
-#   - Various Buttons (e.g., oak_button, stone_button, etc.)
-#   - Lever (lever)
-#   - Pressure Plates (e.g., oak_pressure_plate, stone_pressure_plate, etc.)
-#   - Other similar susceptible blocks
+# 典型示例包括但不限于：
+#   - 红石粉 (redstone_wire)
+#   - 红石火把 (redstone_torch)
+#   - 火把 (torch)
+#   - 各种花朵（例如：poppy, dandelion, blue_orchid 等）
+#   - 各种树苗（例如：oak_sapling, spruce_sapling, birch_sapling 等）
+#   - 各种按钮（例如：oak_button, stone_button 等）
+#   - 拉杆 (lever)
+#   - 压力板（例如：oak_pressure_plate, stone_pressure_plate 等）
+#   - 其他类似的易受影响方块
 
 
-# Materials that will appear in the GUI selection menu for all players.
+# 将在所有玩家的 GUI 选择菜单中显示的材料
 allowed-materials:
-  # Natural Blocks
+  # 天然方块
   - STONE
   - GRASS_BLOCK
   - DIRT
@@ -257,7 +257,7 @@ allowed-materials:
   - IRON_ORE
   - COAL_ORE
 
-  # Wood Types
+  # 木材类型
   - OAK_WOOD
   - SPRUCE_WOOD
   - BIRCH_WOOD
@@ -271,7 +271,7 @@ allowed-materials:
   - ACACIA_LOG
   - DARK_OAK_LOG
 
-  # Mineral Blocks
+  # 矿物方块
   - GOLD_BLOCK
   - IRON_BLOCK
   - DIAMOND_BLOCK
@@ -279,7 +279,7 @@ allowed-materials:
   - LAPIS_BLOCK
   - REDSTONE_BLOCK
 
-  # Stone Types
+  # 石材类型
   - GRANITE
   - DIORITE
   - ANDESITE
@@ -287,7 +287,7 @@ allowed-materials:
   - MOSSY_STONE_BRICKS
   - CRACKED_STONE_BRICKS
 
-  # Decorative Blocks
+  # 装饰方块
   - GLASS
   - BOOKSHELF
   - OBSIDIAN
@@ -296,18 +296,18 @@ allowed-materials:
   - CLAY
   - TERRACOTTA
 
-  # Nether Blocks
+  # 下界方块
   - NETHERRACK
   - SOUL_SAND
   - NETHER_BRICKS
   - MAGMA_BLOCK
 
-  # End Blocks
+  # 末地方块
   - END_STONE
   - PURPUR_BLOCK
   - END_STONE_BRICKS
 
-  # Concrete Colors
+  # 混凝土颜色
   - WHITE_CONCRETE
   - ORANGE_CONCRETE
   - MAGENTA_CONCRETE
@@ -325,23 +325,23 @@ allowed-materials:
   - RED_CONCRETE
   - BLACK_CONCRETE
 
-# Group Permissions for Additional Materials
+# 额外材料的组权限
 # -------------------------------------------------------------
 
-# Group-specific materials that will appear in the GUI for players with the corresponding permission.
-# Define permission nodes as follows: magicblock.group.<group-name> (e.g., magicblock.group.vip-material)
-# ✅ Hot-reloadable: Changes take effect immediately with /mb reload
+# 特定组的材料，将在具有相应权限的玩家的 GUI 中显示
+# 权限节点定义如下：magicblock.group.<组名>（例如：magicblock.group.vip-material）
+# ✅ 热重载：使用 /mb reload 立即生效
 group:
-  # VIP group materials
+  # VIP 组材料
   vip-material:
-    # Example: Adds Diamond, Emerald, and Gold Blocks for players with the 'magicblock.group.vip-material' permission.
+    # 示例：为拥有 'magicblock.group.vip-material' 权限的玩家添加钻石块、绿宝石块和金块
     - DIAMOND_BLOCK
     - EMERALD_BLOCK
     - GOLD_BLOCK
 
-  # MVP group materials
+  # MVP 组材料
   mvp-material:
-    # Example: Adds Beacon, Dragon Egg, and Netherite Block for players with the 'magicblock.group.mvp-material' permission.
+    # 示例：为拥有 'magicblock.group.mvp-material' 权限的玩家添加信标、龙蛋和下界合金块
     - BEACON
     - DRAGON_EGG
     - NETHERITE_BLOCK
