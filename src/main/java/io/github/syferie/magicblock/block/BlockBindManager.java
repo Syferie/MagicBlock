@@ -279,7 +279,9 @@ public class BlockBindManager {
             }
         }
 
-        Inventory gui = Bukkit.createInventory(null, 54, plugin.getMessage("gui.bound-blocks-title"));
+        String guiTitle = ChatColor.translateAlternateColorCodes('&',
+            plugin.getConfig().getString("gui.text.bound-blocks-title", "&8⚡ &b已绑定方块"));
+        Inventory gui = Bukkit.createInventory(null, 54, guiTitle);
 
         int slot = 0;
         for (Map.Entry<String, Map<String, Object>> entry : bindings.entrySet()) {
@@ -346,12 +348,17 @@ public class BlockBindManager {
                 lore.add(plugin.getMagicLore());
                 lore.add(getBindLorePrefix() + player.getName());
                 lore.add("");
-                lore.add(ChatColor.GRAY + plugin.getMessage("gui.remaining-uses") + ChatColor.YELLOW + uses + ChatColor.GRAY + "/" + ChatColor.YELLOW + maxUses);
+                String remainingUsesText = ChatColor.translateAlternateColorCodes('&',
+                    plugin.getConfig().getString("gui.text.remaining-uses", "剩余使用次数: "));
+                lore.add(ChatColor.GRAY + remainingUsesText + ChatColor.YELLOW + uses + ChatColor.GRAY + "/" + ChatColor.YELLOW + maxUses);
                 lore.add("");
-                // 使用语言文件中的提示文本
-                lore.add(ChatColor.translateAlternateColorCodes('&', plugin.getMessage("gui.retrieve-block")));
-                lore.add(ChatColor.translateAlternateColorCodes('&', plugin.getMessage("gui.remove-block")));
-                lore.add(ChatColor.translateAlternateColorCodes('&', plugin.getMessage("gui.remove-block-note")));
+                // 使用配置文件中的提示文本
+                lore.add(ChatColor.translateAlternateColorCodes('&',
+                    plugin.getConfig().getString("gui.text.retrieve-block", "&a▸ &7左键点击取回此方块")));
+                lore.add(ChatColor.translateAlternateColorCodes('&',
+                    plugin.getConfig().getString("gui.text.remove-block", "&c▸ &7右键点击从列表中隐藏")));
+                lore.add(ChatColor.translateAlternateColorCodes('&',
+                    plugin.getConfig().getString("gui.text.remove-block-note", "&8• &7(仅从列表隐藏，绑定关系保持)")));
                 meta.setLore(lore);
                 meta.getPersistentDataContainer().set(bindKey, PersistentDataType.STRING, uuid);
                 meta.getPersistentDataContainer().set(

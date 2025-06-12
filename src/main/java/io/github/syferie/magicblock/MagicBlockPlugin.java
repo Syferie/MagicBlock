@@ -550,6 +550,12 @@ public class MagicBlockPlugin extends JavaPlugin {
         if (listener != null) {
             listener.setAllowedMaterials(newAllowedMaterials);
         }
+
+        // 7. 重载GUI配置
+        if (listener != null) {
+            listener.reloadGUIConfig();
+            getLogger().info("✓ GUI配置已重载");
+        }
         getLogger().info("✓ 允许材料列表已重载");
 
         // 7. 重载黑名单世界列表

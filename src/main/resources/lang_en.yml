@@ -24,20 +24,7 @@ general:
   dev-version: "&eDevelopment version detected: &b{0} &7(Latest stable: &b{1}&7)"
   update-check-failed: "&cUpdate check failed: {0}"
 
-gui:
-  title: "&8⚡ &bMagicBlock Selection"
-  search-button: "&e⚡ Search Block"
-  search-lore: "&7» Click to search"
-  previous-page: "&a« Previous Page"
-  next-page: "&aNext Page »"
-  select-block: "&7» Click to select this block"
-  bound-blocks-title: "&8⚡ &bBound Blocks"
-  retrieve-block: "&a▸ &7Left-click to retrieve this block"
-  remove-block: "&c▸ &7Right-click to hide from list"
-  remove-block-note: "&8• &7(Only hides from list, binding remains)"
-  remaining-uses: "Remaining uses: "
-  page-info: "&ePage {0}/{1}"
-  close: "&cClose"
+# GUI related configurations have been moved to config.yml, please configure in config.yml gui.text section
 
 messages:
   block-placed: "&a✔ &7Successfully placed MagicBlock!"

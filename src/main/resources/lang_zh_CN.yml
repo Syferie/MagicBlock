@@ -24,20 +24,7 @@ general:
   dev-version: "&e检测到开发版本: &b{0} &7(最新稳定版: &b{1}&7)"
   update-check-failed: "&c检查更新失败: {0}"
 
-gui:
-  title: "&8⚡ &bMagicBlock选择"
-  search-button: "&e⚡ 搜索方块"
-  search-lore: "&7» 点击进行搜索"
-  previous-page: "&a« 上一页"
-  next-page: "&a下一页 »"
-  select-block: "&7» 点击选择此方块"
-  bound-blocks-title: "&8⚡ &b已绑定的方块"
-  retrieve-block: "&a▸ &7左键点击找回此方块"
-  remove-block: "&c▸ &7右键点击从列表中隐藏"
-  remove-block-note: "&8• &7(仅从列表中隐藏，不会解除绑定)"
-  remaining-uses: "剩余使用次数: "
-  page-info: "&e第 {0}/{1} 页"
-  close: "&c关闭"
+# GUI相关配置已移动到config.yml中，请在config.yml的gui.text部分进行配置
 
 messages:
   block-placed: "&a✔ &7成功放置MagicBlock！"

@@ -137,6 +137,15 @@ public class BlockListener implements Listener {
         this.buildingMaterials.addAll(materials);
     }
 
+    /**
+     * 重载GUI配置
+     */
+    public void reloadGUIConfig() {
+        if (guiManager != null && guiManager.getBlockSelectionGUI() != null) {
+            guiManager.getBlockSelectionGUI().reloadConfig();
+        }
+    }
+
 
 
     private boolean isConnectableBlock(Material material) {
@@ -763,8 +772,10 @@ public class BlockListener implements Listener {
         }
 
         String title = ChatColor.stripColor(event.getView().getTitle());
-        String expectedTitle = ChatColor.stripColor(plugin.getMessage("gui.title"));
-        String boundBlocksTitle = ChatColor.stripColor(plugin.getMessage("gui.bound-blocks-title"));
+        String expectedTitle = ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&',
+            plugin.getConfig().getString("gui.title", "&8⚡ &bMagicBlock选择")));
+        String boundBlocksTitle = ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&',
+            plugin.getConfig().getString("gui.text.bound-blocks-title", "&8⚡ &b已绑定方块")));
 
         if (title.equals(expectedTitle)) {
             event.setCancelled(true);

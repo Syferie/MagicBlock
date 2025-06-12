@@ -103,10 +103,142 @@ display:
 # GUI 设置
 # -------------------------------------------------------------
 
-# 魔法方块选择 GUI 的行数
+# 魔法方块选择 GUI 配置
 # ✅ 热重载：使用 /mb reload 对新打开的 GUI 生效
 gui:
+  # GUI 标题
+  title: "&8⚡ &bMagicBlock选择"
+
+  # GUI 行数 (1-6)
   rows: 6
+
+  # GUI 按钮配置
+  # 支持原版材质 (如: STONE, DIAMOND) 和 ItemsAdder 自定义物品 (如: namespace:item_id)
+  # ItemsAdder 格式说明: 使用命名空间:物品ID，例如 "itemsadder:ruby_sword" 或 "blocks_expansion:oak_crate"
+  #
+  # ItemsAdder 示例配置:
+  # material: "itemsadder:custom_button"     # ItemsAdder自定义物品
+  # material: "blocks_expansion:oak_crate"   # ItemsAdder方块扩展包
+  # material: "DIAMOND"                      # 原版材质
+  buttons:
+    # 上一页按钮
+    previous-page:
+      material: "ARROW"
+      name: "&a« 上一页"
+      lore:
+        - "&7点击返回上一页"
+      slot: 45
+      # 禁用状态配置（第一页时显示）
+      disabled:
+        material: "GRAY_DYE"
+        name: "&8« 上一页 &7(禁用)"
+        lore:
+          - "&7已经是第一页了"
+          - "&8无法继续向前翻页"
+
+    # 下一页按钮
+    next-page:
+      material: "ARROW"
+      name: "&a下一页 »"
+      lore:
+        - "&7点击前往下一页"
+      slot: 53
+      # 禁用状态配置（最后一页时显示）
+      disabled:
+        material: "GRAY_DYE"
+        name: "&8下一页 » &7(禁用)"
+        lore:
+          - "&7已经是最后一页了"
+          - "&8无法继续向后翻页"
+
+    # 页码信息显示
+    page-info:
+      material: "PAPER"
+      name: "&e第 {page}/{total_pages} 页"
+      lore:
+        - "&7当前页码信息"
+      slot: 49
+
+    # 搜索按钮
+    search:
+      material: "COMPASS"
+      name: "&e⚡ 搜索方块"
+      lore:
+        - "&7» 点击进行搜索"
+        - "&7输入方块名称来快速查找"
+      slot: 47
+
+    # 关闭按钮
+    close:
+      material: "BARRIER"
+      name: "&c关闭"
+      lore:
+        - "&7点击关闭GUI"
+      slot: 51
+
+    # 自定义装饰材质 - 用于填充空槽位或装饰GUI
+    # 用户可以自由添加更多自定义材质 (custom5, custom6, etc.)
+    # 设置 enabled: false 可以禁用特定的自定义材质
+    #
+    # 示例用法:
+    # - 填充空槽位: material: "AIR", name: "", lore: []
+    # - 装饰边框: material: "BLACK_STAINED_GLASS_PANE", name: " ", lore: []
+    # - ItemsAdder装饰: material: "itemsadder:custom_border", name: "&7装饰", lore: []
+    custom1:
+      enabled: true
+      material: "AIR"
+      name: ""
+      lore: []
+      slot: 46
+
+    custom2:
+      enabled: true
+      material: "AIR"
+      name: ""
+      lore: []
+      slot: 48
+
+    custom3:
+      enabled: true
+      material: "AIR"
+      name: ""
+      lore: []
+      slot: 50
+
+    custom4:
+      enabled: true
+      material: "AIR"
+      name: ""
+      lore: []
+      slot: 52
+
+    # 示例：添加更多自定义材质（删除 # 启用）
+    # custom5:
+    #   enabled: true
+    #   material: "BLACK_STAINED_GLASS_PANE"
+    #   name: " "
+    #   lore: []
+    #   slot: 0
+    #
+    # custom6:
+    #   enabled: true
+    #   material: "itemsadder:custom_decoration"
+    #   name: "&7装饰物品"
+    #   lore:
+    #     - "&7这是一个装饰物品"
+    #   slot: 8
+
+  # GUI 文本配置
+  text:
+    # 方块选择相关
+    select-block: "&7» 点击选择此方块"
+
+    # 绑定方块GUI相关
+    bound-blocks-title: "&8⚡ &b已绑定方块"
+    retrieve-block: "&a▸ &7左键点击取回此方块"
+    remove-block: "&c▸ &7右键点击从列表中隐藏"
+    remove-block-note: "&8• &7(仅从列表隐藏，绑定关系保持)"
+    remaining-uses: "剩余使用次数: "
 
 # 魔法方块属性
 # -------------------------------------------------------------

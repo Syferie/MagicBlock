@@ -106,10 +106,142 @@ display:
 # GUI Settings
 # -------------------------------------------------------------
 
-# Number of rows for the Magic Block selection GUI.
+# Magic Block selection GUI configuration
 # ✅ Hot-reloadable: Changes take effect for newly opened GUIs with /mb reload
 gui:
+  # GUI title
+  title: "&8⚡ &bMagicBlock Selection"
+
+  # GUI rows (1-6)
   rows: 6
+
+  # GUI button configuration
+  # Supports vanilla materials (e.g., STONE, DIAMOND) and ItemsAdder custom items (e.g., namespace:item_id)
+  # ItemsAdder format: Use namespace:item_id, such as "itemsadder:ruby_sword" or "blocks_expansion:oak_crate"
+  #
+  # ItemsAdder example configurations:
+  # material: "itemsadder:custom_button"     # ItemsAdder custom item
+  # material: "blocks_expansion:oak_crate"   # ItemsAdder block expansion
+  # material: "DIAMOND"                      # Vanilla material
+  buttons:
+    # Previous page button
+    previous-page:
+      material: "ARROW"
+      name: "&a« Previous Page"
+      lore:
+        - "&7Click to go to previous page"
+      slot: 45
+      # Disabled state configuration (shown on first page)
+      disabled:
+        material: "GRAY_DYE"
+        name: "&8« Previous Page &7(Disabled)"
+        lore:
+          - "&7Already on the first page"
+          - "&8Cannot go back further"
+
+    # Next page button
+    next-page:
+      material: "ARROW"
+      name: "&aNext Page »"
+      lore:
+        - "&7Click to go to next page"
+      slot: 53
+      # Disabled state configuration (shown on last page)
+      disabled:
+        material: "GRAY_DYE"
+        name: "&8Next Page » &7(Disabled)"
+        lore:
+          - "&7Already on the last page"
+          - "&8Cannot go forward further"
+
+    # Page info display
+    page-info:
+      material: "PAPER"
+      name: "&ePage {page}/{total_pages}"
+      lore:
+        - "&7Current page information"
+      slot: 49
+
+    # Search button
+    search:
+      material: "COMPASS"
+      name: "&e⚡ Search Blocks"
+      lore:
+        - "&7» Click to search"
+        - "&7Enter block name to quickly find"
+      slot: 47
+
+    # Close button
+    close:
+      material: "BARRIER"
+      name: "&cClose"
+      lore:
+        - "&7Click to close GUI"
+      slot: 51
+
+    # Custom decorative materials - for filling empty slots or decorating GUI
+    # Users can freely add more custom materials (custom5, custom6, etc.)
+    # Set enabled: false to disable specific custom materials
+    #
+    # Example usage:
+    # - Fill empty slots: material: "AIR", name: "", lore: []
+    # - Decorative border: material: "BLACK_STAINED_GLASS_PANE", name: " ", lore: []
+    # - ItemsAdder decoration: material: "itemsadder:custom_border", name: "&7Decoration", lore: []
+    custom1:
+      enabled: true
+      material: "AIR"
+      name: ""
+      lore: []
+      slot: 46
+
+    custom2:
+      enabled: true
+      material: "AIR"
+      name: ""
+      lore: []
+      slot: 48
+
+    custom3:
+      enabled: true
+      material: "AIR"
+      name: ""
+      lore: []
+      slot: 50
+
+    custom4:
+      enabled: true
+      material: "AIR"
+      name: ""
+      lore: []
+      slot: 52
+
+    # Example: Add more custom materials (remove # to enable)
+    # custom5:
+    #   enabled: true
+    #   material: "BLACK_STAINED_GLASS_PANE"
+    #   name: " "
+    #   lore: []
+    #   slot: 0
+    #
+    # custom6:
+    #   enabled: true
+    #   material: "itemsadder:custom_decoration"
+    #   name: "&7Decorative Item"
+    #   lore:
+    #     - "&7This is a decorative item"
+    #   slot: 8
+
+  # GUI text configuration
+  text:
+    # Block selection related
+    select-block: "&7» Click to select this block"
+
+    # Bound blocks GUI related
+    bound-blocks-title: "&8⚡ &bBound Blocks"
+    retrieve-block: "&a▸ &7Left-click to retrieve this block"
+    remove-block: "&c▸ &7Right-click to hide from list"
+    remove-block-note: "&8• &7(Only hides from list, binding remains)"
+    remaining-uses: "Remaining uses: "
 
 # Magic Block Properties
 # -------------------------------------------------------------

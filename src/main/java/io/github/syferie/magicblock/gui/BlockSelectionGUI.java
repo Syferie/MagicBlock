@@ -20,15 +20,16 @@ import java.util.stream.Collectors;
 
 public class BlockSelectionGUI {
     private final MagicBlockPlugin plugin;
+    private final GUIConfig guiConfig;
     private final Map<UUID, Integer> currentPage = new ConcurrentHashMap<>();
     private final Map<UUID, List<Material>> searchResults = new ConcurrentHashMap<>();
     private final Map<UUID, ItemStack> originalItems = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastGuiOpenTime = new ConcurrentHashMap<>();
-    private static final int ITEMS_PER_PAGE = 45;
     private static final long GUI_OPERATION_COOLDOWN = 500; // 0.5秒操作冷却时间
 
     public BlockSelectionGUI(MagicBlockPlugin plugin) {
         this.plugin = plugin;
+        this.guiConfig = new GUIConfig(plugin);
     }
 
     public void openInventory(Player player) {
@@ -51,55 +52,71 @@ public class BlockSelectionGUI {
     }
 
     public void updateInventory(Player player) {
-        Inventory gui = Bukkit.createInventory(null, 54, plugin.getMessage("gui.title"));
+        // 设置GUI更新标志，防止在更新时清理数据
+        GUIManager.setPlayerUpdatingGUI(player, true);
+
+        Inventory gui = Bukkit.createInventory(null, guiConfig.getSize(), guiConfig.getTitle());
         UUID playerId = player.getUniqueId();
         int page = currentPage.getOrDefault(playerId, 1);
 
         List<Material> materials = searchResults.getOrDefault(playerId, plugin.getAllowedMaterials());
-        int totalPages = (int) Math.ceil(materials.size() / (double) ITEMS_PER_PAGE);
 
-        int startIndex = (page - 1) * ITEMS_PER_PAGE;
-        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, materials.size());
+        // 计算每页可显示的物品数量（排除按钮槽位）
+        int itemsPerPage = calculateItemsPerPage();
+        int totalPages = (int) Math.ceil(materials.size() / (double) itemsPerPage);
 
-        // 添加物品
+        plugin.debug("GUI更新 - 玩家: " + player.getName() + ", 页面: " + page + "/" + totalPages +
+                    ", 每页物品数: " + itemsPerPage + ", 总物品数: " + materials.size());
+
+        int startIndex = (page - 1) * itemsPerPage;
+        int endIndex = Math.min(startIndex + itemsPerPage, materials.size());
+
+        // 添加物品到可用槽位
+        int currentSlot = 0;
         for (int i = startIndex; i < endIndex; i++) {
-            Material material = materials.get(i);
-            gui.setItem(i - startIndex, createMagicBlock(material));
+            // 跳过按钮槽位（包括自定义材质槽位）
+            while (currentSlot < guiConfig.getSize() && guiConfig.isButtonSlot(currentSlot)) {
+                currentSlot++;
+            }
+
+            if (currentSlot < guiConfig.getSize()) {
+                Material material = materials.get(i);
+                gui.setItem(currentSlot, createMagicBlock(material));
+                currentSlot++;
+            } else {
+                // 如果没有更多可用槽位，停止添加物品
+                break;
+            }
         }
 
-        // 添加导航按钮和页码信息
-        if (page > 1) {
-            ItemStack prevButton = createNavigationItem(plugin.getMessage("gui.previous-page"), Material.ARROW);
-            gui.setItem(45, prevButton);
-        }
+        // 始终添加导航按钮（保持布局一致性），根据状态显示不同样式
+        gui.setItem(guiConfig.getPreviousPageSlot(), guiConfig.createPreviousPageButton(page > 1));
+        gui.setItem(guiConfig.getNextPageSlot(), guiConfig.createNextPageButton(page < totalPages));
 
-        // 页码显示
-        ItemStack pageInfo = new ItemStack(Material.PAPER);
-        ItemMeta pageInfoMeta = pageInfo.getItemMeta();
-        if (pageInfoMeta != null) {
-            pageInfoMeta.setDisplayName(ChatColor.YELLOW + plugin.getMessage("gui.page-info", page, totalPages));
-            pageInfo.setItemMeta(pageInfoMeta);
-        }
-        gui.setItem(49, pageInfo);
-
-        if (page < totalPages) {
-            ItemStack nextButton = createNavigationItem(plugin.getMessage("gui.next-page"), Material.ARROW);
-            gui.setItem(53, nextButton);
-        }
+        // 添加页码信息
+        gui.setItem(guiConfig.getPageInfoSlot(), guiConfig.createPageInfoButton(page, totalPages));
 
         // 添加搜索按钮
-        gui.setItem(47, createSearchButton());
+        gui.setItem(guiConfig.getSearchSlot(), guiConfig.createSearchButton());
 
         // 添加关闭按钮
-        ItemStack closeButton = new ItemStack(Material.BARRIER);
-        ItemMeta closeMeta = closeButton.getItemMeta();
-        if (closeMeta != null) {
-            closeMeta.setDisplayName(ChatColor.RED + plugin.getMessage("gui.close"));
-            closeButton.setItemMeta(closeMeta);
+        gui.setItem(guiConfig.getCloseSlot(), guiConfig.createCloseButton());
+
+        // 添加自定义材质
+        for (Map.Entry<String, GUIConfig.ButtonConfig> entry : guiConfig.getCustomMaterials().entrySet()) {
+            String customKey = entry.getKey();
+            GUIConfig.ButtonConfig config = entry.getValue();
+            ItemStack customItem = guiConfig.createCustomMaterial(customKey);
+            if (customItem != null && config.slot >= 0 && config.slot < guiConfig.getSize()) {
+                gui.setItem(config.slot, customItem);
+                plugin.debug("添加自定义材质: " + customKey + " -> 槽位 " + config.slot);
+            }
         }
-        gui.setItem(51, closeButton);
 
         player.openInventory(gui);
+
+        // 清除GUI更新标志
+        GUIManager.setPlayerUpdatingGUI(player, false);
     }
 
     public void handleSearch(Player player, String query) {
@@ -113,7 +130,7 @@ public class BlockSelectionGUI {
             List<Material> results = allMaterials.stream()
                 .filter(material -> {
                     String materialName = material.name().toLowerCase();
-                    String localizedName = plugin.getMessage(plugin.getMinecraftLangManager().getItemStackName(new ItemStack(material)));
+                    String localizedName = plugin.getMinecraftLangManager().getItemStackName(new ItemStack(material));
                     return materialName.contains(lowercaseQuery) || 
                            localizedName.toLowerCase().contains(lowercaseQuery);
                 })
@@ -159,32 +176,47 @@ public class BlockSelectionGUI {
         }
 
         UUID playerId = player.getUniqueId();
-        int page = currentPage.getOrDefault(playerId, 1);
-        List<Material> materials = searchResults.getOrDefault(playerId, plugin.getAllowedMaterials());
-        int totalPages = (int) Math.ceil(materials.size() / (double) ITEMS_PER_PAGE);
 
         // 使用synchronized块来确保线程安全
         synchronized (this) {
-            // 处理导航按钮点击
-            if (clickedItem.getType() == Material.ARROW) {
-                if (slot == 45 && page > 1) {
+            // 在synchronized块内读取最新的页面状态
+            int page = currentPage.getOrDefault(playerId, 1);
+            List<Material> materials = searchResults.getOrDefault(playerId, plugin.getAllowedMaterials());
+            int itemsPerPage = calculateItemsPerPage();
+            int totalPages = Math.max(1, (int) Math.ceil(materials.size() / (double) itemsPerPage));
+
+            plugin.debug("按钮点击 - 玩家: " + player.getName() + ", 当前页: " + page + "/" + totalPages +
+                        ", 点击槽位: " + slot + ", 物品: " + clickedItem.getType());
+            plugin.debug("页面状态详情 - currentPage.get(" + playerId + ") = " + currentPage.get(playerId));
+
+            // 处理上一页按钮点击
+            if (slot == guiConfig.getPreviousPageSlot() && guiConfig.matchesPreviousPageButton(clickedItem)) {
+                if (page > 1) {
                     currentPage.put(playerId, page - 1);
                     updateInventory(player);
-                } else if (slot == 53 && page < totalPages) {
+                }
+                // 移除提示消息，用户可以通过按钮的视觉状态了解是否可以翻页
+                return;
+            }
+
+            // 处理下一页按钮点击
+            if (slot == guiConfig.getNextPageSlot() && guiConfig.matchesNextPageButton(clickedItem)) {
+                if (page < totalPages) {
                     currentPage.put(playerId, page + 1);
                     updateInventory(player);
                 }
+                // 移除提示消息，用户可以通过按钮的视觉状态了解是否可以翻页
                 return;
             }
 
             // 处理关闭按钮点击
-            if (slot == 51 && clickedItem.getType() == Material.BARRIER) {
+            if (slot == guiConfig.getCloseSlot() && guiConfig.matchesCloseButton(clickedItem)) {
                 player.closeInventory();
                 return;
             }
 
             // 处理搜索按钮点击
-            if (slot == 47 && clickedItem.getType() == Material.COMPASS) {
+            if (slot == guiConfig.getSearchSlot() && guiConfig.matchesSearchButton(clickedItem)) {
                 player.closeInventory();
                 plugin.sendMessage(player, "messages.search-prompt");
                 GUIManager.setPlayerSearching(player, true);
@@ -228,27 +260,30 @@ public class BlockSelectionGUI {
         }
     }
 
-    private ItemStack createSearchButton() {
-        ItemStack searchButton = new ItemStack(Material.COMPASS);
-        ItemMeta meta = searchButton.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(plugin.getMessage("gui.search-button"));
-            List<String> lore = new ArrayList<>();
-            lore.add(plugin.getMessage("gui.search-lore"));
-            meta.setLore(lore);
-            searchButton.setItemMeta(meta);
+    /**
+     * 计算每页可显示的物品数量（排除按钮槽位）
+     */
+    private int calculateItemsPerPage() {
+        int totalSlots = guiConfig.getSize();
+        int availableSlots = 0;
+
+        // 计算实际可用的槽位数量
+        for (int i = 0; i < totalSlots; i++) {
+            if (!guiConfig.isButtonSlot(i)) {
+                availableSlots++;
+            }
         }
-        return searchButton;
+
+        return availableSlots;
     }
 
-    private ItemStack createNavigationItem(String name, Material material) {
-        ItemStack button = new ItemStack(material);
-        ItemMeta meta = button.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(name);
-            button.setItemMeta(meta);
-        }
-        return button;
+
+
+    /**
+     * 重新加载GUI配置
+     */
+    public void reloadConfig() {
+        guiConfig.loadConfig();
     }
 
     private ItemStack createMagicBlock(Material material) {
@@ -258,9 +293,9 @@ public class BlockSelectionGUI {
             String blockName = plugin.getMinecraftLangManager().getItemStackName(block);
             // 在原有名称两侧添加装饰符号
             String nameFormat = plugin.getConfig().getString("display.block-name-format", "&b✦ %s &b✦");
-            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', 
+            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&',
                 String.format(nameFormat, blockName)));
-            meta.setLore(List.of(plugin.getMessage("gui.select-block")));
+            meta.setLore(List.of(guiConfig.getSelectBlockText()));
             block.setItemMeta(meta);
         }
         return block;
