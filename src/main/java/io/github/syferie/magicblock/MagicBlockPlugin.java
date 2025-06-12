@@ -17,7 +17,12 @@ import io.github.syferie.magicblock.util.PerformanceMonitor;
 import io.github.syferie.magicblock.block.BlockBindManager;
 import io.github.syferie.magicblock.util.UpdateChecker;
 import io.github.syferie.magicblock.manager.MagicBlockIndexManager;
+import io.github.syferie.magicblock.manager.FavoriteManager;
+import io.github.syferie.magicblock.manager.DataMigrationManager;
+import io.github.syferie.magicblock.gui.FavoriteGUI;
+import io.github.syferie.magicblock.gui.GUIManager;
 import io.github.syferie.magicblock.util.DuplicateBlockDetector;
+import io.github.syferie.magicblock.util.ItemCreator;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -62,6 +67,11 @@ public class MagicBlockPlugin extends JavaPlugin {
     private PerformanceMonitor performanceMonitor;
     private MagicBlockIndexManager indexManager;
     private DuplicateBlockDetector duplicateDetector;
+    private FavoriteManager favoriteManager;
+    private FavoriteGUI favoriteGUI;
+    private GUIManager guiManager;
+    private ItemCreator itemCreator;
+    private DataMigrationManager dataMigrationManager;
 
     @Override
     public void onEnable() {
@@ -678,6 +688,32 @@ public class MagicBlockPlugin extends JavaPlugin {
                 this.blockBindManager.setDatabaseManager(this.databaseManager);
             }
         }
+
+        // 初始化工具类
+        this.itemCreator = new ItemCreator(this);
+
+        // 初始化数据迁移管理器并执行迁移
+        this.dataMigrationManager = new DataMigrationManager(this);
+        if (dataMigrationManager.needsMigration()) {
+            getLogger().info("检测到需要迁移绑定数据...");
+            if (dataMigrationManager.migrateData()) {
+                getLogger().info("绑定数据迁移成功！");
+                if (dataMigrationManager.validateMigration()) {
+                    getLogger().info("迁移数据验证通过");
+                } else {
+                    getLogger().warning("迁移数据验证失败，请检查数据完整性");
+                }
+            } else {
+                getLogger().severe("绑定数据迁移失败！请检查日志");
+            }
+        }
+
+        // 初始化收藏管理器
+        this.favoriteManager = new FavoriteManager(this);
+
+        // 初始化GUI
+        this.favoriteGUI = new FavoriteGUI(this, favoriteManager);
+        this.guiManager = listener.getGuiManager(); // 使用BlockListener中创建的GUIManager
     }
 
     private void registerEventsAndCommands() {
@@ -688,6 +724,12 @@ public class MagicBlockPlugin extends JavaPlugin {
         if (duplicateDetector != null) {
             getServer().getPluginManager().registerEvents(duplicateDetector, this);
             debug("防刷检测器事件已注册");
+        }
+
+        // 注册GUI管理器事件
+        if (guiManager != null) {
+            getServer().getPluginManager().registerEvents(guiManager, this);
+            debug("GUI管理器事件已注册");
         }
 
         CommandManager commandManager = new CommandManager(this);
@@ -749,5 +791,29 @@ public class MagicBlockPlugin extends JavaPlugin {
 
     public DuplicateBlockDetector getDuplicateDetector() {
         return duplicateDetector;
+    }
+
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
+    }
+
+    public FavoriteManager getFavoriteManager() {
+        return favoriteManager;
+    }
+
+    public FavoriteGUI getFavoriteGUI() {
+        return favoriteGUI;
+    }
+
+    public GUIManager getGuiManager() {
+        return guiManager;
+    }
+
+    public ItemCreator getItemCreator() {
+        return itemCreator;
+    }
+
+    public DataMigrationManager getDataMigrationManager() {
+        return dataMigrationManager;
     }
 }

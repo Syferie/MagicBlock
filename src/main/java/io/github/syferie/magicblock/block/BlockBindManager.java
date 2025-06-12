@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -19,15 +20,24 @@ import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 public class BlockBindManager {
     private final MagicBlockPlugin plugin;
     private final NamespacedKey bindKey;
     private final File bindFile;
+    private final File bindJsonFile;
     private FileConfiguration bindConfig;
+    private final Gson gson;
     private final Map<UUID, Map<String, Long>> lastClickTimes = new HashMap<>();
     private static final long DOUBLE_CLICK_TIME = 500; // 双击时间窗口（毫秒）
     private DatabaseManager databaseManager;
@@ -36,6 +46,8 @@ public class BlockBindManager {
         this.plugin = plugin;
         this.bindKey = new NamespacedKey(plugin, "magicblock_bind");
         this.bindFile = new File(plugin.getDataFolder(), "bindings.yml");
+        this.bindJsonFile = new File(plugin.getDataFolder(), "bindings.json");
+        this.gson = new GsonBuilder().setPrettyPrinting().create();
         loadBindConfig();
     }
 
@@ -53,6 +65,32 @@ public class BlockBindManager {
     }
 
     private void loadBindConfig() {
+        // 检查是否存在JSON文件
+        if (bindJsonFile.exists()) {
+            // 优先使用JSON文件
+            try (FileReader reader = new FileReader(bindJsonFile)) {
+                plugin.debug("使用JSON文件加载绑定数据");
+                // 创建空的YAML配置以兼容旧代码
+                if (!bindFile.exists()) {
+                    try {
+                        bindFile.createNewFile();
+                    } catch (IOException e) {
+                        plugin.getLogger().warning("无法创建绑定配置文件: " + e.getMessage());
+                    }
+                }
+                bindConfig = YamlConfiguration.loadConfiguration(bindFile);
+            } catch (IOException e) {
+                plugin.getLogger().warning("无法读取JSON绑定文件: " + e.getMessage());
+                // 回退到YAML文件
+                loadYamlBindConfig();
+            }
+        } else {
+            // 使用YAML文件
+            loadYamlBindConfig();
+        }
+    }
+
+    private void loadYamlBindConfig() {
         if (!bindFile.exists()) {
             try {
                 bindFile.createNewFile();
@@ -61,6 +99,7 @@ public class BlockBindManager {
             }
         }
         bindConfig = YamlConfiguration.loadConfiguration(bindFile);
+        plugin.debug("使用YAML文件加载绑定数据");
     }
 
     public FileConfiguration getBindConfig() {
@@ -68,10 +107,61 @@ public class BlockBindManager {
     }
 
     public void saveBindConfig() {
+        // 检查是否应该使用JSON存储
+        if (bindJsonFile.exists()) {
+            saveBindConfigToJson();
+        } else {
+            // 使用YAML存储
+            try {
+                bindConfig.save(bindFile);
+                plugin.debug("绑定数据已保存到YAML文件");
+            } catch (IOException e) {
+                plugin.getLogger().warning("无法保存绑定配置到YAML: " + e.getMessage());
+            }
+        }
+    }
+
+    private void saveBindConfigToJson() {
         try {
-            bindConfig.save(bindFile);
+            // 从YAML配置转换为JSON格式
+            Map<String, Object> jsonData = new HashMap<>();
+
+            // 获取所有玩家UUID
+            ConfigurationSection bindingsSection = bindConfig.getConfigurationSection("bindings");
+            if (bindingsSection != null) {
+                for (String uuid : bindingsSection.getKeys(false)) {
+                    ConfigurationSection playerSection = bindingsSection.getConfigurationSection(uuid);
+                    if (playerSection != null) {
+                        Map<String, Object> playerData = new HashMap<>();
+
+                        // 获取玩家的所有绑定方块
+                        for (String blockId : playerSection.getKeys(false)) {
+                            ConfigurationSection blockSection = playerSection.getConfigurationSection(blockId);
+                            if (blockSection != null) {
+                                Map<String, Object> blockData = new HashMap<>();
+
+                                // 复制所有方块数据
+                                for (String key : blockSection.getKeys(false)) {
+                                    blockData.put(key, blockSection.get(key));
+                                }
+
+                                playerData.put(blockId, blockData);
+                            }
+                        }
+
+                        jsonData.put(uuid, playerData);
+                    }
+                }
+            }
+
+            // 写入JSON文件
+            try (FileWriter writer = new FileWriter(bindJsonFile)) {
+                gson.toJson(jsonData, writer);
+                plugin.debug("绑定数据已保存到JSON文件");
+            }
+
         } catch (IOException e) {
-            plugin.getLogger().warning("无法保存绑定配置: " + e.getMessage());
+            plugin.getLogger().warning("无法保存绑定配置到JSON: " + e.getMessage());
         }
     }
 

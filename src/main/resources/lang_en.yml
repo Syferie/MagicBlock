@@ -60,6 +60,9 @@ messages:
   food-effect-applied: "&a✔ &7Successfully used magic food!"
   food-invalid: "&c✖ &7Invalid magic food!"
   food-not-edible: "&c✖ &7This item cannot be eaten!"
+  favorite-added: "&a⭐ &7Added &e{0} &7to favorites!"
+  favorite-removed: "&c⭐ &7Removed &e{0} &7from favorites!"
+  favorites-disabled: "&c✖ &7Favorites feature is disabled!"
 
 # Anti-Duplication Messages
 anti-duplication:

@@ -138,6 +138,14 @@ public class DatabaseManager {
     }
 
     /**
+     * 获取表前缀
+     * @return 表前缀
+     */
+    public String getTablePrefix() {
+        return tablePrefix;
+    }
+
+    /**
      * 关闭数据库连接
      */
     public void close() {
