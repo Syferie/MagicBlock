@@ -78,6 +78,10 @@ anti-duplication:
   duplicates-removed: "&c⚠ &7Detected and removed &c%amount% &7duplicate magic blocks (triggered by &b%player%&7)"
 
 commands:
+  # General command messages
+  console-only-error: "&c✖ &7This command can only be executed by players"
+  unknown-command: "&c✖ &7Unknown command"
+
   help:
     title: "&e⚡ &7MagicBlock Help"
     help: "&7/mb help &8- &7Show help information"
@@ -85,7 +89,7 @@ commands:
     give: "&7/mb give <player> [uses] &8- &7Give a MagicBlock to a player"
     getfood: "&7/mb getfood <food> [uses] &8- &7Get magic food"
     settimes: "&7/mb settimes <uses> &8- &7Set uses for held MagicBlock"
-    addtimes: "&7/mb addtimes <uses> &8- &7Add uses to held MagicBlock"
+    addtimes: "&7/mb addtimes <uses> &8- &7Add uses to held MagicBlock &8(&7Console: /mb addtimes <player> <uses>&8)"
     list: "&7/mb list &8- &7View bound blocks"
     reload: "&7/mb reload &8- &7Reload plugin configuration"
     performance: "&7/mb performance &8- &7View plugin performance report"
@@ -97,7 +101,10 @@ commands:
     success-infinite: "&a✔ &7Successfully got a MagicBlock with &binfinite &7uses!"
     invalid-number: "&c✖ &7Invalid number of uses."
   give:
-    no-permission: "&c✖ &7You don't have permission to use this command!"
+    no-permission: "&c✖ &7You don't have permission to use this command"
+    usage: "&cUsage: &7/mb give <player> [uses]"
+    player-not-found: "&c✖ &7Player not found: &b{0}"
+    invalid-number: "&c✖ &7Invalid number: &b{0}&7, using default value"
     success:
       console: "&a✔ &7Successfully gave &b{0} &7a MagicBlock with &b{1} &7uses!"
       console-infinite: "&a✔ &7Successfully gave &b{0} &7a MagicBlock with &binfinite &7uses!"
@@ -111,11 +118,19 @@ commands:
     success-infinite: "&a✔ &7Successfully set MagicBlock uses to &binfinite&7!"
   addtimes:
     no-permission: "&c✖ &7You don't have permission to use this command!"
-    must-hold: "&c✖ &7You must hold a MagicBlock to add uses!"
-    invalid-number: "&c✖ &7Invalid number of uses."
-    unlimited: "&c✖ &7This MagicBlock already has infinite uses!"
-    success: "&a✔ &7Successfully added &b{0} &7uses! Current total: &b{1}"
     usage: "&c✖ &7Usage: /mb addtimes <amount>"
+    console-usage: "&cConsole usage: &7/mb addtimes <player> <uses>"
+    must-hold: "&c✖ &7You must hold a MagicBlock to add uses!"
+    must-hold-console: "&c✖ &7Player &b{0} &7must be holding a magic block"
+    invalid-number: "&c✖ &7Invalid number of uses."
+    invalid-number-console: "&c✖ &7Invalid number: &b{0}"
+    player-not-found: "&c✖ &7Player not found: &b{0}"
+    unlimited: "&c✖ &7This MagicBlock already has infinite uses!"
+    unlimited-console: "&c✖ &7This block already has infinite uses"
+    success: "&a✔ &7Successfully added &b{0} &7uses! Current total: &b{1}"
+    success-other: "&a✔ &7Successfully added &b{1} &7uses to &b{0}&7's magic block, current total: &b{2}"
+    success-console: "&a✔ &7Successfully added &b{1} &7uses to &b{0}&7's magic block, current total: &b{2}"
+    received: "&a✔ &7Your magic block received &b{0} &7uses, current total: &b{1}"
   getfood:
     no-permission: "&c✖ &7You don't have permission to use this command!"
     usage: "&c✖ &7Usage: /mb getfood <food> [uses]"

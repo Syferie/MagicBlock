@@ -78,6 +78,10 @@ anti-duplication:
   duplicates-removed: "&c⚠ &7检测到并移除了 &c%amount% &7个重复的魔法方块（触发玩家：&b%player%&7）"
 
 commands:
+  # 通用命令消息
+  console-only-error: "&c✖ &7此命令只能由玩家执行"
+  unknown-command: "&c✖ &7未知的命令"
+
   help:
     title: "&e⚡ &7MagicBlock 帮助"
     help: "&7/mb help &8- &7显示帮助信息"
@@ -85,7 +89,7 @@ commands:
     give: "&7/mb give <玩家> [次数] &8- &7给予玩家MagicBlock"
     getfood: "&7/mb getfood <食物> [次数] &8- &7获取魔法食物"
     settimes: "&7/mb settimes <次数> &8- &7设置手持MagicBlock的使用次数"
-    addtimes: "&7/mb addtimes <次数> &8- &7增加手持MagicBlock的使用次数"
+    addtimes: "&7/mb addtimes <次数> &8- &7增加手持MagicBlock的使用次数 &8(&7控制台: /mb addtimes <玩家> <次数>&8)"
     list: "&7/mb list &8- &7查看已绑定的方块"
     reload: "&7/mb reload &8- &7重载插件配置"
     performance: "&7/mb performance &8- &7查看插件性能报告"
@@ -97,7 +101,10 @@ commands:
     success-infinite: "&a✔ &7成功获得一个拥有 &b无限 &7次使用次数的MagicBlock！"
     invalid-number: "&c✖ &7无效的次数。"
   give:
-    no-permission: "&c✖ &7你没有权限使用此命令！"
+    no-permission: "&c✖ &7你没有权限使用此命令"
+    usage: "&c用法: &7/mb give <玩家> [次数]"
+    player-not-found: "&c✖ &7找不到玩家: &b{0}"
+    invalid-number: "&c✖ &7无效的次数: &b{0}&7，使用默认值"
     success:
       console: "&a✔ &7成功给予 &b{0} &7个拥有 &b{1} &7次使用次数的MagicBlock！"
       console-infinite: "&a✔ &7成功给予 &b{0} &7一个拥有 &b无限 &7次使用次数的MagicBlock！"
@@ -111,11 +118,19 @@ commands:
     success-infinite: "&a✔ &7成功将MagicBlock的使用次数设置为 &b无限 &7次！"
   addtimes:
     usage: "&c✖ &7用法: /mb addtimes <次数>"
+    console-usage: "&c控制台用法: &7/mb addtimes <玩家> <次数>"
     no-permission: "&c✖ &7你没有权限使用此命令！"
     must-hold: "&c✖ &7你必须手持一个MagicBlock来添加使用次数！"
+    must-hold-console: "&c✖ &7玩家 &b{0} &7必须手持魔法方块"
     invalid-number: "&c✖ &7无效的次数。"
+    invalid-number-console: "&c✖ &7无效的次数: &b{0}"
+    player-not-found: "&c✖ &7找不到玩家: &b{0}"
     unlimited: "&c✖ &7这个MagicBlock已经是无限使用次数了！"
+    unlimited-console: "&c✖ &7该方块已经是无限次数"
     success: "&a✔ &7成功增加 &b{0} &7次使用次数！当前总次数: &b{1}"
+    success-other: "&a✔ &7成功为玩家 &b{0} &7的魔法方块增加了 &b{1} &7次使用次数，当前次数: &b{2}"
+    success-console: "&a✔ &7成功为玩家 &b{0} &7的魔法方块增加了 &b{1} &7次使用次数，当前次数: &b{2}"
+    received: "&a✔ &7你的魔法方块获得了 &b{0} &7次使用次数，当前次数: &b{1}"
   getfood:
     no-permission: "&c✖ &7你没有权限使用此命令！"
     usage: "&c✖ &7用法: /mb getfood <食物> [次数]"

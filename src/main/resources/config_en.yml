@@ -159,6 +159,13 @@ anti-duplication:
   # Check frequency: when players switch to magic blocks in main/off hand
   # This provides good protection while maintaining performance
 
+# Shop Plugin Integration
+# -------------------------------------------------------------
+# Supports automatic addition of uses to players' held magic blocks via shop plugins
+# Shop plugins can set post-purchase console command: mb addtimes %player% [uses]
+# This way players automatically get uses added to their held magic block when purchasing
+# Note: Players must be holding a magic block when purchasing, otherwise the command will fail
+
 # Performance Settings
 # -------------------------------------------------------------
 # These settings help optimize plugin performance for high-traffic servers

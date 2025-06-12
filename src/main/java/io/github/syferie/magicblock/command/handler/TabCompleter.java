@@ -85,10 +85,63 @@ public class TabCompleter implements org.bukkit.command.TabCompleter {
                             }
                         }
                         break;
+                    case "addtimes":
+                        if (sender.hasPermission("magicblock.addtimes")) {
+                            // 如果是控制台执行，第二个参数是玩家名
+                            if (!(sender instanceof Player)) {
+                                String input = args[1].toLowerCase();
+                                completions.addAll(Bukkit.getOnlinePlayers().stream()
+                                    .map(Player::getName)
+                                    .filter(name -> name.toLowerCase().startsWith(input))
+                                    .collect(Collectors.toList()));
+                            } else {
+                                // 如果是玩家执行，第二个参数是次数，提供一些常用数值
+                                String input = args[1].toLowerCase();
+                                List<String> commonValues = Arrays.asList("100", "500", "1000", "5000", "10000");
+                                completions.addAll(commonValues.stream()
+                                    .filter(value -> value.startsWith(input))
+                                    .collect(Collectors.toList()));
+                            }
+                        }
+                        break;
+                }
+            } else if (args.length == 3) {
+                // 针对特定命令的第三个参数提供补全
+                switch (args[0].toLowerCase()) {
+                    case "give":
+                        if (sender.hasPermission("magicblock.give")) {
+                            // 第三个参数是次数，提供一些常用数值
+                            String input = args[2].toLowerCase();
+                            List<String> commonValues = Arrays.asList("100", "500", "1000", "5000", "10000", "-1");
+                            completions.addAll(commonValues.stream()
+                                .filter(value -> value.startsWith(input))
+                                .collect(Collectors.toList()));
+                        }
+                        break;
+                    case "addtimes":
+                        if (sender.hasPermission("magicblock.addtimes") && !(sender instanceof Player)) {
+                            // 控制台执行时，第三个参数是次数
+                            String input = args[2].toLowerCase();
+                            List<String> commonValues = Arrays.asList("100", "500", "1000", "5000", "10000");
+                            completions.addAll(commonValues.stream()
+                                .filter(value -> value.startsWith(input))
+                                .collect(Collectors.toList()));
+                        }
+                        break;
+                    case "getfood":
+                        if (sender.hasPermission("magicblock.getfood")) {
+                            // 第三个参数是次数，提供一些常用数值
+                            String input = args[2].toLowerCase();
+                            List<String> commonValues = Arrays.asList("64", "100", "500", "1000", "-1");
+                            completions.addAll(commonValues.stream()
+                                .filter(value -> value.startsWith(input))
+                                .collect(Collectors.toList()));
+                        }
+                        break;
                 }
             }
         }
-        
+
         return completions;
     }
 }

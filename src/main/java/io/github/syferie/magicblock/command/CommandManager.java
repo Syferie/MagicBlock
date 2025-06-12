@@ -5,7 +5,6 @@ import io.github.syferie.magicblock.MagicBlockPlugin;
 import me.clip.placeholderapi.PlaceholderAPI;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -29,7 +28,7 @@ public class CommandManager implements CommandExecutor {
             if (sender instanceof Player) {
                 sendHelpMessage((Player) sender);
             } else {
-                sender.sendMessage(ChatColor.RED + "用法: /mb give <玩家> [次数]");
+                plugin.sendMessage(sender, "commands.give.console-usage");
             }
             return true;
         }
@@ -39,21 +38,21 @@ public class CommandManager implements CommandExecutor {
                 if (sender instanceof Player) {
                     sendHelpMessage((Player) sender);
                 } else {
-                    sender.sendMessage(ChatColor.RED + "此命令只能由玩家执行。");
+                    plugin.sendMessage(sender, "commands.console-only-error");
                 }
                 break;
             case "list":
                 if (sender instanceof Player) {
                     handleList((Player) sender);
                 } else {
-                    sender.sendMessage(ChatColor.RED + "此命令只能由玩家执行。");
+                    plugin.sendMessage(sender, "commands.console-only-error");
                 }
                 break;
             case "get":
                 if (sender instanceof Player) {
                     handleGet((Player) sender, args);
                 } else {
-                    sender.sendMessage(ChatColor.RED + "此命令只能由玩家执行。");
+                    plugin.sendMessage(sender, "commands.console-only-error");
                 }
                 break;
             case "reload":
@@ -63,21 +62,17 @@ public class CommandManager implements CommandExecutor {
                 if (sender instanceof Player) {
                     handleSetTimes((Player) sender, args);
                 } else {
-                    sender.sendMessage(ChatColor.RED + "此命令只能由玩家执行。");
+                    plugin.sendMessage(sender, "commands.console-only-error");
                 }
                 break;
             case "addtimes":
-                if (sender instanceof Player) {
-                    handleAddTimes((Player) sender, args);
-                } else {
-                    sender.sendMessage(ChatColor.RED + "此命令只能由玩家执行。");
-                }
+                handleAddTimes(sender, args);
                 break;
             case "getfood":
                 if (sender instanceof Player) {
                     handleGetFood((Player) sender, args);
                 } else {
-                    sender.sendMessage(ChatColor.RED + "此命令只能由玩家执行。");
+                    plugin.sendMessage(sender, "commands.console-only-error");
                 }
                 break;
             case "give":
@@ -91,7 +86,7 @@ public class CommandManager implements CommandExecutor {
                 if (sender instanceof Player) {
                     sendHelpMessage((Player) sender);
                 } else {
-                    sender.sendMessage(ChatColor.RED + "未知的命令。");
+                    plugin.sendMessage(sender, "commands.unknown-command");
                 }
                 break;
         }
@@ -138,12 +133,12 @@ public class CommandManager implements CommandExecutor {
 
     private void handleGive(CommandSender sender, String[] args) {
         if (!sender.hasPermission("magicblock.give")) {
-            sender.sendMessage(ChatColor.RED + "你没有权限使用此命令。");
+            plugin.sendMessage(sender, "commands.give.no-permission");
             return;
         }
 
         if (args.length < 2) {
-            sender.sendMessage(ChatColor.RED + "用法: /mb give <玩家> [次数]");
+            plugin.sendMessage(sender, "commands.give.usage");
             return;
         }
 
@@ -155,7 +150,7 @@ public class CommandManager implements CommandExecutor {
 
         Player target = Bukkit.getPlayer(targetPlayerName);
         if (target == null) {
-            sender.sendMessage(ChatColor.RED + "找不到玩家: " + targetPlayerName);
+            plugin.sendMessage(sender, "commands.give.player-not-found", targetPlayerName);
             return;
         }
 
@@ -170,11 +165,11 @@ public class CommandManager implements CommandExecutor {
             times = Integer.parseInt(timesArg);
             // 如果指定-1，则设置为无限次数
             if (times != -1 && times <= 0) {
-                sender.sendMessage(ChatColor.RED + "无效的次数: " + timesArg + "，使用默认值。");
+                plugin.sendMessage(sender, "commands.give.invalid-number", timesArg);
                 times = plugin.getDefaultBlockTimes();
             }
         } catch (NumberFormatException e) {
-            sender.sendMessage(ChatColor.RED + "无效的次数: " + timesArg + "，使用默认值。");
+            plugin.sendMessage(sender, "commands.give.invalid-number", timesArg);
             times = plugin.getDefaultBlockTimes();
         }
 
@@ -357,73 +352,137 @@ public class CommandManager implements CommandExecutor {
         plugin.sendMessage(player, "commands.settimes.success", times);
     }
 
-    private void handleAddTimes(Player player, String[] args) {
-        if (!player.hasPermission("magicblock.addtimes")) {
-            plugin.sendMessage(player, "commands.addtimes.no-permission");
+    private void handleAddTimes(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("magicblock.addtimes")) {
+            plugin.sendMessage(sender, "commands.addtimes.no-permission");
             return;
         }
 
-        // 检查使用权限
-        if (!player.hasPermission("magicblock.use")) {
-            plugin.sendMessage(player, "messages.no-permission-use");
-            return;
-        }
+        // 支持两种用法：
+        // 1. 玩家执行: /mb addtimes <次数> (给自己手持的方块增加次数)
+        // 2. 控制台执行: /mb addtimes <玩家> <次数> (给指定玩家手持的方块增加次数)
 
-        if (args.length < 2) {
-            plugin.sendMessage(player, "commands.addtimes.usage");
-            return;
-        }
-
-        ItemStack item = player.getInventory().getItemInMainHand();
-        if (!plugin.getBlockManager().isMagicBlock(item)) {
-            plugin.sendMessage(player, "commands.addtimes.must-hold");
-            return;
-        }
-
-        // 检查是否是绑定的方块且是否属于该玩家
-        UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(item);
-        if (boundPlayer != null && !boundPlayer.equals(player.getUniqueId())) {
-            plugin.sendMessage(player, "messages.not-bound-to-you");
-            return;
-        }
-
+        Player targetPlayer;
         int addTimes;
-        try {
-            addTimes = Integer.parseInt(args[1]);
-            if (addTimes <= 0) {
-                plugin.sendMessage(player, "commands.addtimes.invalid-number");
+
+        if (sender instanceof Player) {
+            // 玩家执行命令
+            targetPlayer = (Player) sender;
+
+            // 检查使用权限
+            if (!targetPlayer.hasPermission("magicblock.use")) {
+                plugin.sendMessage(targetPlayer, "messages.no-permission-use");
                 return;
             }
-        } catch (NumberFormatException e) {
-            plugin.sendMessage(player, "commands.addtimes.invalid-number");
+
+            if (args.length < 2) {
+                plugin.sendMessage(targetPlayer, "commands.addtimes.usage");
+                return;
+            }
+
+            try {
+                addTimes = Integer.parseInt(args[1]);
+                if (addTimes <= 0) {
+                    plugin.sendMessage(targetPlayer, "commands.addtimes.invalid-number");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                plugin.sendMessage(targetPlayer, "commands.addtimes.invalid-number");
+                return;
+            }
+        } else {
+            // 控制台执行命令
+            if (args.length < 3) {
+                plugin.sendMessage(sender, "commands.addtimes.console-usage");
+                return;
+            }
+
+            // 处理变量替换（支持 %player% 等）
+            String targetPlayerName = args[1];
+            if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+                targetPlayerName = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(null, targetPlayerName);
+            }
+
+            targetPlayer = Bukkit.getPlayer(targetPlayerName);
+            if (targetPlayer == null) {
+                plugin.sendMessage(sender, "commands.addtimes.player-not-found", targetPlayerName);
+                return;
+            }
+
+            try {
+                addTimes = Integer.parseInt(args[2]);
+                if (addTimes <= 0) {
+                    plugin.sendMessage(sender, "commands.addtimes.invalid-number-console", args[2]);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                plugin.sendMessage(sender, "commands.addtimes.invalid-number-console", args[2]);
+                return;
+            }
+        }
+
+        // 获取目标玩家手持的物品
+        ItemStack item = targetPlayer.getInventory().getItemInMainHand();
+        if (!plugin.getBlockManager().isMagicBlock(item)) {
+            if (sender instanceof Player) {
+                plugin.sendMessage((Player) sender, "commands.addtimes.must-hold");
+            } else {
+                plugin.sendMessage(sender, "commands.addtimes.must-hold-console", targetPlayer.getName());
+            }
             return;
+        }
+
+        // 如果是玩家执行，检查绑定权限
+        if (sender instanceof Player) {
+            UUID boundPlayer = plugin.getBlockBindManager().getBoundPlayer(item);
+            if (boundPlayer != null && !boundPlayer.equals(targetPlayer.getUniqueId())) {
+                plugin.sendMessage(targetPlayer, "messages.not-bound-to-you");
+                return;
+            }
         }
 
         // 获取当前使用次数和最大使用次数
         int currentTimes = plugin.getBlockManager().getUseTimes(item);
         int maxTimes = plugin.getBlockManager().getMaxUseTimes(item);
-        
+
         // 检查是否是无限次数
         if (currentTimes == Integer.MAX_VALUE - 100) {
-            plugin.sendMessage(player, "commands.addtimes.unlimited");
+            if (sender instanceof Player) {
+                plugin.sendMessage((Player) sender, "commands.addtimes.unlimited");
+            } else {
+                plugin.sendMessage(sender, "commands.addtimes.unlimited-console");
+            }
             return;
         }
 
         // 计算新的使用次数和最大次数
         int newTimes = currentTimes + addTimes;
         int newMaxTimes = maxTimes + addTimes;
-        
+
         // 设置新的使用次数和最大次数
         plugin.getBlockManager().setUseTimes(item, newTimes);
         plugin.getBlockManager().setMaxUseTimes(item, newMaxTimes);
-        
+
         // 如果是绑定的方块，更新配置中的使用次数
         if (plugin.getBlockBindManager().isBlockBound(item)) {
             plugin.getBlockBindManager().updateBlockMaterial(item);
         }
 
         // 发送成功消息
-        plugin.sendMessage(player, "commands.addtimes.success", addTimes, newTimes);
+        if (sender instanceof Player && sender == targetPlayer) {
+            // 玩家给自己增加次数
+            plugin.sendMessage(targetPlayer, "commands.addtimes.success", addTimes, newTimes);
+        } else {
+            // 控制台或管理员给其他玩家增加次数
+            if (sender instanceof Player) {
+                plugin.sendMessage((Player) sender, "commands.addtimes.success-other", targetPlayer.getName(), addTimes, newTimes);
+            } else {
+                plugin.sendMessage(sender, "commands.addtimes.success-console", targetPlayer.getName(), addTimes, newTimes);
+            }
+
+            // 通知目标玩家
+            plugin.sendMessage(targetPlayer, "commands.addtimes.received", addTimes, newTimes);
+        }
     }
 
     private void handleList(Player player) {
