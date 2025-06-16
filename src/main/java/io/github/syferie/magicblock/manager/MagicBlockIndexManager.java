@@ -73,7 +73,7 @@ public class MagicBlockIndexManager {
         worldsWithMagicBlocks.add(worldName);
         
         // 4. 持久化存储（异步）
-        plugin.getFoliaLib().getScheduler().runAsync(task -> {
+        plugin.getFoliaLib().getScheduler().runAtLocation(location, task -> {
             saveToPersistentStorage(location, magicBlock);
         });
         
@@ -107,7 +107,7 @@ public class MagicBlockIndexManager {
             checkAndCleanupWorld(location.getWorld().getName());
             
             // 4. 从持久化存储移除（异步）
-            plugin.getFoliaLib().getScheduler().runAsync(task -> {
+            plugin.getFoliaLib().getScheduler().runAtLocation(location, task -> {
                 removeFromPersistentStorage(location);
             });
             

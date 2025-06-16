@@ -482,7 +482,7 @@ public class BlockListener implements Listener {
             // only if the block is actually air (not replaced by Residence or other plugins)
             final Location finalBlockLocation = blockLocation; // Effectively final for lambda
 
-            plugin.getFoliaLib().getScheduler().runLater(() -> {
+            plugin.getFoliaLib().getScheduler().runAtLocationLater(finalBlockLocation, () -> {
                 Block blockAtLocation = finalBlockLocation.getBlock();
                 if (blockAtLocation.getType() == Material.AIR) {
                     // 🚀 性能优化：使用新的索引系统移除魔法方块

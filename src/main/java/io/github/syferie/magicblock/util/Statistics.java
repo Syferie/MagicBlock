@@ -86,7 +86,7 @@ public class Statistics {
         if (totalUses % batchThreshold == 0 ||
             (currentTime - lastSaveTime) > saveInterval) {
 
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            plugin.getFoliaLib().getScheduler().runAsync(wrappedTask -> {
                 if (needsSave) {
                     saveStats();
                     needsSave = false;
