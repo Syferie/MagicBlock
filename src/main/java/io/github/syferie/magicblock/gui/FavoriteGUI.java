@@ -233,8 +233,8 @@ public class FavoriteGUI {
             }
             
             // 处理收藏方块点击
-            if (clickedItem != null && clickedItem.getType() != Material.AIR && 
-                !guiConfig.isButtonSlot(slot) && plugin.getAllowedMaterials().contains(clickedItem.getType())) {
+            if (clickedItem != null && clickedItem.getType() != Material.AIR &&
+                !guiConfig.isButtonSlot(slot) && plugin.getAllowedMaterialsForPlayer(player).contains(clickedItem.getType())) {
                 
                 if (isRightClick) {
                     // 右键取消收藏

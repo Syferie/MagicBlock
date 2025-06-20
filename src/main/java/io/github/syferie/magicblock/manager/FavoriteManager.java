@@ -282,9 +282,9 @@ public class FavoriteManager {
         if (favorites == null || favorites.isEmpty()) {
             return new ArrayList<>();
         }
-        
-        // 过滤只显示在允许列表中的材质
-        List<Material> allowedMaterials = plugin.getAllowedMaterials();
+
+        // 过滤只显示在允许列表中的材质（包括权限组材质）
+        List<Material> allowedMaterials = plugin.getAllowedMaterialsForPlayer(player);
         return favorites.stream()
                 .filter(allowedMaterials::contains)
                 .sorted(Comparator.comparing(Material::name))

@@ -101,6 +101,7 @@ public class MagicBlockPlugin extends JavaPlugin {
 
         // 初始化允许的材料列表
         this.allowedMaterials = loadMaterialsFromConfig();
+        getLogger().info("Loaded " + allowedMaterials.size() + " allowed materials");
 
         // 检查更新
         if(getConfig().getBoolean("check-updates")) {
@@ -561,6 +562,8 @@ public class MagicBlockPlugin extends JavaPlugin {
             listener.setAllowedMaterials(newAllowedMaterials);
         }
 
+
+
         // 7. 重载GUI配置
         if (listener != null) {
             listener.reloadGUIConfig();
@@ -628,7 +631,7 @@ public class MagicBlockPlugin extends JavaPlugin {
         ConfigurationSection groups = getConfig().getConfigurationSection("group");
         if (groups != null) {
             for (String key : groups.getKeys(false)) {
-                if (player.hasPermission("magicblock." + key.replace("-material", ""))) {
+                if (player.hasPermission("magicblock.group." + key)) {
                     List<String> groupMaterials = groups.getStringList(key);
                     for (String materialName : groupMaterials) {
                         Material mat = Material.getMaterial(materialName);

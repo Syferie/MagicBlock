@@ -60,7 +60,7 @@ public class BlockSelectionGUI {
         UUID playerId = player.getUniqueId();
         int page = currentPage.getOrDefault(playerId, 1);
 
-        List<Material> materials = searchResults.getOrDefault(playerId, plugin.getAllowedMaterials());
+        List<Material> materials = searchResults.getOrDefault(playerId, plugin.getAllowedMaterialsForPlayer(player));
 
         // 计算每页可显示的物品数量（排除按钮槽位）
         int itemsPerPage = calculateItemsPerPage();
@@ -127,7 +127,7 @@ public class BlockSelectionGUI {
 
     public void handleSearch(Player player, String query) {
         UUID playerId = player.getUniqueId();
-        List<Material> allMaterials = plugin.getAllowedMaterials();
+        List<Material> allMaterials = plugin.getAllowedMaterialsForPlayer(player);
         
         if (query == null || query.trim().isEmpty()) {
             searchResults.remove(playerId);
@@ -191,7 +191,7 @@ public class BlockSelectionGUI {
         synchronized (this) {
             // 在synchronized块内读取最新的页面状态
             int page = currentPage.getOrDefault(playerId, 1);
-            List<Material> materials = searchResults.getOrDefault(playerId, plugin.getAllowedMaterials());
+            List<Material> materials = searchResults.getOrDefault(playerId, plugin.getAllowedMaterialsForPlayer(player));
             int itemsPerPage = calculateItemsPerPage();
             int totalPages = Math.max(1, (int) Math.ceil(materials.size() / (double) itemsPerPage));
 
@@ -246,7 +246,7 @@ public class BlockSelectionGUI {
             }
 
             // 检查点击的物品是否在允许的材料列表中
-            if (!plugin.getAllowedMaterials().contains(clickedItem.getType())) {
+            if (!plugin.getAllowedMaterialsForPlayer(player).contains(clickedItem.getType())) {
                 return;
             }
 
