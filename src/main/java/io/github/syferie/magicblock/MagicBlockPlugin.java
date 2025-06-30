@@ -735,6 +735,12 @@ public class MagicBlockPlugin extends JavaPlugin {
             debug("GUI管理器事件已注册");
         }
 
+        // 🔧 修复：注册魔法方块索引管理器事件（用于区块加载时恢复数据）
+        if (indexManager != null) {
+            getServer().getPluginManager().registerEvents(indexManager, this);
+            debug("魔法方块索引管理器事件已注册");
+        }
+
         CommandManager commandManager = new CommandManager(this);
         getCommand("magicblock").setExecutor(commandManager);
         getCommand("magicblock").setTabCompleter(new TabCompleter(this));

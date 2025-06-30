@@ -10,6 +10,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.NamespacedKey;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.world.ChunkLoadEvent;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,14 +20,15 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 魔法方块索引管理器
  * 实现高性能的魔法方块位置索引和查找
- * 
+ *
  * 性能优化策略：
  * 1. 内存索引：O(1) 快速查找
  * 2. 区块缓存：减少内存使用
  * 3. 持久化存储：数据安全保障
  * 4. 智能过滤：早期事件过滤
+ * 5. 区块加载时自动恢复：解决重启后数据丢失问题
  */
-public class MagicBlockIndexManager {
+public class MagicBlockIndexManager implements Listener {
     private final MagicBlockPlugin plugin;
     private final NamespacedKey magicBlockKey;
     
@@ -348,15 +352,85 @@ public class MagicBlockIndexManager {
      */
     public void reload() {
         plugin.getLogger().info("重载魔法方块索引系统...");
-        
+
         // 清空现有索引
         globalMagicBlockIndex.clear();
         chunkMagicBlocks.clear();
         worldsWithMagicBlocks.clear();
-        
+
         // 重新加载
         loadExistingMagicBlocks();
-        
+
         plugin.getLogger().info("魔法方块索引系统重载完成");
+    }
+
+    /**
+     * 🔧 修复：监听区块加载事件，自动恢复魔法方块索引
+     * 解决服务器重启后魔法方块会掉落的问题
+     */
+    @EventHandler
+    public void onChunkLoad(ChunkLoadEvent event) {
+        Chunk chunk = event.getChunk();
+        String chunkKey = chunk.getWorld().getName() + "_" + chunk.getX() + "_" + chunk.getZ();
+
+        // 检查该区块是否已经在索引中
+        if (chunkMagicBlocks.containsKey(chunkKey)) {
+            return; // 已经加载过了
+        }
+
+        // 从PCD中恢复魔法方块索引
+        loadMagicBlocksFromChunk(chunk);
+    }
+
+    /**
+     * 从指定区块的PCD中加载魔法方块索引
+     */
+    private void loadMagicBlocksFromChunk(Chunk chunk) {
+        PersistentDataContainer container = chunk.getPersistentDataContainer();
+        String locationsData = container.get(magicBlockKey, PersistentDataType.STRING);
+
+        if (locationsData != null && !locationsData.isEmpty()) {
+            String[] locations = locationsData.split(";");
+            int loadedCount = 0;
+
+            for (String locationStr : locations) {
+                try {
+                    String[] parts = locationStr.split(",");
+                    if (parts.length == 4) {
+                        World world = Bukkit.getWorld(parts[0]);
+                        if (world != null) {
+                            Location loc = new Location(world,
+                                Integer.parseInt(parts[1]),
+                                Integer.parseInt(parts[2]),
+                                Integer.parseInt(parts[3]));
+
+                            // 验证方块是否仍然存在
+                            Block block = loc.getBlock();
+                            if (!block.getType().isAir()) {
+                                // 添加到索引（不触发持久化）
+                                String locationKey = serializeLocation(loc);
+                                String chunkKey = getChunkKey(loc);
+
+                                globalMagicBlockIndex.add(locationKey);
+                                chunkMagicBlocks.computeIfAbsent(chunkKey, k -> ConcurrentHashMap.newKeySet())
+                                               .add(locationKey);
+                                worldsWithMagicBlocks.add(world.getName());
+
+                                loadedCount++;
+                            } else {
+                                // 方块不存在，从PCD中清理
+                                plugin.debug("清理不存在的魔法方块: " + locationStr);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    plugin.debug("加载区块魔法方块位置时出错: " + locationStr + " - " + e.getMessage());
+                }
+            }
+
+            if (loadedCount > 0) {
+                plugin.debug("从区块 " + chunk.getX() + "," + chunk.getZ() + " 恢复了 " + loadedCount + " 个魔法方块");
+            }
+        }
     }
 }
